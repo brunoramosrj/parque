@@ -167,7 +167,8 @@ data["Top5ProcessosRAM"]=$(get_data "ps -eo comm,pmem --sort=-pmem | head -n 6 |
 # --- CONSTRUÇÃO DO JSON FINAL ---
 echo "Construindo objeto JSON..."
 json_output=$(jq -n '{}')
-for key in "${!data[@]}"; do
+readarray -t sorted_keys < <(printf '%s\n' "${!data[@]}" | sort)
+for key in "${sorted_keys[@]}"; do
     value=$(remove_accents "${data[$key]}")
     if [[ $value =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
         json_output=$(echo "$json_output" | jq --arg key "$key" --argjson val "$value" '.[$key] = $val')
@@ -208,7 +209,7 @@ echo "Inventário individual salvo em $JSON_DESTINO"
 HTML_DESTINO="$INVENTORY_DIR/$HOSTNAME.html"
 echo "Gerando relatório HTML individual..."
 html_rows=""
-for key in "${!data[@]}"; do
+for key in "${sorted_keys[@]}"; do
     value=${data[$key]:-"Indisponivel"}
     html_rows+="<tr><td><b>$key</b></td><td>$value</td></tr>"
 done
