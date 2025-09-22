@@ -549,7 +549,19 @@ function renderDashboard() {
             
             try {
                 if (typeof inventoryData !== 'undefined' && Array.isArray(inventoryData) && inventoryData.length > 0) {
-                    allHeaders = Object.keys(inventoryData[0]);
+                    const headerSet = new Set();
+                    inventoryData.forEach(record => {
+                        if (record && typeof record === 'object' && !Array.isArray(record)) {
+                            Object.keys(record).forEach(key => headerSet.add(key));
+                        }
+                    });
+
+                    const prioritizedDefaults = DEFAULT_COLUMN_NAMES.filter(name => headerSet.has(name));
+                    const additionalHeaders = Array.from(headerSet)
+                        .filter(key => !DEFAULT_COLUMN_NAMES.includes(key))
+                        .sort((a, b) => a.localeCompare(b));
+
+                    allHeaders = [...prioritizedDefaults, ...additionalHeaders];
                     originalDataset = inventoryData;
 
                     const storedVisible = localStorage.getItem(DEFAULT_VISIBLE_COLUMNS_KEY);
