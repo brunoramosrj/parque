@@ -1,0 +1,592 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parque Computacional Avançado</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px 20px;
+            background-color: #f4f4f4;
+            color: #333;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        body.dark-theme { background-color: #222; color: #eee; }
+        body.dark-theme h1, body.dark-theme .modal-content h2 { color: #eee; }
+        body.dark-theme table { background-color: #333; border-color: #555; }
+        body.dark-theme th.main-header-cell { background-color: #0056b3; border-color: #555; }
+        body.dark-theme .column-filter-row th { background-color: #383838; border-color: #555; }
+        body.dark-theme .column-filter-row input { background-color: #555; color: #eee; border-color: #666; }
+        body.dark-theme td { border-color: #444; }
+        body.dark-theme tr:nth-child(even) { background-color: #3a3a3a; }
+        body.dark-theme tr:not(.header-row):not(.column-filter-row):hover { background-color: #4a4a4a; }
+        body.dark-theme .modal-content { background-color: #444; color: #eee; }
+        body.dark-theme .modal-columns-list label { color: #eee; }
+        body.dark-theme .controls button, body.dark-theme .top-controls button,
+        body.dark-theme .pagination-controls button,
+        body.dark-theme .modal-quick-actions button,
+        body.dark-theme .modal-actions button { background-color: #555; border-color: #666; }
+        body.dark-theme .modal-quick-actions button:hover,
+        body.dark-theme .modal-actions .apply-btn:hover,
+        body.dark-theme .modal-actions .cancel-btn:hover { background-color: #666; }
+        body.dark-theme #status { color: #bbb; }
+        body.dark-theme input[type="text"], 
+        body.dark-theme input[type="search"],
+        body.dark-theme select { background-color: #555; color: #eee; border-color: #666; }
+        h1 { text-align: center; font-size: 1.8em; margin-top: 10px; margin-bottom: 15px; }
+        .top-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+        .top-controls .search-filter-box { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
+        .top-controls input[type="text"], .top-controls input[type="search"] { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9em; }
+        .top-controls .action-buttons button { margin-left: 10px; }
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 5px 0; }
+        .controls button, .top-controls button, .pagination-controls button { padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; white-space: nowrap; }
+        .controls button:hover, .top-controls button:hover, .pagination-controls button:hover { background-color: #0056b3; }
+        .controls button:disabled, .top-controls button:disabled, .pagination-controls button:disabled { background-color: #cccccc; color: #666666; cursor: not-allowed; }
+        #status { font-style: italic; font-size: 0.95em; color: #555; flex-grow: 1; margin-right: 15px; }
+        .column-filter-row th { padding: 5px; }
+        .column-filter-row input { width: 90%; padding: 4px; font-size: 0.8em; border: 1px solid #ccc; border-radius: 3px; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background-color: #fff; }
+        th, td { border: 1px solid #ddd; padding: 10px 12px; text-align: left; font-size: 0.85em; white-space: nowrap; }
+        th.main-header-cell { background-color: #007bff; color: white; font-weight: bold; position: sticky; top: 0; z-index: 10; cursor: pointer; user-select: none; }
+        .column-filter-row th { position: sticky; top: 40px; z-index: 9; background-color: #f0f0f0; }
+        th .sort-indicator { margin-left: 5px; font-size: 0.8em; opacity: 0.7; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        tr:not(.header-row):not(.column-filter-row):hover { background-color: #e9ecef; }
+        tr.selected-row td { background-color: #cce5ff !important; color: #004085; }
+        #tableContainer { max-height: calc(100vh - 230px); overflow: auto; border: 1px solid #ccc; }
+        .pagination-controls { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; margin-top: 10px; }
+        .pagination-controls span { font-size: 0.9em; }
+        .pagination-controls select { padding: 6px; margin: 0 10px; border-radius: 4px; border: 1px solid #ccc; }
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.7); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        body.dark-theme .loader-overlay { background-color: rgba(0, 0, 0, 0.7); }
+        .loader { border: 8px solid #f3f3f3; border-top: 8px solid #3498db; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background-color: white; padding: 25px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column; }
+        .modal-content h2 { margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .modal-quick-actions { display: flex; gap: 10px; margin-bottom: 20px; }
+        .modal-quick-actions button { flex-grow: 1; padding: 8px 12px; font-size: 0.9em; background-color: #e9ecef; border: 1px solid #ced4da; color: #495057; border-radius: 4px; cursor: pointer; }
+        .modal-quick-actions button:hover { background-color: #dee2e6; }
+        .modal-columns-list { margin-bottom: 20px; flex-grow: 1; overflow-y: auto; padding-right: 10px; }
+        .modal-columns-list label { display: block; margin-bottom: 10px; font-size: 0.95em; cursor: pointer; }
+        .modal-columns-list input[type="checkbox"] { margin-right: 8px; vertical-align: middle; }
+        .modal-actions { text-align: right; padding-top: 15px; border-top: 1px solid #eee; flex-shrink: 0; }
+        .modal-actions button { padding: 10px 18px; margin-left: 10px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+        .modal-actions .apply-btn { background-color: #28a745; color: white; border: none; }
+        .modal-actions .apply-btn:hover { background-color: #218838; }
+        .modal-actions .cancel-btn { background-color: #6c757d; color: white; border: none; }
+        .modal-actions .cancel-btn:hover { background-color: #5a6268; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="loader-overlay" id="loaderOverlay"><div class="loader"></div></div>
+
+    <h1>Parque Computacional do DepMSMRJ</h1>
+
+    <div class="top-controls">
+        <div class="search-filter-box">
+            <input type="search" id="globalSearchInput" placeholder="Busca global...">
+        </div>
+        <div class="action-buttons">
+            <button id="btnGoToDashboard" title="Visualizar Dashboard">📊 Dashboard</button>
+            <button id="btnExportCSV" title="Exportar visão atual para CSV">📤 Exportar</button>
+            <button id="btnToggleTheme" title="Alternar Tema Claro/Escuro">🎨</button>
+            <button id="btnResetView" title="Resetar Filtros e Visualização">🔄</button>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div id="status">Carregando dados...</div>
+        <button id="btnConfigureColumns" disabled>Configurar Colunas</button>
+    </div>
+
+    <div id="tableContainer">
+        <table id="csvTable">
+            <thead id="csvTableHead"></thead>
+            <tbody id="csvTableBody"></tbody>
+        </table>
+    </div>
+
+    <div class="pagination-controls">
+        <button id="btnPrevPage" disabled>Anterior</button>
+        <span>Página <span id="currentPage">1</span> de <span id="totalPages">1</span></span>
+        <select id="rowsPerPageSelect">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="500">Todos</option>
+        </select>
+        <span>linhas por página</span>
+        <button id="btnNextPage" disabled>Próximo</button>
+    </div>
+
+    <div id="dashboardContainer" style="display:none; padding:20px;">
+        <h2>Dashboard do Inventário</h2>
+        <canvas id="osChart" style="max-height:300px; margin-bottom:30px;"></canvas>
+        <canvas id="cpuChart" style="max-height:300px; margin-bottom:30px;"></canvas>
+        <canvas id="ramChart" style="max-height:300px;"></canvas>
+    </div>
+
+
+    <div id="columnsModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Selecionar Colunas para Exibição</h2>
+            <div class="modal-quick-actions">
+                <button id="btnToggleAllColumns">Marcar / Desmarcar Tudo</button>
+                <button id="btnSelectDefaultColumns">Seleção Padrão</button>
+            </div>
+            <div id="modalColumnsList" class="modal-columns-list"></div>
+            <div class="modal-actions">
+                <button id="btnCancelColumns" class="cancel-btn">Cancelar</button>
+                <button id="btnApplyColumns" class="apply-btn">Aplicar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    //<DATA_START>
+    var inventoryData = [{"Computador":"ADMINBAMRJ","Usuario":"adminsti","IP":"10.2.43.22","MAC":"04-7C-16-9B-3A-F8","Computador_Fabricante":"LENOVO","Computador_Modelo":"30GUS69R00","Computador_Serial":"PE0C4CSR","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 11 Pro","Build":"26100","Data_Instalacao":"2025-08-13","Uptime_Horas":"10.2","Uptime_Formatado":"0d 10h 10m","Dominio_ou_Grupo":"bambrj.ad","Status_Ativacao":"Ativado","Canal_Licenca":"OEM","Chave_Parcial":"KW3W6","Chave_OEM_BIOS":"Nao Coletado","CPU":"13th Gen Intel(R) Core(TM) i5-13500","Arquitetura":"64 bits","CPU_Cores":14,"CPU_Threads":20,"CPU_Clock_MHz":2500,"PlacaMae_Fabricante":"LENOVO","PlacaMae_Modelo":"1064","PlacaMae_Serial":"                        ","BIOS_Versao":"S0IKT30A","BIOS_Data":"","RAM_GB_Total":32,"Qtd_Pentes":2,"RAM_Detalhes":"[16GB/Tipo /5600MHz/SK Hynix]; [16GB/Tipo /5600MHz/SK Hynix]","Armazenamento_C_GB":279,"Espaco_Livre_C_GB":162,"Espaco_Livre_C_Perc":58,"Discos_Fisicos":"HDD - WDC WD10EZEX-00WN4A0 (932GB) | SSD - WD PC SN810 SDCQNRY-512G-1001 (477GB)","Volumes":"[E: 195GB livre de 195GB]; [C: 162GB livre de 279GB]; [D: 915GB livre de 932GB]","Modelo_Disco_Principal":"WD PC SN810 SDCQNRY-512G-1001","GPU":"Intel(R) UHD Graphics 770","Monitores":"HPN - HP P22a G4; LEN - T22i-30","Resolucao_Tela":"1920x1080","Bateria":"Desktop/Sem bateria","Impressoras":"CLTI ADM; Epson ESC/P 9pin V4 Class Driver; EPSON L3150 Series (Copiar 1); EPSON L3150 Series (Copiar 2); EPSON L3150 Series; EPSONF0FE67 (L5290 Series); Microsoft Print to PDF; OneNote (Desktop); PDFCreator; RICOH MP 402SPF - CLTIAB; RICOH MP 402SPF PCL 6","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Nao","Servidor_WSUS":"","DataHora_Coleta":"2025-09-11 14:02:12","AdminsLocais":"","UpdatesPendentes":0,"UltimaInstalacaoUpdates":"2025-09-10 15:10","PortasTCP_Abertas":"135, 139, 623, 2968, 3306, 5040, 5357, 16960, 16992, 19293, 30523, 42050, 49664, 49665, 49668, 49669, 49670, 49671, 49672, 49718, 49729, 49758, 55228, 61209, 62354","PortasUDP_Abertas":"123, 137, 138, 500, 1900, 2968, 3702, 4500, 5050, 5353, 5355, 15000, 15001, 49664, 49665, 49666, 49669, 50216, 50217, 51545, 51546, 51547, 51548, 53179, 54062, 55617, 56325, 60592, 60593, 60722, 60812, 60847, 61322, 63875, 64040, 64528, 64529, 65345, 65480","SaudeDiscoSMART":"Nao suportado ou sem permissao","NumeroSerieMonitores":"BRC20602D7; VAB20124","GatewayPadrao":"10.2.32.1","ServidoresDNS":"10.200.192.62, 10.205.145.64","ServidorDHCP":null,"DHCPAtivado":false,"ConsumoCPU_Percentual":20,"ConsumoRAM_Percentual":43.46,"Top5ProcessosCPU":"DecodeProcess (CPU: 2.324,69s); PlayControlClient (CPU: 856,19s); explorer (CPU: 722,50s); firefox (CPU: 587,78s); HCWebControlService (CPU: 493,61s)","Top5ProcessosRAM":"firefox (RAM: 1.026,72MB); firefox (RAM: 712,97MB); explorer (RAM: 582,06MB); javaw (RAM: 543,48MB); firefox (RAM: 419,04MB)"},{"Computador":"DEPMSMRJ-CPD","Usuario":"Administrator","IP":"10.7.48.222","MAC":"0C-9D-92-8E-80-82","Computador_Fabricante":"System manufacturer","Computador_Modelo":"System Product Name","Computador_Serial":"System Serial Number","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 11 Pro","Build":"22635","Data_Instalacao":"2024-08-30","Uptime_Horas":"97.6","Uptime_Formatado":"4d 1h 38m","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"AMD Athlon 220GE with Radeon Vega Graphics","Arquitetura":"64 bits","CPU_Cores":2,"CPU_Threads":4,"CPU_Clock_MHz":3400,"PlacaMae_Fabricante":"ASUSTeK COMPUTER INC.","PlacaMae_Modelo":"PRIME A320M-K/BR","PlacaMae_Serial":"190443384303204","BIOS_Versao":"5007","BIOS_Data":"","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/DDR4/2666MHz/Kingston]","Armazenamento_C_GB":223,"Espaco_Livre_C_GB":25,"Espaco_Livre_C_Perc":11,"Discos_Fisicos":"HDD - TOSHIBA DT01ACA100 (932GB) | SSD - SSD 240GB (224GB)","Volumes":"[C: 25GB livre de 223GB]; [D: 228GB livre de 931GB]","Modelo_Disco_Principal":"SSD 240GB","GPU":"AMD Radeon(TM) Vega 3 Graphics","Monitores":"GSM - LG FULL HD","Resolucao_Tela":"1920x1080","Bateria":"Desktop/Sem bateria","Impressoras":"RICOH IM 430 PCL 6; Microsoft Print to PDF","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-09-22 09:15:16","AdminsLocais":"Domain Admins; adminclti; Administrador","UpdatesPendentes":1,"UltimaInstalacaoUpdates":"2025-09-22 10:41","PortasTCP_Abertas":"135, 139, 445, 5040, 7680, 13000, 14000, 30523, 49664, 49665, 49666, 49667, 49668, 49669, 49680, 60319, 60797","PortasUDP_Abertas":"123, 137, 138, 500, 951, 974, 1900, 3702, 4500, 5050, 5353, 5355, 15000, 15001, 49656, 49657, 49658, 49659, 49660, 51614, 53143, 55161, 55400, 55401, 57377, 57847, 58579, 59249, 65500","SaudeDiscoSMART":"","NumeroSerieMonitores":"205AZVN5B391","GatewayPadrao":"10.7.48.1","ServidoresDNS":"10.200.192.161, 10.205.145.64","ServidorDHCP":null,"DHCPAtivado":false,"ConsumoCPU_Percentual":0,"ConsumoRAM_Percentual":78.27,"Top5ProcessosCPU":"avp (CPU: 31.459,02s); System (CPU: 1.375,50s); svchost (CPU: 467,27s); svchost (CPU: 287,20s); klnagent (CPU: 232,55s)","Top5ProcessosRAM":"firefox (RAM: 339,68MB); firefox (RAM: 310,23MB); firefox (RAM: 291,98MB); explorer (RAM: 270,12MB); powershell (RAM: 253,61MB)"}];
+    //<DATA_END>
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const loaderOverlay = document.getElementById('loaderOverlay');
+        const statusDiv = document.getElementById('status');
+        const tableHead = document.getElementById('csvTableHead');
+        const tableBody = document.getElementById('csvTableBody');
+
+        const btnConfigureColumns = document.getElementById('btnConfigureColumns');
+        const columnsModal = document.getElementById('columnsModal');
+        const modalColumnsList = document.getElementById('modalColumnsList');
+        const btnApplyColumns = document.getElementById('btnApplyColumns');
+        const btnCancelColumns = document.getElementById('btnCancelColumns');
+        const btnToggleAllColumns = document.getElementById('btnToggleAllColumns');
+        const btnSelectDefaultColumns = document.getElementById('btnSelectDefaultColumns');
+
+        const globalSearchInput = document.getElementById('globalSearchInput');
+        const btnResetView = document.getElementById('btnResetView');
+        const btnToggleTheme = document.getElementById('btnToggleTheme');
+        const btnGoToDashboard = document.getElementById('btnGoToDashboard');
+        const btnExportCSV = document.getElementById('btnExportCSV');
+
+        const btnPrevPage = document.getElementById('btnPrevPage');
+        const btnNextPage = document.getElementById('btnNextPage');
+        const currentPageSpan = document.getElementById('currentPage');
+        const totalPagesSpan = document.getElementById('totalPages');
+        const rowsPerPageSelect = document.getElementById('rowsPerPageSelect');
+
+        let allHeaders = []; 
+        let originalDataset = []; 
+        let filteredAndSortedDataset = []; 
+        
+        let visibleColumnIndexes = []; 
+        let columnFilters = {}; 
+
+        let currentSortKey = null;
+        let currentSortDirection = 'asc';
+
+        let currentPage = 1;
+        let rowsPerPage = parseInt(rowsPerPageSelect.value);
+        
+        const DEFAULT_COLUMN_NAMES = [ "Computador", "Usuario", "IP", "SO", "CPU", "RAM_GB_Total", "Modelo_Disco_Principal", "Antivirus", "DataHora_Coleta" ];
+        const DEFAULT_VISIBLE_COLUMNS_KEY = 'visibleColumnsInventario';
+        const THEME_KEY = 'inventarioTheme';
+        
+        let columnFilterDebounceTimer = null; 
+        let globalSearchDebounceTimer = null;
+        const DEBOUNCE_DELAY = 700;
+
+        function showLoader(show) { loaderOverlay.style.display = show ? 'flex' : 'none'; }
+        function toggleTheme() { document.body.classList.toggle('dark-theme'); localStorage.setItem(THEME_KEY, document.body.classList.contains('dark-theme') ? 'dark' : 'light'); }
+        function loadTheme() { if (localStorage.getItem(THEME_KEY) === 'dark') document.body.classList.add('dark-theme'); }
+        
+        btnConfigureColumns.addEventListener('click', () => { if (allHeaders.length > 0) { populateModalColumns(); columnsModal.style.display = 'flex'; }});
+        btnCancelColumns.addEventListener('click', () => { columnsModal.style.display = 'none'; });
+        btnApplyColumns.addEventListener('click', () => {
+            const selectedCheckboxes = modalColumnsList.querySelectorAll('input[type="checkbox"]:checked');
+            visibleColumnIndexes = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
+            localStorage.setItem(DEFAULT_VISIBLE_COLUMNS_KEY, JSON.stringify(visibleColumnIndexes));
+            columnsModal.style.display = 'none';
+            currentPage = 1; 
+            renderHeaderAndFilterRows();
+            applyFiltersAndRender(); 
+        });
+        columnsModal.addEventListener('click', (event) => { if (event.target === columnsModal) columnsModal.style.display = 'none'; });
+        
+        let showingDashboard = false;
+
+btnGoToDashboard.addEventListener('click', () => {
+    const tableContainer = document.getElementById('tableContainer');
+    const paginationControls = document.querySelector('.pagination-controls');
+    const dashboardContainer = document.getElementById('dashboardContainer');
+
+    if (!showingDashboard) {
+        // Mostrar Dashboard
+        tableContainer.style.display = 'none';
+        paginationControls.style.display = 'none';
+        dashboardContainer.style.display = 'block';
+        btnGoToDashboard.textContent = '📋 Voltar à Tabela';
+        renderDashboard();
+    } else {
+        // Mostrar Tabela
+        tableContainer.style.display = 'block';
+        paginationControls.style.display = 'flex';
+        dashboardContainer.style.display = 'none';
+        btnGoToDashboard.textContent = '📊 Dashboard';
+    }
+    showingDashboard = !showingDashboard;
+});
+
+function renderDashboard() {
+    // Limpar gráficos antigos se já existirem
+    if (window.osChartInstance) window.osChartInstance.destroy();
+    if (window.cpuChartInstance) window.cpuChartInstance.destroy();
+    if (window.ramChartInstance) window.ramChartInstance.destroy();
+
+    // Gráfico de Sistemas Operacionais
+    const osCounts = {};
+    inventoryData.forEach(d => {
+        osCounts[d.SO] = (osCounts[d.SO] || 0) + 1;
+    });
+    window.osChartInstance = new Chart(document.getElementById('osChart'), {
+        type: 'pie',
+        data: {
+            labels: Object.keys(osCounts),
+            datasets: [{
+                data: Object.values(osCounts),
+                backgroundColor: ['#007bff','#28a745','#ffc107','#dc3545','#6f42c1']
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // Gráfico de CPUs
+    const cpuCounts = {};
+    inventoryData.forEach(d => {
+        cpuCounts[d.CPU] = (cpuCounts[d.CPU] || 0) + 1;
+    });
+    window.cpuChartInstance = new Chart(document.getElementById('cpuChart'), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(cpuCounts),
+            datasets: [{
+                label: 'Quantidade',
+                data: Object.values(cpuCounts),
+                backgroundColor: '#17a2b8'
+            }]
+        },
+        options: { responsive: true, indexAxis: 'y' }
+    });
+
+    // Gráfico de RAM
+    const ramCounts = {};
+    inventoryData.forEach(d => {
+        ramCounts[d.RAM_GB_Total] = (ramCounts[d.RAM_GB_Total] || 0) + 1;
+    });
+    window.ramChartInstance = new Chart(document.getElementById('ramChart'), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(ramCounts).map(r => r + ' GB'),
+            datasets: [{
+                label: 'Quantidade de Máquinas',
+                data: Object.values(ramCounts),
+                backgroundColor: '#ffc107'
+            }]
+        },
+        options: { responsive: true }
+    });
+}
+
+
+        btnToggleAllColumns.addEventListener('click', () => {
+            const checkboxes = modalColumnsList.querySelectorAll('input[type="checkbox"]');
+            if (checkboxes.length === 0) return;
+            const shouldCheck = !checkboxes[0].checked;
+            checkboxes.forEach(cb => cb.checked = shouldCheck);
+        });
+
+        btnSelectDefaultColumns.addEventListener('click', () => {
+            const defaultIndexes = DEFAULT_COLUMN_NAMES.map(name => allHeaders.indexOf(name)).filter(index => index !== -1); 
+            const checkboxes = modalColumnsList.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => { cb.checked = defaultIndexes.includes(parseInt(cb.value)); });
+        });
+
+        function populateModalColumns() {
+            modalColumnsList.innerHTML = ''; 
+            if (!allHeaders || allHeaders.length === 0) return;
+            allHeaders.forEach((header, index) => {
+                const label = document.createElement('label');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox'; checkbox.value = index; 
+                checkbox.checked = visibleColumnIndexes.includes(index);
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(' ' + header));
+                modalColumnsList.appendChild(label);
+            });
+        }
+        
+        function applyFiltersAndRender() {
+            let dataToProcess = [...originalDataset];
+            const globalSearchTerm = globalSearchInput.value.toLowerCase().trim();
+
+            if (globalSearchTerm) {
+                dataToProcess = dataToProcess.filter(row => 
+                    visibleColumnIndexes.some(colIndex => {
+                        if (colIndex < 0 || colIndex >= allHeaders.length) return false;
+                        const headerKey = allHeaders[colIndex];
+                        return (row[headerKey] || '').toString().toLowerCase().includes(globalSearchTerm);
+                    })
+                );
+            }
+
+            Object.keys(columnFilters).forEach(headerKey => {
+                const filterTerm = (columnFilters[headerKey] || '').toLowerCase().trim();
+                if (filterTerm) {
+                    dataToProcess = dataToProcess.filter(row =>
+                        (row[headerKey] || '').toString().toLowerCase().includes(filterTerm)
+                    );
+                }
+            });
+
+            if (currentSortKey && allHeaders.includes(currentSortKey)) {
+                dataToProcess.sort((objA, objB) => {
+                    let valA = (objA[currentSortKey] || '').toString().trim();
+                    let valB = (objB[currentSortKey] || '').toString().trim();
+                    const numA = parseFloat(valA.replace(',', '.')); const numB = parseFloat(valB.replace(',', '.'));
+                    if (!isNaN(numA) && !isNaN(numB)) { valA = numA; valB = numB; }
+                    else { valA = valA.toLowerCase(); valB = valB.toLowerCase(); }
+                    if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
+                    if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+            
+            filteredAndSortedDataset = dataToProcess;
+            updatePagination(); 
+            renderTableBody();
+        }
+        
+        function updatePagination() {
+            const totalRows = filteredAndSortedDataset.length;
+            let rpp = (rowsPerPageSelect.value === "500") ? (totalRows > 0 ? totalRows : 1) : parseInt(rowsPerPageSelect.value);
+            const totalPgs = Math.ceil(totalRows / rpp) || 1;
+            totalPagesSpan.textContent = totalPgs;
+            currentPage = Math.min(currentPage, totalPgs); 
+            currentPageSpan.textContent = currentPage;
+            btnPrevPage.disabled = currentPage === 1;
+            btnNextPage.disabled = currentPage === totalPgs || totalRows === 0;
+        }
+
+        function renderHeaderAndFilterRows() {
+            tableHead.innerHTML = ''; 
+            if (allHeaders.length === 0) return;
+
+            const headerRow = document.createElement('tr');
+            headerRow.classList.add('header-row');
+            visibleColumnIndexes.forEach(colIndex => {
+                if (colIndex < 0 || colIndex >= allHeaders.length) return; 
+                const headerText = allHeaders[colIndex];
+                const th = document.createElement('th');
+                th.classList.add('main-header-cell'); 
+                th.textContent = headerText.trim();
+                th.dataset.sortKey = headerText;
+                const sortIndicator = document.createElement('span');
+                sortIndicator.classList.add('sort-indicator');
+                if (headerText === currentSortKey) {
+                    sortIndicator.textContent = currentSortDirection === 'asc' ? '▲' : '▼';
+                }
+                th.appendChild(sortIndicator);
+                th.addEventListener('click', handleSort);
+                headerRow.appendChild(th);
+            });
+            tableHead.appendChild(headerRow);
+
+            const filterRow = document.createElement('tr');
+            filterRow.classList.add('column-filter-row');
+            visibleColumnIndexes.forEach(colIndex => {
+                if (colIndex < 0 || colIndex >= allHeaders.length) return; 
+                const headerText = allHeaders[colIndex];
+                const th = document.createElement('th');
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = `Filtrar...`;
+                input.title = `Filtrar ${headerText}`;
+                input.dataset.headerKey = headerText;
+                input.value = columnFilters[headerText] || ''; 
+                input.addEventListener('input', handleColumnFilterInput);
+                th.appendChild(input);
+                filterRow.appendChild(th);
+            });
+            tableHead.appendChild(filterRow);
+        }
+
+        function renderTableBody() {
+            tableBody.innerHTML = ''; 
+            let rpp = (rowsPerPageSelect.value === "500") ? (filteredAndSortedDataset.length > 0 ? filteredAndSortedDataset.length : 1) : parseInt(rowsPerPageSelect.value);
+            statusDiv.textContent = `Exibindo ${filteredAndSortedDataset.length} registros. ${visibleColumnIndexes.length} de ${allHeaders.length} colunas visíveis.`;
+            if (visibleColumnIndexes.length === 0 && originalDataset.length > 0) { statusDiv.textContent += " Nenhuma coluna selecionada."; }
+            const startIndex = (currentPage - 1) * rpp;
+            const endIndex = startIndex + rpp;
+            const pageData = filteredAndSortedDataset.slice(startIndex, endIndex);
+            if (pageData.length === 0 && originalDataset.length > 0) {
+                const tr = tableBody.insertRow(); const td = tr.insertCell(); td.colSpan = Math.max(1, visibleColumnIndexes.length);
+                td.textContent = "Nenhum dado corresponde aos filtros aplicados."; td.style.textAlign = "center";
+            }
+            pageData.forEach(rowDataObject => {
+                const dataRow = document.createElement('tr');
+                visibleColumnIndexes.forEach(colIndex => {
+                    if (colIndex < 0 || colIndex >= allHeaders.length) return; 
+                    const headerKey = allHeaders[colIndex];
+                    const td = document.createElement('td');
+                    td.textContent = (rowDataObject[headerKey] || '').toString().trim();
+                    dataRow.appendChild(td);
+                });
+                tableBody.appendChild(dataRow);
+            });
+        }
+        
+        function handleSort(event) {
+            const sortKey = event.currentTarget.dataset.sortKey;
+            if (currentSortKey === sortKey) { currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc'; } 
+            else { currentSortKey = sortKey; currentSortDirection = 'asc'; }
+            currentPage = 1; 
+            renderHeaderAndFilterRows();
+            applyFiltersAndRender();
+        }
+
+        function handleColumnFilterInput(event) {
+            const headerKey = event.target.dataset.headerKey;
+            columnFilters[headerKey] = event.target.value; 
+            clearTimeout(columnFilterDebounceTimer);
+            columnFilterDebounceTimer = setTimeout(() => { currentPage = 1; applyFiltersAndRender(); }, DEBOUNCE_DELAY);
+        }
+        
+        function exportCurrentViewToCsv() {
+            if (!filteredAndSortedDataset || filteredAndSortedDataset.length === 0) { alert("Não há dados para exportar na visualização atual."); return; }
+            const headersToExport = visibleColumnIndexes.map(index => allHeaders[index]);
+            let csvContent = headersToExport.join(",") + "\r\n";
+            filteredAndSortedDataset.forEach(rowObject => {
+                const row = headersToExport.map(header => {
+                    let cell = rowObject[header] || "";
+                    if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"'))) { cell = `"${cell.replace(/"/g, '""')}"`; }
+                    return cell;
+                });
+                csvContent += row.join(",") + "\r\n";
+            });
+            const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            const date = new Date().toISOString().slice(0, 10);
+            link.setAttribute("download", `inventario_filtrado_${date}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        btnExportCSV.addEventListener('click', exportCurrentViewToCsv);
+        globalSearchInput.addEventListener('input', () => { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => { currentPage = 1; applyFiltersAndRender(); }, DEBOUNCE_DELAY); });
+        btnResetView.addEventListener('click', () => {
+            localStorage.removeItem(DEFAULT_VISIBLE_COLUMNS_KEY); 
+            if(allHeaders.length > 0) {
+                 const defaultIndexes = DEFAULT_COLUMN_NAMES.map(name => allHeaders.indexOf(name)).filter(index => index !== -1);
+                 visibleColumnIndexes = defaultIndexes.length > 0 ? defaultIndexes : allHeaders.map((_,i) => i);
+            }
+            currentSortKey = null; columnFilters = {}; globalSearchInput.value = ''; currentPage = 1; rowsPerPageSelect.value = "25";
+            renderHeaderAndFilterRows();
+            applyFiltersAndRender();
+        });
+        
+        btnToggleTheme.addEventListener('click', toggleTheme);
+        btnPrevPage.addEventListener('click', () => { if (currentPage > 1) { currentPage--; applyFiltersAndRender(); }});
+        btnNextPage.addEventListener('click', () => {
+            let rpp = (rowsPerPageSelect.value === "500") ? (filteredAndSortedDataset.length > 0 ? filteredAndSortedDataset.length : 1) : parseInt(rowsPerPageSelect.value);
+            const totalPgs = Math.ceil(filteredAndSortedDataset.length / rpp) || 1;
+            if (currentPage < totalPgs) { currentPage++; applyFiltersAndRender(); }
+        });
+        rowsPerPageSelect.addEventListener('change', (event) => {
+            rowsPerPage = (event.target.value === "500") ? Infinity : parseInt(event.target.value);
+            currentPage = 1; applyFiltersAndRender();
+        });
+        tableBody.addEventListener('click', function(event) {
+            const targetRow = event.target.closest('tr');
+            if (!targetRow || targetRow.classList.contains('header-row') || targetRow.classList.contains('column-filter-row')) return;
+            const previouslySelected = tableBody.querySelector('.selected-row');
+            if (previouslySelected) previouslySelected.classList.remove('selected-row');
+            if (previouslySelected !== targetRow) targetRow.classList.add('selected-row');
+        });
+
+		// Duplo clique para abrir o HTML individual
+		tableBody.addEventListener('dblclick', function(event) {
+			const targetRow = event.target.closest('tr');
+			if (!targetRow || targetRow.classList.contains('header-row') || targetRow.classList.contains('column-filter-row')) return;
+
+			const rowIndex = Array.from(tableBody.children).indexOf(targetRow);
+            
+            let rpp = (rowsPerPageSelect.value === "500") ? (filteredAndSortedDataset.length > 0 ? filteredAndSortedDataset.length : 1) : parseInt(rowsPerPageSelect.value);
+            const startIndex = (currentPage - 1) * rpp;
+            const dataIndex = startIndex + rowIndex;
+
+			const rowData = filteredAndSortedDataset[dataIndex];
+			if (!rowData) return;
+
+            const hostname = rowData.Computador;
+			if (hostname) {
+                const url = `inventario/${hostname}.html`;
+				window.open(url, '_blank');
+			} else {
+				alert("Não foi possível encontrar o nome do computador para esta linha.");
+			}
+		});
+
+
+        // --- FUNÇÃO DE INICIALIZAÇÃO CORRIGIDA ---
+        function initializeApp() {
+            loadTheme();
+            showLoader(true);
+            
+            try {
+                if (typeof inventoryData !== 'undefined' && Array.isArray(inventoryData) && inventoryData.length > 0) {
+                    allHeaders = Object.keys(inventoryData[0]);
+                    originalDataset = inventoryData;
+
+                    const storedVisible = localStorage.getItem(DEFAULT_VISIBLE_COLUMNS_KEY);
+                    if (storedVisible) {
+                        try {
+                            let parsed = JSON.parse(storedVisible);
+                            visibleColumnIndexes = parsed.filter(idx => typeof idx === 'number' && idx >=0 && idx < allHeaders.length);
+                            if(visibleColumnIndexes.length === 0 && allHeaders.length > 0) { visibleColumnIndexes = allHeaders.map((_,i) => i); }
+                        } catch (e) { 
+                            console.warn("Erro ao ler colunas visíveis do localStorage.", e);
+                            visibleColumnIndexes = allHeaders.map((_,i) => i); 
+                        }
+                    } else {
+                        visibleColumnIndexes = DEFAULT_COLUMN_NAMES.map(name => allHeaders.indexOf(name)).filter(index => index !== -1);
+                        if (visibleColumnIndexes.length === 0) { visibleColumnIndexes = allHeaders.map((_,i) => i); }
+                    }
+
+                    btnConfigureColumns.disabled = false;
+                    Object.values(document.querySelectorAll('.top-controls button, .pagination-controls button, .pagination-controls select')).forEach(el => el.disabled = false);
+
+                    renderHeaderAndFilterRows();
+                    applyFiltersAndRender();
+                } else {
+                    statusDiv.textContent = 'Nenhum dado de inventário encontrado. Rode o script de coleta nas máquinas.';
+                    btnConfigureColumns.disabled = true;
+                    Object.values(document.querySelectorAll('.top-controls button, .pagination-controls button, .pagination-controls select')).forEach(el => el.disabled = true);
+                }
+            } catch (e) {
+                console.error("Erro fatal durante a inicialização:", e);
+                statusDiv.textContent = "Ocorreu um erro fatal ao processar os dados. Verifique o console (F12).";
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        initializeApp();
+    });
+    </script>
+</body>
+</html>

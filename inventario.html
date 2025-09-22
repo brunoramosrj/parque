@@ -1,0 +1,592 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parque Computacional Avançado</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px 20px;
+            background-color: #f4f4f4;
+            color: #333;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        body.dark-theme { background-color: #222; color: #eee; }
+        body.dark-theme h1, body.dark-theme .modal-content h2 { color: #eee; }
+        body.dark-theme table { background-color: #333; border-color: #555; }
+        body.dark-theme th.main-header-cell { background-color: #0056b3; border-color: #555; }
+        body.dark-theme .column-filter-row th { background-color: #383838; border-color: #555; }
+        body.dark-theme .column-filter-row input { background-color: #555; color: #eee; border-color: #666; }
+        body.dark-theme td { border-color: #444; }
+        body.dark-theme tr:nth-child(even) { background-color: #3a3a3a; }
+        body.dark-theme tr:not(.header-row):not(.column-filter-row):hover { background-color: #4a4a4a; }
+        body.dark-theme .modal-content { background-color: #444; color: #eee; }
+        body.dark-theme .modal-columns-list label { color: #eee; }
+        body.dark-theme .controls button, body.dark-theme .top-controls button,
+        body.dark-theme .pagination-controls button,
+        body.dark-theme .modal-quick-actions button,
+        body.dark-theme .modal-actions button { background-color: #555; border-color: #666; }
+        body.dark-theme .modal-quick-actions button:hover,
+        body.dark-theme .modal-actions .apply-btn:hover,
+        body.dark-theme .modal-actions .cancel-btn:hover { background-color: #666; }
+        body.dark-theme #status { color: #bbb; }
+        body.dark-theme input[type="text"], 
+        body.dark-theme input[type="search"],
+        body.dark-theme select { background-color: #555; color: #eee; border-color: #666; }
+        h1 { text-align: center; font-size: 1.8em; margin-top: 10px; margin-bottom: 15px; }
+        .top-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+        .top-controls .search-filter-box { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
+        .top-controls input[type="text"], .top-controls input[type="search"] { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9em; }
+        .top-controls .action-buttons button { margin-left: 10px; }
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 5px 0; }
+        .controls button, .top-controls button, .pagination-controls button { padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; white-space: nowrap; }
+        .controls button:hover, .top-controls button:hover, .pagination-controls button:hover { background-color: #0056b3; }
+        .controls button:disabled, .top-controls button:disabled, .pagination-controls button:disabled { background-color: #cccccc; color: #666666; cursor: not-allowed; }
+        #status { font-style: italic; font-size: 0.95em; color: #555; flex-grow: 1; margin-right: 15px; }
+        .column-filter-row th { padding: 5px; }
+        .column-filter-row input { width: 90%; padding: 4px; font-size: 0.8em; border: 1px solid #ccc; border-radius: 3px; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background-color: #fff; }
+        th, td { border: 1px solid #ddd; padding: 10px 12px; text-align: left; font-size: 0.85em; white-space: nowrap; }
+        th.main-header-cell { background-color: #007bff; color: white; font-weight: bold; position: sticky; top: 0; z-index: 10; cursor: pointer; user-select: none; }
+        .column-filter-row th { position: sticky; top: 40px; z-index: 9; background-color: #f0f0f0; }
+        th .sort-indicator { margin-left: 5px; font-size: 0.8em; opacity: 0.7; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        tr:not(.header-row):not(.column-filter-row):hover { background-color: #e9ecef; }
+        tr.selected-row td { background-color: #cce5ff !important; color: #004085; }
+        #tableContainer { max-height: calc(100vh - 230px); overflow: auto; border: 1px solid #ccc; }
+        .pagination-controls { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; margin-top: 10px; }
+        .pagination-controls span { font-size: 0.9em; }
+        .pagination-controls select { padding: 6px; margin: 0 10px; border-radius: 4px; border: 1px solid #ccc; }
+        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.7); display: none; justify-content: center; align-items: center; z-index: 2000; }
+        body.dark-theme .loader-overlay { background-color: rgba(0, 0, 0, 0.7); }
+        .loader { border: 8px solid #f3f3f3; border-top: 8px solid #3498db; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background-color: white; padding: 25px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column; }
+        .modal-content h2 { margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .modal-quick-actions { display: flex; gap: 10px; margin-bottom: 20px; }
+        .modal-quick-actions button { flex-grow: 1; padding: 8px 12px; font-size: 0.9em; background-color: #e9ecef; border: 1px solid #ced4da; color: #495057; border-radius: 4px; cursor: pointer; }
+        .modal-quick-actions button:hover { background-color: #dee2e6; }
+        .modal-columns-list { margin-bottom: 20px; flex-grow: 1; overflow-y: auto; padding-right: 10px; }
+        .modal-columns-list label { display: block; margin-bottom: 10px; font-size: 0.95em; cursor: pointer; }
+        .modal-columns-list input[type="checkbox"] { margin-right: 8px; vertical-align: middle; }
+        .modal-actions { text-align: right; padding-top: 15px; border-top: 1px solid #eee; flex-shrink: 0; }
+        .modal-actions button { padding: 10px 18px; margin-left: 10px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+        .modal-actions .apply-btn { background-color: #28a745; color: white; border: none; }
+        .modal-actions .apply-btn:hover { background-color: #218838; }
+        .modal-actions .cancel-btn { background-color: #6c757d; color: white; border: none; }
+        .modal-actions .cancel-btn:hover { background-color: #5a6268; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="loader-overlay" id="loaderOverlay"><div class="loader"></div></div>
+
+    <h1>Parque Computacional do DepMSMRJ</h1>
+
+    <div class="top-controls">
+        <div class="search-filter-box">
+            <input type="search" id="globalSearchInput" placeholder="Busca global...">
+        </div>
+        <div class="action-buttons">
+            <button id="btnGoToDashboard" title="Visualizar Dashboard">📊 Dashboard</button>
+            <button id="btnExportCSV" title="Exportar visão atual para CSV">📤 Exportar</button>
+            <button id="btnToggleTheme" title="Alternar Tema Claro/Escuro">🎨</button>
+            <button id="btnResetView" title="Resetar Filtros e Visualização">🔄</button>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div id="status">Carregando dados...</div>
+        <button id="btnConfigureColumns" disabled>Configurar Colunas</button>
+    </div>
+
+    <div id="tableContainer">
+        <table id="csvTable">
+            <thead id="csvTableHead"></thead>
+            <tbody id="csvTableBody"></tbody>
+        </table>
+    </div>
+
+    <div class="pagination-controls">
+        <button id="btnPrevPage" disabled>Anterior</button>
+        <span>Página <span id="currentPage">1</span> de <span id="totalPages">1</span></span>
+        <select id="rowsPerPageSelect">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="500">Todos</option>
+        </select>
+        <span>linhas por página</span>
+        <button id="btnNextPage" disabled>Próximo</button>
+    </div>
+
+    <div id="dashboardContainer" style="display:none; padding:20px;">
+        <h2>Dashboard do Inventário</h2>
+        <canvas id="osChart" style="max-height:300px; margin-bottom:30px;"></canvas>
+        <canvas id="cpuChart" style="max-height:300px; margin-bottom:30px;"></canvas>
+        <canvas id="ramChart" style="max-height:300px;"></canvas>
+    </div>
+
+
+    <div id="columnsModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Selecionar Colunas para Exibição</h2>
+            <div class="modal-quick-actions">
+                <button id="btnToggleAllColumns">Marcar / Desmarcar Tudo</button>
+                <button id="btnSelectDefaultColumns">Seleção Padrão</button>
+            </div>
+            <div id="modalColumnsList" class="modal-columns-list"></div>
+            <div class="modal-actions">
+                <button id="btnCancelColumns" class="cancel-btn">Cancelar</button>
+                <button id="btnApplyColumns" class="apply-btn">Aplicar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    //<DATA_START>
+    var inventoryData = [{"Computador":"DEPMSMRJ-302","Usuario":"depmsmrj-305","IP":"10.7.48.88","MAC":"1C-1B-0D-F1-2A-88","Computador_Fabricante":"PCWARE","Computador_Modelo":"IPMH81G1","Computador_Serial":"To be filled by O.E.M.","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"19044","Data_Instalacao":"2023-02-06","Uptime_Horas":"336.1","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"Intel(R) Core(TM) i3-4170 CPU @ 3.70GHz","Arquitetura":"64 bits","CPU_Cores":2,"CPU_Threads":4,"CPU_Clock_MHz":3700,"PlacaMae_Fabricante":"PCWARE","PlacaMae_Modelo":"IPMH81G1","PlacaMae_Serial":"To be filled by O.E.M.","BIOS_Versao":"FB DB","BIOS_Data":"2016-06-29","RAM_GB_Total":6,"Qtd_Pentes":2,"RAM_Detalhes":"[4GB/DDR3/1333MHz/1324]; [2GB/DDR3/1333MHz/0114]","Armazenamento_C_GB":223,"Espaco_Livre_C_GB":176,"Espaco_Livre_C_Perc":79,"Discos_Fisicos":"SSD - KINGSTON SA400S37240G (224GB)","Volumes":"[H: 0GB livre de 0GB]; [C: 176GB livre de 223GB]","Modelo_Disco_Principal":"KINGSTON SA400S37240G","GPU":"Adaptador de Video Basico da Microsoft","Monitores":"AOC - F19","Resolucao_Tela":"1366x768","Bateria":"Desktop/Sem bateria","Impressoras":"OneNote; RICOH IM 430 PCL 6; PDFCreator; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 08:01:42"},{"Computador":"DEPMSMRJ-301","Usuario":"depmsmrj-301","IP":"10.7.48.8","MAC":"0C-9D-92-8E-FC-32","Computador_Fabricante":"System manufacturer","Computador_Modelo":"System Product Name","Computador_Serial":"System Serial Number","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"18362","Data_Instalacao":"2020-01-14","Uptime_Horas":"23.2","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Ativado","Canal_Licenca":"Volume","Chave_Parcial":"R3KTY","Chave_OEM_BIOS":"Nao Coletado","CPU":"AMD Athlon 220GE with Radeon Vega Graphics","Arquitetura":"64 bits","CPU_Cores":2,"CPU_Threads":4,"CPU_Clock_MHz":3400,"PlacaMae_Fabricante":"ASUSTeK COMPUTER INC.","PlacaMae_Modelo":"PRIME A320M-K/BR","PlacaMae_Serial":"190747577400460","BIOS_Versao":"5007","BIOS_Data":"2019-06-17","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/DDR4/2400MHz/CRUCIAL]","Armazenamento_C_GB":1854,"Espaco_Livre_C_GB":1792,"Espaco_Livre_C_Perc":97,"Discos_Fisicos":"HDD - ST2000DM008-2FR102 (1863GB)","Volumes":"[C: 1792GB livre de 1854GB]","Modelo_Disco_Principal":"ST2000DM008-2FR102","GPU":"AMD Radeon(TM) Vega 3 Graphics","Monitores":"AOC - 1970W","Resolucao_Tela":"1536x864","Bateria":"Desktop/Sem bateria","Impressoras":"RICOH IM 430 PCL 6; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax; Enviar para o OneNote 16","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Nao","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 08:06:07"},{"Computador":"DEPMSMRJ-308","Usuario":"depmsmrj-304","IP":"10.7.48.101","MAC":"0A-E0-AF-E9-17-4C","Computador_Fabricante":"To be filled by O.E.M.","Computador_Modelo":"To be filled by O.E.M.","Computador_Serial":"To be filled by O.E.M.","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"19043","Data_Instalacao":"2022-03-22","Uptime_Horas":"120.7","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Ativado","Canal_Licenca":"Retail","Chave_Parcial":"MP2KG","Chave_OEM_BIOS":"Nao Coletado","CPU":"Intel(R) Core(TM) i5-3570 CPU @ 3.40GHz","Arquitetura":"64 bits","CPU_Cores":4,"CPU_Threads":4,"CPU_Clock_MHz":3401,"PlacaMae_Fabricante":"INTEL Corporation","PlacaMae_Modelo":"H61","PlacaMae_Serial":"To be filled by O.E.M.","BIOS_Versao":"4.6.5","BIOS_Data":"2020-12-07","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/DDR3/MHz/Kingston]","Armazenamento_C_GB":465,"Espaco_Livre_C_GB":292,"Espaco_Livre_C_Perc":63,"Discos_Fisicos":"Unspecified - WDC WD5000AAKX-001CA0 (466GB)","Volumes":"[C: 292GB livre de 465GB]","Modelo_Disco_Principal":"WDC WD5000AAKX-001CA0","GPU":"Intel(R) HD Graphics","Monitores":"AOC - e22t","Resolucao_Tela":"1920x1080","Bateria":"Desktop/Sem bateria","Impressoras":"OneNote; RICOH IM 430 PCL 6; PDFCreator; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 08:08:48"},{"Computador":"DEPMSMRJ-111","Usuario":"depmsmrj-111","IP":"10.7.48.37","MAC":"FC-AA-14-F9-98-AA","Computador_Fabricante":"PCWARE","Computador_Modelo":"IPMH81G1","Computador_Serial":"To be filled by O.E.M.","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"17763","Data_Instalacao":"2019-12-04","Uptime_Horas":"17.7","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"Intel(R) Core(TM) i3-4170 CPU @ 3.70GHz","Arquitetura":"32 bits","CPU_Cores":2,"CPU_Threads":4,"CPU_Clock_MHz":3700,"PlacaMae_Fabricante":"PCWARE","PlacaMae_Modelo":"IPMH81G1","PlacaMae_Serial":"To be filled by O.E.M.","BIOS_Versao":"FA DB","BIOS_Data":"2014-08-04","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/DDR3/1333MHz/0000]","Armazenamento_C_GB":220,"Espaco_Livre_C_GB":172,"Espaco_Livre_C_Perc":78,"Discos_Fisicos":"HDD - TOSHIBA DT01ACA050 (466GB)","Volumes":"[C: 172GB livre de 220GB]; [D: 246GB livre de 246GB]; [E: 0GB livre de 0GB]","Modelo_Disco_Principal":"TOSHIBA DT01ACA050","GPU":"Adaptador de Video Basico da Microsoft","Monitores":"GSM - W1952","Resolucao_Tela":"1440x900","Bateria":"Desktop/Sem bateria","Impressoras":"SISDIME; RICOH IM 430 PCL 6_2; RICOH IM 430 PCL 6_1; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 08:15:31"},{"Computador":"DEPMSMRJ-109","Usuario":"depmsmrj-109","IP":"10.7.48.65","MAC":"0C-9D-92-8F-04-C6","Computador_Fabricante":"System manufacturer","Computador_Modelo":"System Product Name","Computador_Serial":"System Serial Number","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"18362","Data_Instalacao":"2020-01-14","Uptime_Horas":"17.7","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Ativado","Canal_Licenca":"Volume","Chave_Parcial":"JK8XM","Chave_OEM_BIOS":"Nao Coletado","CPU":"AMD Athlon 220GE with Radeon Vega Graphics","Arquitetura":"64 bits","CPU_Cores":2,"CPU_Threads":4,"CPU_Clock_MHz":3400,"PlacaMae_Fabricante":"ASUSTeK COMPUTER INC.","PlacaMae_Modelo":"PRIME A320M-K/BR","PlacaMae_Serial":"190747577408740","BIOS_Versao":"5007","BIOS_Data":"2019-06-17","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/DDR4/2400MHz/CRUCIAL]","Armazenamento_C_GB":1854,"Espaco_Livre_C_GB":1803,"Espaco_Livre_C_Perc":97,"Discos_Fisicos":"HDD - ST2000DM008-2FR102 (1863GB)","Volumes":"[C: 1803GB livre de 1854GB]","Modelo_Disco_Principal":"ST2000DM008-2FR102","GPU":"AMD Radeon(TM) Vega 3 Graphics","Monitores":"ACR - V226HQL","Resolucao_Tela":"1920x1080","Bateria":"Desktop/Sem bateria","Impressoras":"ZDesigner ZM400 300 dpi (ZPL); RICOH MP 501 PCL 6; RICOH IM 430 PCL 6_1; RICOH IM 430 PCL 6 (SISDIME); RICOH IM 430 PCL 6; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax; Armazem 01","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 08:13:38"},{"Computador":"DEPMSMRJ-104","Usuario":"depmsmrj-104","IP":"10.7.48.114","MAC":"F4-CE-46-C3-23-58","Computador_Fabricante":"Hewlett-Packard","Computador_Modelo":"HP xw4600 Workstation","Computador_Serial":"BRG001F23X","Chassis_Tipo":"Mini Tower","SO":"Microsoft Windows 10 Pro","Build":"17763","Data_Instalacao":"2019-12-03","Uptime_Horas":"17.8","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"Intel(R) Core(TM)2 Quad CPU    Q9550  @ 2.83GHz","Arquitetura":"32 bits","CPU_Cores":4,"CPU_Threads":4,"CPU_Clock_MHz":2833,"PlacaMae_Fabricante":"Hewlett-Packard","PlacaMae_Modelo":"0AA0h","PlacaMae_Serial":"BRG001F23X","BIOS_Versao":"786F3 v01.18","BIOS_Data":"2009-11-19","RAM_GB_Total":4,"Qtd_Pentes":3,"RAM_Detalhes":"[2GB/Tipo /800MHz/JEDEC ID:CE 00 00 00 00 00 00 00]; [2GB/Tipo /800MHz/JEDEC ID:CE 00 00 00 00 00 00 00]; [0GB/Tipo /MHz/]","Armazenamento_C_GB":117,"Espaco_Livre_C_GB":74,"Espaco_Livre_C_Perc":63,"Discos_Fisicos":"HDD - ST3250318AS (233GB)","Volumes":"[C: 74GB livre de 117GB]; [D: 0GB livre de 0GB]","Modelo_Disco_Principal":"ST3250318AS","GPU":"Adaptador de Video Basico da Microsoft","Monitores":"GSM - L177W","Resolucao_Tela":"1024x768","Bateria":"Desktop/Sem bateria","Impressoras":"RICOH IM 430 PCL 6; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax; armazem 01","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 08:23:30"},{"Computador":"DEPMSMRJ-205","Usuario":"depmsmrj-205","IP":"10.7.48.28","MAC":"0A-E0-AF-B4-01-D6","Computador_Fabricante":"To be filled by O.E.M.","Computador_Modelo":"To be filled by O.E.M.","Computador_Serial":"To be filled by O.E.M.","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"19044","Data_Instalacao":"2023-07-05","Uptime_Horas":"0.1","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"Intel(R) Core(TM) i5-3570 CPU @ 3.40GHz","Arquitetura":"64 bits","CPU_Cores":4,"CPU_Threads":4,"CPU_Clock_MHz":3401,"PlacaMae_Fabricante":"INTEL Corporation","PlacaMae_Modelo":"H61","PlacaMae_Serial":"To be filled by O.E.M.","BIOS_Versao":"4.6.5","BIOS_Data":"2020-12-07","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/DDR3/MHz/Kingston]","Armazenamento_C_GB":465,"Espaco_Livre_C_GB":420,"Espaco_Livre_C_Perc":90,"Discos_Fisicos":"Unspecified - WDC WD5000AAKX-75U6AA0 (466GB)","Volumes":"[C: 420GB livre de 465GB]","Modelo_Disco_Principal":"WDC WD5000AAKX-75U6AA0","GPU":"Adaptador de Video Basico da Microsoft","Monitores":"GSM - LG HD","Resolucao_Tela":"1366x768","Bateria":"Desktop/Sem bateria","Impressoras":"OneNote; RICOH IM 430 PCL 6; PDFCreator; OneNote (Desktop); Microsoft XPS Document Writer; Microsoft Print to PDF; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Nao","Servidor_WSUS":"","DataHora_Coleta":"2025-08-26 08:21:21"},{"Computador":"DEPMSMRJ-202","Usuario":"depmsmrj-202","IP":"10.7.48.29","MAC":"70-85-C2-38-00-7E","Computador_Fabricante":"To Be Filled By O.E.M.","Computador_Modelo":"To Be Filled By O.E.M.","Computador_Serial":"To Be Filled By O.E.M.","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"17763","Data_Instalacao":"2019-12-16","Uptime_Horas":"1.8","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"AMD FX(tm)-6300 Six-Core Processor","Arquitetura":"32 bits","CPU_Cores":3,"CPU_Threads":6,"CPU_Clock_MHz":3500,"PlacaMae_Fabricante":"ASRock","PlacaMae_Modelo":"N68-GS4 FX R2.0","PlacaMae_Serial":"M80-A2008901533","BIOS_Versao":"P1.00","BIOS_Data":"2015-10-04","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/Tipo /1066MHz/Kingston      ]","Armazenamento_C_GB":931,"Espaco_Livre_C_GB":800,"Espaco_Livre_C_Perc":86,"Discos_Fisicos":"Unspecified - ST1000DM 010-2EP102 (932GB)","Volumes":"[D: 0GB livre de 0GB]; [C: 800GB livre de 931GB]","Modelo_Disco_Principal":"010-2EP102      ","GPU":"Adaptador de Video Basico da Microsoft","Monitores":"Nenhum monitor detectado","Resolucao_Tela":"1024x768","Bateria":"Desktop/Sem bateria","Impressoras":"RICOH IM 430 [583879216553]; RICOH IM 430 PCL 6_1; RICOH IM 430 PCL 6; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax; armazem 01","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 08:28:47"},{"Computador":"DEPMSMRJ-101","Usuario":"depmsmrj-101","IP":"10.7.48.116","MAC":"B0-5C-DA-9D-83-F7","Computador_Fabricante":"HP","Computador_Modelo":"HP ProDesk 400 G6 SFF","Computador_Serial":"BRJ052G1MK","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"19041","Data_Instalacao":"2021-02-02","Uptime_Horas":"19.5","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Ativado","Canal_Licenca":"OEM","Chave_Parcial":"CKCKC","Chave_OEM_BIOS":"Nao Coletado","CPU":"Intel(R) Core(TM) i5-9500 CPU @ 3.00GHz","Arquitetura":"64 bits","CPU_Cores":6,"CPU_Threads":6,"CPU_Clock_MHz":3000,"PlacaMae_Fabricante":"HP","PlacaMae_Modelo":"859B","PlacaMae_Serial":"PJDPN0AGAEIDDE","BIOS_Versao":"R08 Ver. 02.06.00","BIOS_Data":"2020-07-29","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/DDR4/2667MHz/Adata]","Armazenamento_C_GB":465,"Espaco_Livre_C_GB":395,"Espaco_Livre_C_Perc":85,"Discos_Fisicos":"HDD - WDC WD5000AZLX-60K2TA1 (466GB)","Volumes":"[C: 395GB livre de 465GB]","Modelo_Disco_Principal":"WDC WD5000AZLX-60K2TA1","GPU":"Intel(R) UHD Graphics 630","Monitores":"AOC - F19","Resolucao_Tela":"1366x768","Bateria":"Desktop/Sem bateria","Impressoras":"OneNote; RICOH IM 430 PCL 6_3; RICOH IM 430 PCL 6_2; RICOH IM 430 PCL 6_1; RICOH IM 430 PCL 6; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Nao","Servidor_WSUS":"","DataHora_Coleta":"2025-08-26 08:33:23"},{"Computador":"DEPMSMRJ-10A","Usuario":"depmsmrj-105","IP":"10.7.48.111","MAC":"88-AE-DD-30-89-0C","Computador_Fabricante":"PCWARE","Computador_Modelo":"IPX4120E","Computador_Serial":"00000000","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"19045","Data_Instalacao":"2022-11-21","Uptime_Horas":"24.4","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Ativado","Canal_Licenca":"OEM","Chave_Parcial":"2PQGP","Chave_OEM_BIOS":"Nao Coletado","CPU":"Intel(R) Celeron(R) N4120 CPU @ 1.10GHz","Arquitetura":"64 bits","CPU_Cores":4,"CPU_Threads":4,"CPU_Clock_MHz":1101,"PlacaMae_Fabricante":"PCWARE","PlacaMae_Modelo":"IPX4120E","PlacaMae_Serial":"00000000","BIOS_Versao":"5.13","BIOS_Data":"2022-05-31","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/DDR4/2400MHz/Kingston]","Armazenamento_C_GB":223,"Espaco_Livre_C_GB":119,"Espaco_Livre_C_Perc":53,"Discos_Fisicos":"SSD - KINGSTON SA400S37240G (224GB)","Volumes":"[C: 119GB livre de 223GB]","Modelo_Disco_Principal":"KINGSTON SA400S37240G","GPU":"Intel(R) UHD Graphics 600","Monitores":"ACR - Acer V226HQL","Resolucao_Tela":"1920x1080","Bateria":"Desktop/Sem bateria","Impressoras":"OneNote; RICOH IM 430 PCL 6; PDFCreator; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Nao","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 08:33:54"},{"Computador":"DEPMSMRJ-102","Usuario":"depmsmrj-102","IP":"10.7.48.69","MAC":"38-EA-A7-19-39-9A","Computador_Fabricante":"Hewlett-Packard","Computador_Modelo":"HP Compaq 6005 Pro SFF PC","Computador_Serial":"BRG304F34X","Chassis_Tipo":"Low Profile Desktop","SO":"Microsoft Windows 10 Pro","Build":"10240","Data_Instalacao":"2019-10-04","Uptime_Horas":"94.0","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"AMD Phenom(tm) II X4 B97 Processor","Arquitetura":"64 bits","CPU_Cores":4,"CPU_Threads":4,"CPU_Clock_MHz":3200,"PlacaMae_Fabricante":"Hewlett-Packard","PlacaMae_Modelo":"3047h","PlacaMae_Serial":"BRG304F34X","BIOS_Versao":"786G6 v01.15","BIOS_Data":"2011-08-01","RAM_GB_Total":4,"Qtd_Pentes":3,"RAM_Detalhes":"[2GB/DDR3/1333MHz/JEDEC ID:01 94]; [2GB/DDR3/1333MHz/JEDEC ID:01 94]; [0GB/Tipo /MHz/]","Armazenamento_C_GB":457,"Espaco_Livre_C_GB":395,"Espaco_Livre_C_Perc":86,"Discos_Fisicos":"HDD - ST500DM002-1BD142 (466GB)","Volumes":"[F: 0GB livre de 0GB]; [G: 0GB livre de 0GB]; [H: 0GB livre de 0GB]; [I: 0GB livre de 0GB]; [K: 0GB livre de 0GB]; [J: 0GB livre de 0GB]; [C: 395GB livre de 457GB]; [D: 1GB livre de 7GB]","Modelo_Disco_Principal":"ST500DM002-1BD142","GPU":"Adaptador de Video Basico da Microsoft","Monitores":"GSM - LG FULL HD","Resolucao_Tela":"1024x768","Bateria":"Desktop/Sem bateria","Impressoras":"RICOH IM 430 PCL 6; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 08:30:31"},{"Computador":"DEPMSMRJ-107A","Usuario":"depmsmrj-107","IP":"10.7.48.107","MAC":"0A-E0-AF-E3-01-DD","Computador_Fabricante":"Default string","Computador_Modelo":"Default string","Computador_Serial":"Default string","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"19044","Data_Instalacao":"2022-03-10","Uptime_Horas":"0.1","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"Intel(R) Core(TM) i5-6400 CPU @ 2.70GHz","Arquitetura":"64 bits","CPU_Cores":4,"CPU_Threads":4,"CPU_Clock_MHz":2712,"PlacaMae_Fabricante":"Default string","PlacaMae_Modelo":"Default string","PlacaMae_Serial":"Default string","BIOS_Versao":"5.12","BIOS_Data":"2019-03-21","RAM_GB_Total":8,"Qtd_Pentes":2,"RAM_Detalhes":"[4GB/DDR3/1333MHz/0000]; [4GB/DDR3/1333MHz/0000]","Armazenamento_C_GB":223,"Espaco_Livre_C_GB":177,"Espaco_Livre_C_Perc":80,"Discos_Fisicos":"SSD - KINGSTON SA400S37240G (224GB)","Volumes":"[C: 177GB livre de 223GB]","Modelo_Disco_Principal":"KINGSTON SA400S37240G","GPU":"Adaptador de Video Basico da Microsoft","Monitores":"GSM - LG HD","Resolucao_Tela":"1366x768","Bateria":"Desktop/Sem bateria","Impressoras":"OneNote; RICOH IM 430 PCL 6 - Terreo; RICOH IM 430 Mezanino; PDFCreator; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Nao","Servidor_WSUS":"","DataHora_Coleta":"2025-08-26 08:38:36"},{"Computador":"DEPMSMRJ-103A","Usuario":"depmsmrj-101","IP":"10.7.48.70","MAC":"0A-E0-AF-B4-01-D7","Computador_Fabricante":"To be filled by O.E.M.","Computador_Modelo":"To be filled by O.E.M.","Computador_Serial":"To be filled by O.E.M.","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"19043","Data_Instalacao":"2022-04-18","Uptime_Horas":"0.2","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Ativado","Canal_Licenca":"Retail","Chave_Parcial":"JFG6T","Chave_OEM_BIOS":"Nao Coletado","CPU":"Intel(R) Core(TM) i5-3570 CPU @ 3.40GHz","Arquitetura":"64 bits","CPU_Cores":4,"CPU_Threads":4,"CPU_Clock_MHz":3401,"PlacaMae_Fabricante":"INTEL Corporation","PlacaMae_Modelo":"H61","PlacaMae_Serial":"To be filled by O.E.M.","BIOS_Versao":"4.6.5","BIOS_Data":"2020-12-07","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/DDR3/MHz/Kingston]","Armazenamento_C_GB":465,"Espaco_Livre_C_GB":412,"Espaco_Livre_C_Perc":89,"Discos_Fisicos":"Unspecified - WDC WD5000AAKX-00ERMA0 (466GB)","Volumes":"[C: 412GB livre de 465GB]","Modelo_Disco_Principal":"WDC WD5000AAKX-00ERMA0","GPU":"Intel(R) HD Graphics","Monitores":"HWP - LA1905","Resolucao_Tela":"1440x900","Bateria":"Desktop/Sem bateria","Impressoras":"OneNote; RICOH IM 430 PCL 6; PDFCreator; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 09:20:10"},{"Computador":"DEPMSMRJ-204","Usuario":"depmsmrj-204","IP":"10.7.48.66","MAC":"F4-CE-46-C3-13-C6","Computador_Fabricante":"Hewlett-Packard","Computador_Modelo":"HP xw4600 Workstation","Computador_Serial":"BRG001F23P","Chassis_Tipo":"Mini Tower","SO":"Microsoft Windows 10 Pro","Build":"10240","Data_Instalacao":"2019-10-02","Uptime_Horas":"0.1","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"Intel(R) Core(TM)2 Quad CPU    Q9550  @ 2.83GHz","Arquitetura":"64 bits","CPU_Cores":4,"CPU_Threads":4,"CPU_Clock_MHz":2833,"PlacaMae_Fabricante":"Hewlett-Packard","PlacaMae_Modelo":"0AA0h","PlacaMae_Serial":"BRG001F23P","BIOS_Versao":"786F3 v01.18","BIOS_Data":"2009-11-19","RAM_GB_Total":4,"Qtd_Pentes":3,"RAM_Detalhes":"[2GB/Tipo /800MHz/JEDEC ID:CE 00 00 00 00 00 00 00]; [2GB/Tipo /800MHz/JEDEC ID:CE 00 00 00 00 00 00 00]; [0GB/Tipo /MHz/]","Armazenamento_C_GB":220,"Espaco_Livre_C_GB":155,"Espaco_Livre_C_Perc":70,"Discos_Fisicos":"HDD - TOSHIBA DT01ACA050 (466GB)","Volumes":"[D: 0GB livre de 0GB]; [C: 155GB livre de 220GB]; [E: 0GB livre de 0GB]; [F: 0GB livre de 0GB]","Modelo_Disco_Principal":"TOSHIBA DT01ACA050","GPU":"Adaptador de Video Basico da Microsoft","Monitores":"ACR - EB192Q","Resolucao_Tela":"1024x768","Bateria":"Desktop/Sem bateria","Impressoras":"RICOH MP 501 PCL 6; RICOH IM 430 PCL 6; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 08:43:10"},{"Computador":"DEPMSMRJ-206","Usuario":"depmsmrj-206","IP":"10.7.48.230","MAC":"78-E7-D1-AD-5E-41","Computador_Fabricante":"Hewlett-Packard","Computador_Modelo":"HP Compaq 6005 Pro SFF PC","Computador_Serial":"BRG025FTW6","Chassis_Tipo":"Low Profile Desktop","SO":"Microsoft Windows 10 Pro","Build":"10240","Data_Instalacao":"2019-10-31","Uptime_Horas":"0.9","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"AMD Phenom(tm) II X4 B93 Processor","Arquitetura":"64 bits","CPU_Cores":4,"CPU_Threads":4,"CPU_Clock_MHz":2800,"PlacaMae_Fabricante":"Hewlett-Packard","PlacaMae_Modelo":"3047h","PlacaMae_Serial":"BRG025FTW6","BIOS_Versao":"786G6 v01.03","BIOS_Data":"2009-08-24","RAM_GB_Total":4,"Qtd_Pentes":3,"RAM_Detalhes":"[2GB/DDR3/1333MHz/JEDEC ID:80 CE]; [2GB/DDR3/1333MHz/JEDEC ID:80 CE]; [0GB/Tipo /MHz/]","Armazenamento_C_GB":289,"Espaco_Livre_C_GB":207,"Espaco_Livre_C_Perc":72,"Discos_Fisicos":"UnSpecified - WDC WD3200AAJS-60Z0A0 (298GB)","Volumes":"[C: 207GB livre de 289GB]; [D: 7GB livre de 7GB]; [E: 0GB livre de 0GB]","Modelo_Disco_Principal":"WDC WD3200AAJS-60Z0A0","GPU":"Adaptador de Video Basico da Microsoft","Monitores":"GSM - L177W","Resolucao_Tela":"1024x768","Bateria":"Desktop/Sem bateria","Impressoras":"ZDesigner ZM400 300 dpi (ZPL); RICOH IM 430 PCL 6; RICOH IM 430; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 08:52:17"},{"Computador":"DEPMSMRJ-108","Usuario":"depmsmrj-108","IP":"10.7.48.6","MAC":"70-85-C2-69-B5-98","Computador_Fabricante":"To Be Filled By O.E.M.","Computador_Modelo":"To Be Filled By O.E.M.","Computador_Serial":"To Be Filled By O.E.M.","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"17763","Data_Instalacao":"2019-02-18","Uptime_Horas":"139.5","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Ativado","Canal_Licenca":"Retail","Chave_Parcial":"Q9MP6","Chave_OEM_BIOS":"Nao Coletado","CPU":"AMD A8-9600 RADEON R7, 10 COMPUTE CORES 4C+6G","Arquitetura":"64 bits","CPU_Cores":4,"CPU_Threads":4,"CPU_Clock_MHz":3100,"PlacaMae_Fabricante":"ASRock","PlacaMae_Modelo":"A320M-HD","PlacaMae_Serial":"M8S-37631811208","BIOS_Versao":"P4.90","BIOS_Data":"2018-08-30","RAM_GB_Total":4,"Qtd_Pentes":null,"RAM_Detalhes":"[4GB/DDR4/2132MHz/Kingston]","Armazenamento_C_GB":931,"Espaco_Livre_C_GB":849,"Espaco_Livre_C_Perc":91,"Discos_Fisicos":"HDD - TOSHIBA DT01ACA100 (932GB)","Volumes":"[C: 849GB livre de 931GB]","Modelo_Disco_Principal":"TOSHIBA DT01ACA100","GPU":"AMD Radeon R7 Graphics","Monitores":"HWP - LE1911","Resolucao_Tela":"1280x1024","Bateria":"Desktop/Sem bateria","Impressoras":"RICOH IM 430 PCL 6_2; Microsoft XPS Document Writer; Microsoft Print to PDF; Kyocera ECOSYS M3040idn KX; IMPRI-RECEPCAO (HP LaserJet Professional P 1102w); Impressora de imagem do PaperPort; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 09:27:00"},{"Computador":"DEPMSMRJ-110","Usuario":"DEPMSMRJ-110","IP":"10.7.48.78","MAC":"FC-AA-14-F9-97-D8","Computador_Fabricante":"PCWARE","Computador_Modelo":"IPMH81G1","Computador_Serial":"To be filled by O.E.M.","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"19044","Data_Instalacao":"2024-06-05","Uptime_Horas":"117.2","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"Intel(R) Core(TM) i3-4170 CPU @ 3.70GHz","Arquitetura":"64 bits","CPU_Cores":2,"CPU_Threads":4,"CPU_Clock_MHz":3700,"PlacaMae_Fabricante":"PCWARE","PlacaMae_Modelo":"IPMH81G1","PlacaMae_Serial":"To be filled by O.E.M.","BIOS_Versao":"FA DB","BIOS_Data":"2014-08-04","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/DDR3/1333MHz/Kingston]","Armazenamento_C_GB":196,"Espaco_Livre_C_GB":124,"Espaco_Livre_C_Perc":63,"Discos_Fisicos":"HDD - TOSHIBA DT01ACA050 (466GB)","Volumes":"[C: 124GB livre de 196GB]; [F: 0GB livre de 0GB]","Modelo_Disco_Principal":"TOSHIBA DT01ACA050","GPU":"Adaptador de Video Basico da Microsoft","Monitores":"HWP - LE1911","Resolucao_Tela":"1280x1024","Bateria":"Desktop/Sem bateria","Impressoras":"OneNote; RICOH IM 430 PCL 6; OneNote (Desktop); Microsoft XPS Document Writer; Microsoft Print to PDF; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 09:18:17"},{"Computador":"DEPMSMRJ-303","Usuario":"depmsmrj-302","IP":"10.7.48.100","MAC":"F4-4D-30-8C-AF-EB","Computador_Fabricante":"Centrium","Computador_Modelo":"C2016-H110M4-C2H","Computador_Serial":"00000000","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"19044","Data_Instalacao":"2024-05-30","Uptime_Horas":"95.3","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Ativado","Canal_Licenca":"Retail","Chave_Parcial":"RJRC6","Chave_OEM_BIOS":"Nao Coletado","CPU":"Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz","Arquitetura":"64 bits","CPU_Cores":4,"CPU_Threads":4,"CPU_Clock_MHz":3201,"PlacaMae_Fabricante":"Centrium","PlacaMae_Modelo":"C2016-H110M4-C2H","PlacaMae_Serial":"00000000","BIOS_Versao":"5.12","BIOS_Data":"2017-01-17","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/DDR4/2400MHz/859B]","Armazenamento_C_GB":223,"Espaco_Livre_C_GB":151,"Espaco_Livre_C_Perc":68,"Discos_Fisicos":"SSD - KINGSTON SA400S37240G (224GB)","Volumes":"[C: 151GB livre de 223GB]","Modelo_Disco_Principal":"KINGSTON SA400S37240G","GPU":"Intel(R) HD Graphics 530","Monitores":"ACR - EB192Q","Resolucao_Tela":"1366x768","Bateria":"Desktop/Sem bateria","Impressoras":"OneNote; RICOH IM 430 PCL 6; PDFCreator; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 09:41:08"},{"Computador":"DEPMSMRJ-SECOM","Usuario":"depmsmrj-secom","IP":"10.7.48.13","MAC":"70-85-C2-37-FF-E7","Computador_Fabricante":"To Be Filled By O.E.M.","Computador_Modelo":"To Be Filled By O.E.M.","Computador_Serial":"To Be Filled By O.E.M.","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"17763","Data_Instalacao":"2019-12-19","Uptime_Horas":"294.7","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"AMD FX(tm)-6300 Six-Core Processor","Arquitetura":"32 bits","CPU_Cores":3,"CPU_Threads":6,"CPU_Clock_MHz":3500,"PlacaMae_Fabricante":"ASRock","PlacaMae_Modelo":"N68-GS4 FX R2.0","PlacaMae_Serial":"                      ","BIOS_Versao":"P1.00","BIOS_Data":"2015-10-04","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/Tipo /1638MHz/Kingston      ]","Armazenamento_C_GB":466,"Espaco_Livre_C_GB":383,"Espaco_Livre_C_Perc":82,"Discos_Fisicos":"Unspecified - ST350031 2CS (466GB)","Volumes":"[C: 383GB livre de 466GB]","Modelo_Disco_Principal":"2CS             ","GPU":"Adaptador de Video Basico da Microsoft","Monitores":"Nenhum monitor detectado","Resolucao_Tela":"1400x1050","Bateria":"Desktop/Sem bateria","Impressoras":"RICOH IM 430 PCL 6; Microsoft XPS Document Writer; Microsoft Print to PDF; HP LaserJet Professional M1132 MFP (Copiar 2); HP LaserJet Professional M1132 MFP (Copiar 1); HP LaserJet Professional M1132 MFP; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 13:36:18"},{"Computador":"DEPMSMRJ-306","Usuario":"depmsmrj-306","IP":"10.7.48.121","MAC":"70-85-C2-69-D0-8E","Computador_Fabricante":"To Be Filled By O.E.M.","Computador_Modelo":"To Be Filled By O.E.M.","Computador_Serial":"To Be Filled By O.E.M.","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"17763","Data_Instalacao":"2019-04-08","Uptime_Horas":"4.8","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"AMD A8-9600 RADEON R7, 10 COMPUTE CORES 4C+6G","Arquitetura":"64 bits","CPU_Cores":4,"CPU_Threads":4,"CPU_Clock_MHz":3100,"PlacaMae_Fabricante":"ASRock","PlacaMae_Modelo":"A320M-HD","PlacaMae_Serial":"M8S-37631809478","BIOS_Versao":"P4.90","BIOS_Data":"2018-08-30","RAM_GB_Total":4,"Qtd_Pentes":null,"RAM_Detalhes":"[4GB/DDR4/2132MHz/Kingston]","Armazenamento_C_GB":931,"Espaco_Livre_C_GB":863,"Espaco_Livre_C_Perc":93,"Discos_Fisicos":"HDD - TOSHIBA DT01ACA100 (932GB)","Volumes":"[C: 863GB livre de 931GB]","Modelo_Disco_Principal":"TOSHIBA DT01ACA100","GPU":"AMD Radeon R7 Graphics","Monitores":"GSM - LG FULL HD","Resolucao_Tela":"1920x1080","Bateria":"Desktop/Sem bateria","Impressoras":"RICOH IM 430 PCL 6; Microsoft XPS Document Writer; Microsoft Print to PDF; Kyocera ECOSYS M3040idn KX; IMPRI-RECEPCAO (HP LaserJet Professional P 1102w); Impressora de imagem do PaperPort; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 13:42:17"},{"Computador":"DEPMSMRJ-MSGTR","Usuario":"depmsmrj-msg","IP":"10.7.48.11","MAC":"88-AE-DD-30-85-F4","Computador_Fabricante":"PCWARE","Computador_Modelo":"IPX4120E","Computador_Serial":"00000000","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"19045","Data_Instalacao":"2023-05-12","Uptime_Horas":"102.7","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"Intel(R) Celeron(R) N4120 CPU @ 1.10GHz","Arquitetura":"32 bits","CPU_Cores":4,"CPU_Threads":4,"CPU_Clock_MHz":1101,"PlacaMae_Fabricante":"PCWARE","PlacaMae_Modelo":"IPX4120E","PlacaMae_Serial":"00000000","BIOS_Versao":"5.13","BIOS_Data":"2022-05-31","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/DDR4/2400MHz/Kingston]","Armazenamento_C_GB":224,"Espaco_Livre_C_GB":188,"Espaco_Livre_C_Perc":84,"Discos_Fisicos":"SSD - KINGSTON SA400S37240G (224GB)","Volumes":"[C: 188GB livre de 224GB]","Modelo_Disco_Principal":"KINGSTON SA400S37240G","GPU":"Adaptador de Video Basico da Microsoft","Monitores":"DEL - DELL E178FP","Resolucao_Tela":"1280x1024","Bateria":"Desktop/Sem bateria","Impressoras":"OneNote; RICOH IM 430 PCL 6; PDFCreator; Microsoft XPS Document Writer; Microsoft Print to PDF; HP DeskJet 3630 series; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-08-26 13:54:21"},{"Computador":"DEPMSMRJ-01","Usuario":"DepMSMRJ-01","IP":"10.7.48.9","MAC":"0C-9D-92-8E-B6-52","Computador_Fabricante":"System manufacturer","Computador_Modelo":"System Product Name","Computador_Serial":"System Serial Number","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"19044","Data_Instalacao":"2023-01-23","Uptime_Horas":"0.1","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Ativado","Canal_Licenca":"Volume","Chave_Parcial":"3DBQB","Chave_OEM_BIOS":"Nao Coletado","CPU":"AMD Athlon 220GE with Radeon Vega Graphics","Arquitetura":"64 bits","CPU_Cores":2,"CPU_Threads":4,"CPU_Clock_MHz":3400,"PlacaMae_Fabricante":"ASUSTeK COMPUTER INC.","PlacaMae_Modelo":"PRIME A320M-K/BR","PlacaMae_Serial":"MB-1234567890","BIOS_Versao":"5007","BIOS_Data":"2019-06-17","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/DDR4/2400MHz/Undefined]","Armazenamento_C_GB":223,"Espaco_Livre_C_GB":104,"Espaco_Livre_C_Perc":47,"Discos_Fisicos":"SSD - KINGSTON SA400S37240G (224GB) | Unspecified - SanDisk Cruzer Fit (7GB)","Volumes":"[D: 7GB livre de 7GB]; [C: 104GB livre de 223GB]","Modelo_Disco_Principal":"KINGSTON SA400S37240G","GPU":"AMD Radeon(TM) Vega 3 Graphics","Monitores":"ACR - V226HQL; ACR - Acer V226HQL","Resolucao_Tela":"1920x1080","Bateria":"Desktop/Sem bateria","Impressoras":"OneNote; RICOH IM 430 PCL 6; PDFCreator; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"10.200.192.117:8530","DataHora_Coleta":"2025-08-26 15:21:26"},{"Computador":"DEPMSMRJ-CPD","Usuario":"Administrator","IP":"10.7.48.222","MAC":"0C-9D-92-8E-80-82","Computador_Fabricante":"System manufacturer","Computador_Modelo":"System Product Name","Computador_Serial":"System Serial Number","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 11 Pro","Build":"22635","Data_Instalacao":"2024-08-30","Uptime_Horas":"193.7","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"AMD Athlon 220GE with Radeon Vega Graphics","Arquitetura":"64 bits","CPU_Cores":2,"CPU_Threads":4,"CPU_Clock_MHz":3400,"PlacaMae_Fabricante":"ASUSTeK COMPUTER INC.","PlacaMae_Modelo":"PRIME A320M-K/BR","PlacaMae_Serial":"190443384303204","BIOS_Versao":"5007","BIOS_Data":"2019-06-17","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/DDR4/2666MHz/Kingston]","Armazenamento_C_GB":223,"Espaco_Livre_C_GB":29,"Espaco_Livre_C_Perc":13,"Discos_Fisicos":"HDD - TOSHIBA DT01ACA100 (932GB) | SSD - SSD 240GB (224GB)","Volumes":"[C: 29GB livre de 223GB]; [D: 360GB livre de 931GB]","Modelo_Disco_Principal":"SSD 240GB","GPU":"AMD Radeon(TM) Vega 3 Graphics","Monitores":"ACR - V226HQL; GSM - LG TV","Resolucao_Tela":"1920x1080","Bateria":"Desktop/Sem bateria","Impressoras":"RICOH IM 430 PCL 6; Microsoft Print to PDF","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Nao","Servidor_WSUS":"","DataHora_Coleta":"2025-08-29 09:42:00"},{"Computador":"BAMRJ-IDENTIFIC","Usuario":"bamrj-identifica2","IP":"10.2.43.234","MAC":"BC-5F-F4-97-85-72","Computador_Fabricante":"To Be Filled By O.E.M.","Computador_Modelo":"To Be Filled By O.E.M.","Computador_Serial":"To Be Filled By O.E.M.","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"10240","Data_Instalacao":"2015-07-13","Uptime_Horas":"50.1","Dominio_ou_Grupo":"bambrj.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"AMD FX(tm)-4300 Quad-Core Processor","Arquitetura":"64 bits","CPU_Cores":2,"CPU_Threads":4,"CPU_Clock_MHz":3800,"PlacaMae_Fabricante":"ASRock","PlacaMae_Modelo":"N68-S3 FX","PlacaMae_Serial":"                      ","BIOS_Versao":"P1.20","BIOS_Data":"2012-06-03","RAM_GB_Total":4,"Qtd_Pentes":null,"RAM_Detalhes":"[4GB/Tipo /200MHz/A-DATA        ]","Armazenamento_C_GB":223,"Espaco_Livre_C_GB":188,"Espaco_Livre_C_Perc":84,"Discos_Fisicos":"UnSpecified - SSD 240G B (224GB)","Volumes":"[C: 188GB livre de 223GB]; [E: 0GB livre de 0GB]; [F: 0GB livre de 0GB]","Modelo_Disco_Principal":"B               ","GPU":"Adaptador de Video Basico da Microsoft","Monitores":"Nenhum monitor detectado","Resolucao_Tela":"1024x768","Bateria":"Desktop/Sem bateria","Impressoras":"PDF24 Fax; PDF24; Microsoft XPS Document Writer; Microsoft Print to PDF; Fax","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Nao","Servidor_WSUS":"","DataHora_Coleta":"2025-08-29 16:11:58"},{"Computador":"DESKTOP-5V3SFMT","Usuario":"bruno","IP":"192.168.0.10","MAC":"0C-9D-92-8F-16-DC","Computador_Fabricante":"System manufacturer","Computador_Modelo":"System Product Name","Computador_Serial":"System Serial Number","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 10 Pro","Build":"19045","Data_Instalacao":"","Uptime_Horas":"0.0","Uptime_Formatado":"Indisponivel","Dominio_ou_Grupo":"WORKGROUP","Status_Ativacao":"Ativado","Canal_Licenca":"Volume","Chave_Parcial":"KD73B","Chave_OEM_BIOS":"Nao Coletado","CPU":"AMD Athlon 220GE with Radeon Vega Graphics","Arquitetura":"64 bits","CPU_Cores":2,"CPU_Threads":4,"CPU_Clock_MHz":3400,"PlacaMae_Fabricante":"ASUSTeK COMPUTER INC.","PlacaMae_Modelo":"PRIME A320M-K/BR","PlacaMae_Serial":"190747577404572","BIOS_Versao":"5007","BIOS_Data":"","RAM_GB_Total":16,"Qtd_Pentes":2,"RAM_Detalhes":"[8GB/DDR4/2400MHz/Kingston]; [8GB/DDR4/2400MHz/CRUCIAL]","Armazenamento_C_GB":223,"Espaco_Livre_C_GB":81,"Espaco_Livre_C_Perc":36,"Discos_Fisicos":"SSD - KINGSTON SA400S37240G (224GB)","Volumes":"[C: 81GB livre de 223GB]; [F: 0GB livre de 0GB]; [G: 0GB livre de 0GB]; [H: 0GB livre de 0GB]; [I: 0GB livre de 0GB]","Modelo_Disco_Principal":"KINGSTON SA400S37240G","GPU":"AMD Radeon(TM) Vega 3 Graphics","Monitores":"AOC - 2050W; SGT - ","Resolucao_Tela":"1600x900","Bateria":"Desktop/Sem bateria","Impressoras":"OneNote for Windows 10; OneNote (Desktop); Microsoft XPS Document Writer; Microsoft Print to PDF; HP184DA6 (HP DeskJet 2800 series); Fax","Antivirus":"Kaspersky","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Nao","Servidor_WSUS":"","DataHora_Coleta":"2025-08-30 18:13:59","AdminsLocais":"Administrador; bruno","UpdatesPendentes":1,"UltimaInstalacaoUpdates":"2025-08-13 03:26","PortasTCP_Abertas":"135, 139, 445, 5040, 5357, 5939, 7680, 17788, 27036, 27060, 42050, 49664, 49665, 49666, 49667, 49668, 49677, 49680, 51000, 51001, 51002, 51003, 51005, 51007, 51008, 55077, 55078, 55083","PortasUDP_Abertas":"67, 137, 138, 500, 1900, 2177, 3702, 4500, 5050, 5353, 5355, 27036, 52414, 55620, 55621, 55622, 55623, 56108, 56621, 56622, 56777, 56778, 58124, 60390, 61492, 62478, 63030, 63031, 63747, 63750, 63751, 64611, 65040","SaudeDiscoSMART":"Nao suportado ou sem permissao","NumeroSerieMonitores":"DTK43IA002633; 6666","GatewayPadrao":"192.168.0.1","ServidoresDNS":"181.213.132.2, 181.213.132.3","ServidorDHCP":"192.168.0.1","DHCPAtivado":true,"ConsumoCPU_Percentual":9,"ConsumoRAM_Percentual":59.9,"Top5ProcessosCPU":"brave (CPU: 1.022,91s); node (CPU: 256,92s); brave (CPU: 253,64s); Trae (CPU: 214,06s); RadeonSoftware (CPU: 197,75s)","Top5ProcessosRAM":"Memory Compression (RAM: 749,77MB); brave (RAM: 416,12MB); steamwebhelper (RAM: 379,04MB); Trae (RAM: 337,66MB); powershell (RAM: 238,98MB)"}];
+    //<DATA_END>
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const loaderOverlay = document.getElementById('loaderOverlay');
+        const statusDiv = document.getElementById('status');
+        const tableHead = document.getElementById('csvTableHead');
+        const tableBody = document.getElementById('csvTableBody');
+
+        const btnConfigureColumns = document.getElementById('btnConfigureColumns');
+        const columnsModal = document.getElementById('columnsModal');
+        const modalColumnsList = document.getElementById('modalColumnsList');
+        const btnApplyColumns = document.getElementById('btnApplyColumns');
+        const btnCancelColumns = document.getElementById('btnCancelColumns');
+        const btnToggleAllColumns = document.getElementById('btnToggleAllColumns');
+        const btnSelectDefaultColumns = document.getElementById('btnSelectDefaultColumns');
+
+        const globalSearchInput = document.getElementById('globalSearchInput');
+        const btnResetView = document.getElementById('btnResetView');
+        const btnToggleTheme = document.getElementById('btnToggleTheme');
+        const btnGoToDashboard = document.getElementById('btnGoToDashboard');
+        const btnExportCSV = document.getElementById('btnExportCSV');
+
+        const btnPrevPage = document.getElementById('btnPrevPage');
+        const btnNextPage = document.getElementById('btnNextPage');
+        const currentPageSpan = document.getElementById('currentPage');
+        const totalPagesSpan = document.getElementById('totalPages');
+        const rowsPerPageSelect = document.getElementById('rowsPerPageSelect');
+
+        let allHeaders = []; 
+        let originalDataset = []; 
+        let filteredAndSortedDataset = []; 
+        
+        let visibleColumnIndexes = []; 
+        let columnFilters = {}; 
+
+        let currentSortKey = null;
+        let currentSortDirection = 'asc';
+
+        let currentPage = 1;
+        let rowsPerPage = parseInt(rowsPerPageSelect.value);
+        
+        const DEFAULT_COLUMN_NAMES = [ "Computador", "Usuario", "IP", "SO", "CPU", "RAM_GB_Total", "Modelo_Disco_Principal", "Antivirus", "DataHora_Coleta" ];
+        const DEFAULT_VISIBLE_COLUMNS_KEY = 'visibleColumnsInventario';
+        const THEME_KEY = 'inventarioTheme';
+        
+        let columnFilterDebounceTimer = null; 
+        let globalSearchDebounceTimer = null;
+        const DEBOUNCE_DELAY = 700;
+
+        function showLoader(show) { loaderOverlay.style.display = show ? 'flex' : 'none'; }
+        function toggleTheme() { document.body.classList.toggle('dark-theme'); localStorage.setItem(THEME_KEY, document.body.classList.contains('dark-theme') ? 'dark' : 'light'); }
+        function loadTheme() { if (localStorage.getItem(THEME_KEY) === 'dark') document.body.classList.add('dark-theme'); }
+        
+        btnConfigureColumns.addEventListener('click', () => { if (allHeaders.length > 0) { populateModalColumns(); columnsModal.style.display = 'flex'; }});
+        btnCancelColumns.addEventListener('click', () => { columnsModal.style.display = 'none'; });
+        btnApplyColumns.addEventListener('click', () => {
+            const selectedCheckboxes = modalColumnsList.querySelectorAll('input[type="checkbox"]:checked');
+            visibleColumnIndexes = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
+            localStorage.setItem(DEFAULT_VISIBLE_COLUMNS_KEY, JSON.stringify(visibleColumnIndexes));
+            columnsModal.style.display = 'none';
+            currentPage = 1; 
+            renderHeaderAndFilterRows();
+            applyFiltersAndRender(); 
+        });
+        columnsModal.addEventListener('click', (event) => { if (event.target === columnsModal) columnsModal.style.display = 'none'; });
+        
+        let showingDashboard = false;
+
+btnGoToDashboard.addEventListener('click', () => {
+    const tableContainer = document.getElementById('tableContainer');
+    const paginationControls = document.querySelector('.pagination-controls');
+    const dashboardContainer = document.getElementById('dashboardContainer');
+
+    if (!showingDashboard) {
+        // Mostrar Dashboard
+        tableContainer.style.display = 'none';
+        paginationControls.style.display = 'none';
+        dashboardContainer.style.display = 'block';
+        btnGoToDashboard.textContent = '📋 Voltar à Tabela';
+        renderDashboard();
+    } else {
+        // Mostrar Tabela
+        tableContainer.style.display = 'block';
+        paginationControls.style.display = 'flex';
+        dashboardContainer.style.display = 'none';
+        btnGoToDashboard.textContent = '📊 Dashboard';
+    }
+    showingDashboard = !showingDashboard;
+});
+
+function renderDashboard() {
+    // Limpar gráficos antigos se já existirem
+    if (window.osChartInstance) window.osChartInstance.destroy();
+    if (window.cpuChartInstance) window.cpuChartInstance.destroy();
+    if (window.ramChartInstance) window.ramChartInstance.destroy();
+
+    // Gráfico de Sistemas Operacionais
+    const osCounts = {};
+    inventoryData.forEach(d => {
+        osCounts[d.SO] = (osCounts[d.SO] || 0) + 1;
+    });
+    window.osChartInstance = new Chart(document.getElementById('osChart'), {
+        type: 'pie',
+        data: {
+            labels: Object.keys(osCounts),
+            datasets: [{
+                data: Object.values(osCounts),
+                backgroundColor: ['#007bff','#28a745','#ffc107','#dc3545','#6f42c1']
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // Gráfico de CPUs
+    const cpuCounts = {};
+    inventoryData.forEach(d => {
+        cpuCounts[d.CPU] = (cpuCounts[d.CPU] || 0) + 1;
+    });
+    window.cpuChartInstance = new Chart(document.getElementById('cpuChart'), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(cpuCounts),
+            datasets: [{
+                label: 'Quantidade',
+                data: Object.values(cpuCounts),
+                backgroundColor: '#17a2b8'
+            }]
+        },
+        options: { responsive: true, indexAxis: 'y' }
+    });
+
+    // Gráfico de RAM
+    const ramCounts = {};
+    inventoryData.forEach(d => {
+        ramCounts[d.RAM_GB_Total] = (ramCounts[d.RAM_GB_Total] || 0) + 1;
+    });
+    window.ramChartInstance = new Chart(document.getElementById('ramChart'), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(ramCounts).map(r => r + ' GB'),
+            datasets: [{
+                label: 'Quantidade de Máquinas',
+                data: Object.values(ramCounts),
+                backgroundColor: '#ffc107'
+            }]
+        },
+        options: { responsive: true }
+    });
+}
+
+
+        btnToggleAllColumns.addEventListener('click', () => {
+            const checkboxes = modalColumnsList.querySelectorAll('input[type="checkbox"]');
+            if (checkboxes.length === 0) return;
+            const shouldCheck = !checkboxes[0].checked;
+            checkboxes.forEach(cb => cb.checked = shouldCheck);
+        });
+
+        btnSelectDefaultColumns.addEventListener('click', () => {
+            const defaultIndexes = DEFAULT_COLUMN_NAMES.map(name => allHeaders.indexOf(name)).filter(index => index !== -1); 
+            const checkboxes = modalColumnsList.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(cb => { cb.checked = defaultIndexes.includes(parseInt(cb.value)); });
+        });
+
+        function populateModalColumns() {
+            modalColumnsList.innerHTML = ''; 
+            if (!allHeaders || allHeaders.length === 0) return;
+            allHeaders.forEach((header, index) => {
+                const label = document.createElement('label');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox'; checkbox.value = index; 
+                checkbox.checked = visibleColumnIndexes.includes(index);
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(' ' + header));
+                modalColumnsList.appendChild(label);
+            });
+        }
+        
+        function applyFiltersAndRender() {
+            let dataToProcess = [...originalDataset];
+            const globalSearchTerm = globalSearchInput.value.toLowerCase().trim();
+
+            if (globalSearchTerm) {
+                dataToProcess = dataToProcess.filter(row => 
+                    visibleColumnIndexes.some(colIndex => {
+                        if (colIndex < 0 || colIndex >= allHeaders.length) return false;
+                        const headerKey = allHeaders[colIndex];
+                        return (row[headerKey] || '').toString().toLowerCase().includes(globalSearchTerm);
+                    })
+                );
+            }
+
+            Object.keys(columnFilters).forEach(headerKey => {
+                const filterTerm = (columnFilters[headerKey] || '').toLowerCase().trim();
+                if (filterTerm) {
+                    dataToProcess = dataToProcess.filter(row =>
+                        (row[headerKey] || '').toString().toLowerCase().includes(filterTerm)
+                    );
+                }
+            });
+
+            if (currentSortKey && allHeaders.includes(currentSortKey)) {
+                dataToProcess.sort((objA, objB) => {
+                    let valA = (objA[currentSortKey] || '').toString().trim();
+                    let valB = (objB[currentSortKey] || '').toString().trim();
+                    const numA = parseFloat(valA.replace(',', '.')); const numB = parseFloat(valB.replace(',', '.'));
+                    if (!isNaN(numA) && !isNaN(numB)) { valA = numA; valB = numB; }
+                    else { valA = valA.toLowerCase(); valB = valB.toLowerCase(); }
+                    if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
+                    if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+            
+            filteredAndSortedDataset = dataToProcess;
+            updatePagination(); 
+            renderTableBody();
+        }
+        
+        function updatePagination() {
+            const totalRows = filteredAndSortedDataset.length;
+            let rpp = (rowsPerPageSelect.value === "500") ? (totalRows > 0 ? totalRows : 1) : parseInt(rowsPerPageSelect.value);
+            const totalPgs = Math.ceil(totalRows / rpp) || 1;
+            totalPagesSpan.textContent = totalPgs;
+            currentPage = Math.min(currentPage, totalPgs); 
+            currentPageSpan.textContent = currentPage;
+            btnPrevPage.disabled = currentPage === 1;
+            btnNextPage.disabled = currentPage === totalPgs || totalRows === 0;
+        }
+
+        function renderHeaderAndFilterRows() {
+            tableHead.innerHTML = ''; 
+            if (allHeaders.length === 0) return;
+
+            const headerRow = document.createElement('tr');
+            headerRow.classList.add('header-row');
+            visibleColumnIndexes.forEach(colIndex => {
+                if (colIndex < 0 || colIndex >= allHeaders.length) return; 
+                const headerText = allHeaders[colIndex];
+                const th = document.createElement('th');
+                th.classList.add('main-header-cell'); 
+                th.textContent = headerText.trim();
+                th.dataset.sortKey = headerText;
+                const sortIndicator = document.createElement('span');
+                sortIndicator.classList.add('sort-indicator');
+                if (headerText === currentSortKey) {
+                    sortIndicator.textContent = currentSortDirection === 'asc' ? '▲' : '▼';
+                }
+                th.appendChild(sortIndicator);
+                th.addEventListener('click', handleSort);
+                headerRow.appendChild(th);
+            });
+            tableHead.appendChild(headerRow);
+
+            const filterRow = document.createElement('tr');
+            filterRow.classList.add('column-filter-row');
+            visibleColumnIndexes.forEach(colIndex => {
+                if (colIndex < 0 || colIndex >= allHeaders.length) return; 
+                const headerText = allHeaders[colIndex];
+                const th = document.createElement('th');
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = `Filtrar...`;
+                input.title = `Filtrar ${headerText}`;
+                input.dataset.headerKey = headerText;
+                input.value = columnFilters[headerText] || ''; 
+                input.addEventListener('input', handleColumnFilterInput);
+                th.appendChild(input);
+                filterRow.appendChild(th);
+            });
+            tableHead.appendChild(filterRow);
+        }
+
+        function renderTableBody() {
+            tableBody.innerHTML = ''; 
+            let rpp = (rowsPerPageSelect.value === "500") ? (filteredAndSortedDataset.length > 0 ? filteredAndSortedDataset.length : 1) : parseInt(rowsPerPageSelect.value);
+            statusDiv.textContent = `Exibindo ${filteredAndSortedDataset.length} registros. ${visibleColumnIndexes.length} de ${allHeaders.length} colunas visíveis.`;
+            if (visibleColumnIndexes.length === 0 && originalDataset.length > 0) { statusDiv.textContent += " Nenhuma coluna selecionada."; }
+            const startIndex = (currentPage - 1) * rpp;
+            const endIndex = startIndex + rpp;
+            const pageData = filteredAndSortedDataset.slice(startIndex, endIndex);
+            if (pageData.length === 0 && originalDataset.length > 0) {
+                const tr = tableBody.insertRow(); const td = tr.insertCell(); td.colSpan = Math.max(1, visibleColumnIndexes.length);
+                td.textContent = "Nenhum dado corresponde aos filtros aplicados."; td.style.textAlign = "center";
+            }
+            pageData.forEach(rowDataObject => {
+                const dataRow = document.createElement('tr');
+                visibleColumnIndexes.forEach(colIndex => {
+                    if (colIndex < 0 || colIndex >= allHeaders.length) return; 
+                    const headerKey = allHeaders[colIndex];
+                    const td = document.createElement('td');
+                    td.textContent = (rowDataObject[headerKey] || '').toString().trim();
+                    dataRow.appendChild(td);
+                });
+                tableBody.appendChild(dataRow);
+            });
+        }
+        
+        function handleSort(event) {
+            const sortKey = event.currentTarget.dataset.sortKey;
+            if (currentSortKey === sortKey) { currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc'; } 
+            else { currentSortKey = sortKey; currentSortDirection = 'asc'; }
+            currentPage = 1; 
+            renderHeaderAndFilterRows();
+            applyFiltersAndRender();
+        }
+
+        function handleColumnFilterInput(event) {
+            const headerKey = event.target.dataset.headerKey;
+            columnFilters[headerKey] = event.target.value; 
+            clearTimeout(columnFilterDebounceTimer);
+            columnFilterDebounceTimer = setTimeout(() => { currentPage = 1; applyFiltersAndRender(); }, DEBOUNCE_DELAY);
+        }
+        
+        function exportCurrentViewToCsv() {
+            if (!filteredAndSortedDataset || filteredAndSortedDataset.length === 0) { alert("Não há dados para exportar na visualização atual."); return; }
+            const headersToExport = visibleColumnIndexes.map(index => allHeaders[index]);
+            let csvContent = headersToExport.join(",") + "\r\n";
+            filteredAndSortedDataset.forEach(rowObject => {
+                const row = headersToExport.map(header => {
+                    let cell = rowObject[header] || "";
+                    if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"'))) { cell = `"${cell.replace(/"/g, '""')}"`; }
+                    return cell;
+                });
+                csvContent += row.join(",") + "\r\n";
+            });
+            const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            const date = new Date().toISOString().slice(0, 10);
+            link.setAttribute("download", `inventario_filtrado_${date}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        btnExportCSV.addEventListener('click', exportCurrentViewToCsv);
+        globalSearchInput.addEventListener('input', () => { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => { currentPage = 1; applyFiltersAndRender(); }, DEBOUNCE_DELAY); });
+        btnResetView.addEventListener('click', () => {
+            localStorage.removeItem(DEFAULT_VISIBLE_COLUMNS_KEY); 
+            if(allHeaders.length > 0) {
+                 const defaultIndexes = DEFAULT_COLUMN_NAMES.map(name => allHeaders.indexOf(name)).filter(index => index !== -1);
+                 visibleColumnIndexes = defaultIndexes.length > 0 ? defaultIndexes : allHeaders.map((_,i) => i);
+            }
+            currentSortKey = null; columnFilters = {}; globalSearchInput.value = ''; currentPage = 1; rowsPerPageSelect.value = "25";
+            renderHeaderAndFilterRows();
+            applyFiltersAndRender();
+        });
+        
+        btnToggleTheme.addEventListener('click', toggleTheme);
+        btnPrevPage.addEventListener('click', () => { if (currentPage > 1) { currentPage--; applyFiltersAndRender(); }});
+        btnNextPage.addEventListener('click', () => {
+            let rpp = (rowsPerPageSelect.value === "500") ? (filteredAndSortedDataset.length > 0 ? filteredAndSortedDataset.length : 1) : parseInt(rowsPerPageSelect.value);
+            const totalPgs = Math.ceil(filteredAndSortedDataset.length / rpp) || 1;
+            if (currentPage < totalPgs) { currentPage++; applyFiltersAndRender(); }
+        });
+        rowsPerPageSelect.addEventListener('change', (event) => {
+            rowsPerPage = (event.target.value === "500") ? Infinity : parseInt(event.target.value);
+            currentPage = 1; applyFiltersAndRender();
+        });
+        tableBody.addEventListener('click', function(event) {
+            const targetRow = event.target.closest('tr');
+            if (!targetRow || targetRow.classList.contains('header-row') || targetRow.classList.contains('column-filter-row')) return;
+            const previouslySelected = tableBody.querySelector('.selected-row');
+            if (previouslySelected) previouslySelected.classList.remove('selected-row');
+            if (previouslySelected !== targetRow) targetRow.classList.add('selected-row');
+        });
+
+		// Duplo clique para abrir o HTML individual
+		tableBody.addEventListener('dblclick', function(event) {
+			const targetRow = event.target.closest('tr');
+			if (!targetRow || targetRow.classList.contains('header-row') || targetRow.classList.contains('column-filter-row')) return;
+
+			const rowIndex = Array.from(tableBody.children).indexOf(targetRow);
+            
+            let rpp = (rowsPerPageSelect.value === "500") ? (filteredAndSortedDataset.length > 0 ? filteredAndSortedDataset.length : 1) : parseInt(rowsPerPageSelect.value);
+            const startIndex = (currentPage - 1) * rpp;
+            const dataIndex = startIndex + rowIndex;
+
+			const rowData = filteredAndSortedDataset[dataIndex];
+			if (!rowData) return;
+
+            const hostname = rowData.Computador;
+			if (hostname) {
+                const url = `inventario/${hostname}.html`;
+				window.open(url, '_blank');
+			} else {
+				alert("Não foi possível encontrar o nome do computador para esta linha.");
+			}
+		});
+
+
+        // --- FUNÇÃO DE INICIALIZAÇÃO CORRIGIDA ---
+        function initializeApp() {
+            loadTheme();
+            showLoader(true);
+            
+            try {
+                if (typeof inventoryData !== 'undefined' && Array.isArray(inventoryData) && inventoryData.length > 0) {
+                    allHeaders = Object.keys(inventoryData[0]);
+                    originalDataset = inventoryData;
+
+                    const storedVisible = localStorage.getItem(DEFAULT_VISIBLE_COLUMNS_KEY);
+                    if (storedVisible) {
+                        try {
+                            let parsed = JSON.parse(storedVisible);
+                            visibleColumnIndexes = parsed.filter(idx => typeof idx === 'number' && idx >=0 && idx < allHeaders.length);
+                            if(visibleColumnIndexes.length === 0 && allHeaders.length > 0) { visibleColumnIndexes = allHeaders.map((_,i) => i); }
+                        } catch (e) { 
+                            console.warn("Erro ao ler colunas visíveis do localStorage.", e);
+                            visibleColumnIndexes = allHeaders.map((_,i) => i); 
+                        }
+                    } else {
+                        visibleColumnIndexes = DEFAULT_COLUMN_NAMES.map(name => allHeaders.indexOf(name)).filter(index => index !== -1);
+                        if (visibleColumnIndexes.length === 0) { visibleColumnIndexes = allHeaders.map((_,i) => i); }
+                    }
+
+                    btnConfigureColumns.disabled = false;
+                    Object.values(document.querySelectorAll('.top-controls button, .pagination-controls button, .pagination-controls select')).forEach(el => el.disabled = false);
+
+                    renderHeaderAndFilterRows();
+                    applyFiltersAndRender();
+                } else {
+                    statusDiv.textContent = 'Nenhum dado de inventário encontrado. Rode o script de coleta nas máquinas.';
+                    btnConfigureColumns.disabled = true;
+                    Object.values(document.querySelectorAll('.top-controls button, .pagination-controls button, .pagination-controls select')).forEach(el => el.disabled = true);
+                }
+            } catch (e) {
+                console.error("Erro fatal durante a inicialização:", e);
+                statusDiv.textContent = "Ocorreu um erro fatal ao processar os dados. Verifique o console (F12).";
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        initializeApp();
+    });
+    </script>
+</body>
+</html>
