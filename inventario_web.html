@@ -206,12 +206,21 @@
         btnCancelColumns.addEventListener('click', () => { columnsModal.style.display = 'none'; });
         btnApplyColumns.addEventListener('click', () => {
             const selectedCheckboxes = modalColumnsList.querySelectorAll('input[type="checkbox"]:checked');
-            visibleColumnIndexes = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
-            localStorage.setItem(DEFAULT_VISIBLE_COLUMNS_KEY, JSON.stringify(visibleColumnIndexes));
+            visibleColumnIndexes = Array.from(selectedCheckboxes)
+                .map(cb => parseInt(cb.value, 10))
+                .filter(index => !Number.isNaN(index) && index >= 0 && index < allHeaders.length);
+            const visibleColumnNames = visibleColumnIndexes
+                .map(index => allHeaders[index])
+                .filter(name => typeof name === 'string');
+            if (visibleColumnNames.length > 0 || selectedCheckboxes.length === 0) {
+                localStorage.setItem(DEFAULT_VISIBLE_COLUMNS_KEY, JSON.stringify(visibleColumnNames));
+            } else {
+                localStorage.removeItem(DEFAULT_VISIBLE_COLUMNS_KEY);
+            }
             columnsModal.style.display = 'none';
-            currentPage = 1; 
+            currentPage = 1;
             renderHeaderAndFilterRows();
-            applyFiltersAndRender(); 
+            applyFiltersAndRender();
         });
         columnsModal.addEventListener('click', (event) => { if (event.target === columnsModal) columnsModal.style.display = 'none'; });
         
@@ -567,17 +576,65 @@ function renderDashboard() {
                     const storedVisible = localStorage.getItem(DEFAULT_VISIBLE_COLUMNS_KEY);
                     if (storedVisible) {
                         try {
-                            let parsed = JSON.parse(storedVisible);
-                            visibleColumnIndexes = parsed.filter(idx => typeof idx === 'number' && idx >=0 && idx < allHeaders.length);
+                            const parsed = JSON.parse(storedVisible);
+                            if (Array.isArray(parsed)) {
+                                if (parsed.every(item => typeof item === 'string')) {
+                                    visibleColumnIndexes = parsed
+                                        .map(name => allHeaders.indexOf(name))
+                                        .filter(index => index !== -1);
+                                    const sanitizedNames = visibleColumnIndexes.map(index => allHeaders[index]);
+                                    if (sanitizedNames.length !== parsed.length) {
+                                        localStorage.setItem(DEFAULT_VISIBLE_COLUMNS_KEY, JSON.stringify(sanitizedNames));
+                                    }
+                                } else if (parsed.every(item => typeof item === 'number')) {
+                                    visibleColumnIndexes = parsed
+                                        .filter(idx => Number.isInteger(idx) && idx >= 0 && idx < allHeaders.length);
+                                    const convertedNames = visibleColumnIndexes
+                                        .map(index => allHeaders[index])
+                                        .filter(name => typeof name === 'string');
+                                    if (convertedNames.length > 0 || parsed.length === 0) {
+                                        localStorage.setItem(DEFAULT_VISIBLE_COLUMNS_KEY, JSON.stringify(convertedNames));
+                                    } else {
+                                        localStorage.removeItem(DEFAULT_VISIBLE_COLUMNS_KEY);
+                                    }
+                                } else {
+                                    const derivedIndexes = [];
+                                    parsed.forEach(item => {
+                                        if (typeof item === 'string') {
+                                            const idx = allHeaders.indexOf(item);
+                                            if (idx !== -1) derivedIndexes.push(idx);
+                                        } else if (typeof item === 'number' && Number.isInteger(item) && item >= 0 && item < allHeaders.length) {
+                                            derivedIndexes.push(item);
+                                        }
+                                    });
+                                    visibleColumnIndexes = derivedIndexes;
+                                    const normalizedNames = visibleColumnIndexes
+                                        .map(index => allHeaders[index])
+                                        .filter(name => typeof name === 'string');
+                                    if (parsed.some(item => typeof item === 'number')) {
+                                        if (normalizedNames.length > 0 || parsed.length === 0) {
+                                            localStorage.setItem(DEFAULT_VISIBLE_COLUMNS_KEY, JSON.stringify(normalizedNames));
+                                        } else {
+                                            localStorage.removeItem(DEFAULT_VISIBLE_COLUMNS_KEY);
+                                        }
+                                    } else if (normalizedNames.length !== parsed.length) {
+                                        localStorage.setItem(DEFAULT_VISIBLE_COLUMNS_KEY, JSON.stringify(normalizedNames));
+                                    }
+                                }
+                            } else {
+                                visibleColumnIndexes = [];
+                            }
                             if(visibleColumnIndexes.length === 0 && allHeaders.length > 0) { visibleColumnIndexes = allHeaders.map((_,i) => i); }
-                        } catch (e) { 
+                        } catch (e) {
                             console.warn("Erro ao ler colunas visíveis do localStorage.", e);
-                            visibleColumnIndexes = allHeaders.map((_,i) => i); 
+                            visibleColumnIndexes = allHeaders.map((_,i) => i);
                         }
                     } else {
-                        visibleColumnIndexes = DEFAULT_COLUMN_NAMES.map(name => allHeaders.indexOf(name)).filter(index => index !== -1);
+                        visibleColumnIndexes = DEFAULT_COLUMN_NAMES.map(name => allHeaders.indexOf(name)).filter(index => index!== -1);
                         if (visibleColumnIndexes.length === 0) { visibleColumnIndexes = allHeaders.map((_,i) => i); }
                     }
+
+
 
                     btnConfigureColumns.disabled = false;
                     Object.values(document.querySelectorAll('.top-controls button, .pagination-controls button, .pagination-controls select')).forEach(el => el.disabled = false);
