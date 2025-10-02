@@ -209,18 +209,39 @@ printf '%s\n' "//<DATA_START>" >> "$temp_html"
 printf '    var inventoryData = %s;\n' "$updated_json" >> "$temp_html"
 printf '%s\n' "    //<DATA_END>" >> "$temp_html"
 printf '%s\n' "$after_data" >> "$temp_html"
-if mv -f "$temp_html" "$HTML_FILE"; then
+finalize_html_update() {
     if ! printf '%s\n' "$updated_json" > "$AGGREGATED_JSON_PATH"; then
         flock -u 200
         echo "ERRO: não foi possível atualizar o JSON agregado em $AGGREGATED_JSON_PATH." >&2
         exit 1
     fi
     flock -u 200
-    echo "Arquivo HTML atualizado com sucesso."
+    echo "$1"
+}
+mv_err_file=$(mktemp)
+if mv -f "$temp_html" "$HTML_FILE" 2>"$mv_err_file"; then
+    mv_exit=$?
+    rm -f "$mv_err_file"
+    finalize_html_update "Arquivo HTML atualizado com sucesso."
 else
-    flock -u 200
-    echo "ERRO: não foi possível atualizar o arquivo HTML em $HTML_FILE." >&2
-    exit 1
+    mv_exit=$?
+    mv_err_msg=$(cat "$mv_err_file")
+    rm -f "$mv_err_file"
+    if printf '%s' "$mv_err_msg" | grep -qiE 'Permission denied|Operation not permitted'; then
+        echo "Aviso: mv falhou com código $mv_exit devido a permissão. Tentando fallback..." >&2
+        if cat "$temp_html" > "$HTML_FILE"; then
+            finalize_html_update "Arquivo HTML atualizado com sucesso via fallback."
+        else
+            flock -u 200
+            echo "ERRO: fallback de escrita falhou para $HTML_FILE." >&2
+            exit 1
+        fi
+    else
+        flock -u 200
+        printf '%s\n' "$mv_err_msg" >&2
+        echo "ERRO: não foi possível atualizar o arquivo HTML em $HTML_FILE (código $mv_exit)." >&2
+        exit 1
+    fi
 fi
 trap - EXIT
 
