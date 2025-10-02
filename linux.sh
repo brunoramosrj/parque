@@ -185,6 +185,7 @@ if [ ! -f "$HTML_FILE" ]; then
 fi
 echo "Atualizando bloco JSON no HTML (modo robusto)..."
 temp_html=$(mktemp)
+trap 'rm -f "$temp_html"' EXIT
 current_content=$(cat "$HTML_FILE")
 before_data=$(printf '%s\n' "$current_content" | sed -n '1,/\/\/<DATA_START>/p' | sed '$d')
 after_data=$(printf '%s\n' "$current_content" | sed -n '/\/\/<DATA_END>/,$p' | sed '1d')
@@ -198,9 +199,15 @@ printf '%s\n' "//<DATA_START>" >> "$temp_html"
 printf '    var inventoryData = %s;\n' "$updated_json" >> "$temp_html"
 printf '%s\n' "    //<DATA_END>" >> "$temp_html"
 printf '%s\n' "$after_data" >> "$temp_html"
-mv "$temp_html" "$HTML_FILE"
-flock -u 200
-echo "Arquivo HTML atualizado com sucesso."
+if mv -f "$temp_html" "$HTML_FILE"; then
+    flock -u 200
+    echo "Arquivo HTML atualizado com sucesso."
+else
+    flock -u 200
+    echo "ERRO: não foi possível atualizar o arquivo HTML em $HTML_FILE." >&2
+    exit 1
+fi
+trap - EXIT
 
 # --- SALVAR ARQUIVOS INDIVIDUAIS E CORRIGIR PERMISSÕES ---
 JSON_DESTINO="$INVENTORY_DIR/$HOSTNAME.json"
