@@ -23,6 +23,7 @@ fi
 # --- Caminhos e Variáveis Globais ---
 HTML_FILE="$PROJECT_DIR/inventario_web.html"
 INVENTORY_DIR="$PROJECT_DIR/inventario"
+AGGREGATED_JSON_PATH="$INVENTORY_DIR/inventario_web.json"
 HOSTNAME=$(hostname)
 DATA_HORA=$(date +"%Y-%m-%d %H:%M:%S")
 STOPWATCH_START=$(date +%s.%N)
@@ -183,6 +184,15 @@ LOCK_FILE="/var/lock/inventory_html.lock"; exec 200>"$LOCK_FILE"; flock -x 200
 if [ ! -f "$HTML_FILE" ]; then
     echo "ERRO: Arquivo HTML template não encontrado em $HTML_FILE."; flock -u 200; exit 1;
 fi
+backup_stamp=$(date +%Y%m%d%H%M%S)
+backup_file="$INVENTORY_DIR/inventario_web.${backup_stamp}.bak.html"
+if cp --preserve=mode,ownership,timestamps "$HTML_FILE" "$backup_file"; then
+    echo "Backup do HTML original criado em $backup_file"
+else
+    flock -u 200
+    echo "ERRO: não foi possível criar o backup de $HTML_FILE em $backup_file." >&2
+    exit 1
+fi
 echo "Atualizando bloco JSON no HTML (modo robusto)..."
 temp_html=$(mktemp "$(dirname "$HTML_FILE")/inventario_web.html.XXXXXX")
 trap 'rm -f "$temp_html"' EXIT
@@ -200,6 +210,11 @@ printf '    var inventoryData = %s;\n' "$updated_json" >> "$temp_html"
 printf '%s\n' "    //<DATA_END>" >> "$temp_html"
 printf '%s\n' "$after_data" >> "$temp_html"
 if mv -f "$temp_html" "$HTML_FILE"; then
+    if ! printf '%s\n' "$updated_json" > "$AGGREGATED_JSON_PATH"; then
+        flock -u 200
+        echo "ERRO: não foi possível atualizar o JSON agregado em $AGGREGATED_JSON_PATH." >&2
+        exit 1
+    fi
     flock -u 200
     echo "Arquivo HTML atualizado com sucesso."
 else
@@ -226,7 +241,7 @@ EOF
 echo "Relatório individual salvo em $HTML_DESTINO"
 
 if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
-    chown "$SUDO_USER:$SUDO_USER" "$HTML_FILE" "$JSON_DESTINO" "$HTML_DESTINO" 2>/dev/null
+    chown "$SUDO_USER:$SUDO_USER" "$HTML_FILE" "$JSON_DESTINO" "$HTML_DESTINO" "$AGGREGATED_JSON_PATH" 2>/dev/null
     echo "Permissões dos arquivos gerados corrigidas para o usuário '$SUDO_USER'."
 fi
 
