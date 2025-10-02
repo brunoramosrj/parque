@@ -184,7 +184,7 @@ if [ ! -f "$HTML_FILE" ]; then
     echo "ERRO: Arquivo HTML template não encontrado em $HTML_FILE."; flock -u 200; exit 1;
 fi
 echo "Atualizando bloco JSON no HTML (modo robusto)..."
-temp_html=$(mktemp)
+temp_html=$(mktemp "$(dirname "$HTML_FILE")/inventario_web.html.XXXXXX")
 trap 'rm -f "$temp_html"' EXIT
 current_content=$(cat "$HTML_FILE")
 before_data=$(printf '%s\n' "$current_content" | sed -n '1,/\/\/<DATA_START>/p' | sed '$d')
