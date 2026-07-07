@@ -197,9 +197,57 @@ echo "Atualizando bloco JSON no HTML (modo robusto)..."
 temp_html=$(mktemp "$(dirname "$HTML_FILE")/inventario_web.html.XXXXXX")
 trap 'rm -f "$temp_html"' EXIT
 current_content=$(cat "$HTML_FILE")
-before_data=$(printf '%s\n' "$current_content" | sed -n '1,/\/\/<DATA_START>/p' | sed '$d')
-after_data=$(printf '%s\n' "$current_content" | sed -n '/\/\/<DATA_END>/,$p' | sed '1d')
-json_part=$(printf '%s\n' "$current_content" | sed -n '/\/\/<DATA_START>/,/\/\/<DATA_END>/p' | sed '1d;$d' | sed 's/^[[:space:]]*var inventoryData = //; s/;[[:space:]]*$//')
+marker_counts=$(printf '%s\n' "$current_content" | awk '
+    {
+        line = $0
+        sub(/^[[:space:]]*/, "", line)
+        sub(/[[:space:]]*$/, "", line)
+        if (line == "//<DATA_START>") starts++
+        if (line == "//<DATA_END>") ends++
+    }
+    END { printf "%d %d", starts + 0, ends + 0 }
+')
+start_count=${marker_counts%% *}
+end_count=${marker_counts##* }
+if [ "$start_count" -lt 1 ] || [ "$end_count" -lt 1 ]; then
+    flock -u 200
+    echo "ERRO: HTML invalido: marcadores //<DATA_START>/ //<DATA_END> nao encontrados." >&2
+    exit 1
+fi
+if [ "$start_count" -gt 1 ] || [ "$end_count" -gt 1 ]; then
+    echo "AVISO: HTML continha blocos de dados duplicados; a regravacao vai manter apenas o primeiro bloco dentro do script."
+fi
+before_data=$(printf '%s\n' "$current_content" | awk '
+    {
+        line = $0
+        sub(/^[[:space:]]*/, "", line)
+        sub(/[[:space:]]*$/, "", line)
+        if (line == "//<DATA_START>") exit
+        print
+    }
+')
+json_part=$(printf '%s\n' "$current_content" | awk '
+    {
+        line = $0
+        sub(/^[[:space:]]*/, "", line)
+        sub(/[[:space:]]*$/, "", line)
+        if (line == "//<DATA_START>" && !captured) { in_block = 1; next }
+        if (line == "//<DATA_END>" && in_block) { captured = 1; in_block = 0; exit }
+        if (in_block) print
+    }
+' | sed 's/^[[:space:]]*var inventoryData = //; s/;[[:space:]]*$//')
+after_data=$(printf '%s\n' "$current_content" | awk '
+    {
+        line = $0
+        sub(/^[[:space:]]*/, "", line)
+        sub(/[[:space:]]*$/, "", line)
+        if (!after_first && line == "//<DATA_END>") { after_first = 1; next }
+        if (!after_first) next
+        if (line == "//<DATA_START>") { skip_extra = 1; next }
+        if (skip_extra && line == "//<DATA_END>") { skip_extra = 0; next }
+        if (!skip_extra) print
+    }
+')
 if [ -z "$(printf '%s' "$json_part" | tr -d '[:space:]')" ]; then json_part="[]"; fi
 updated_json=$(printf '%s\n' "$json_part" | jq --argjson new_entry "$json_output" '[.[] | select(.Computador != $new_entry.Computador)] + [$new_entry]') || {
     echo "ERRO: falha ao processar JSON atual com jq."; flock -u 200; exit 1;
