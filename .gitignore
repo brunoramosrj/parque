@@ -1,0 +1,36 @@
+# Runtime inventory data
+inventario/
+executados/
+retorno/
+comandos/
+softwares/
+
+# Local generated/operational files
+inventario_web.html
+inventario_web.json
+*.log
+erro.txt
+screenshot*.jpg
+screenshot*.png
+
+# Local/private configuration
+parque.conf
+
+# Temporary, backup, and refactor leftovers
+__lixo_refactor/
+*.zip
+*.bak
+*.bak.*
+* - Copia*
+*Cópia*
+Copy #*
+
+# Editor/agent metadata
+.agents/
+.codex/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp

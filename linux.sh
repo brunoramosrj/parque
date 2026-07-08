@@ -6,8 +6,50 @@
 #
 # =========================================================================
 
-# --- CONFIGURAÇÃO ---
-PROJECT_DIR="/mnt/parque3.0"
+# --- CARREGA CONFIGURACAO (parque.conf) ---
+# Defaults calculados a partir da pasta do proprio script.
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+PROJECT_DIR="$SCRIPT_DIR"
+HTML_FILE="inventario_web.html"
+INVENTORY_DIR="inventario"
+MARCADOR_DADOS_INI="//<DATA_START>"
+MARCADOR_DADOS_FIM="//<DATA_END>"
+CONFIG_FILE="$SCRIPT_DIR/parque.conf"
+if [ -f "$CONFIG_FILE" ]; then
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Ignora linhas em branco e comentarios
+        case "$line" in
+            ''|\#*) continue ;;
+        esac
+        case "$line" in
+            *=*)
+                key="${line%%=*}"
+                val="${line#*=}"
+                key="$(echo "$key" | xargs)"
+                val="${val%${val##*[![:space:]]}}"  # rtrim espacos
+                val="${val#"${val%%[![:space:]]*}"}" # ltrim espacos
+                case "$key" in
+                    PROJECT_DIR)         [ -n "$val" ] && PROJECT_DIR="$val" ;;
+                    HTML_FILE)           [ -n "$val" ] && HTML_FILE="$val" ;;
+                    INVENTORY_DIR)       [ -n "$val" ] && INVENTORY_DIR="$val" ;;
+                    MARCADOR_DADOS_INI)  [ -n "$val" ] && MARCADOR_DADOS_INI="$val" ;;
+                    MARCADOR_DADOS_FIM)  [ -n "$val" ] && MARCADOR_DADOS_FIM="$val" ;;
+                esac
+                ;;
+        esac
+    done < "$CONFIG_FILE"
+fi
+
+# Resolve caminhos derivados: se nao forem absolutos, tornam-se relativos a PROJECT_DIR
+resolve_path() {
+    case "$1" in
+        /*) echo "$1" ;;
+        '') echo "$2" ;;
+        *)  echo "$PROJECT_DIR/$1" ;;
+    esac
+}
+HTML_FILE="$(resolve_path "$HTML_FILE" "$PROJECT_DIR/inventario_web.html")"
+INVENTORY_DIR="$(resolve_path "$INVENTORY_DIR" "$PROJECT_DIR/inventario")"
 
 # --- Verificação de Root e Dependências ---
 if [ "$EUID" -ne 0 ]; then
@@ -20,10 +62,7 @@ if ! command -v jq &> /dev/null; then
     exit 1
 fi
 
-# --- Caminhos e Variáveis Globais ---
-HTML_FILE="$PROJECT_DIR/inventario_web.html"
-INVENTORY_DIR="$PROJECT_DIR/inventario"
-AGGREGATED_JSON_PATH="$INVENTORY_DIR/inventario_web.json"
+# --- Variáveis Globais ---
 HOSTNAME=$(hostname)
 DATA_HORA=$(date +"%Y-%m-%d %H:%M:%S")
 STOPWATCH_START=$(date +%s.%N)
@@ -168,8 +207,7 @@ data["Top5ProcessosRAM"]=$(get_data "ps -eo comm,pmem --sort=-pmem | head -n 6 |
 # --- CONSTRUÇÃO DO JSON FINAL ---
 echo "Construindo objeto JSON..."
 json_output=$(jq -n '{}')
-readarray -t sorted_keys < <(printf '%s\n' "${!data[@]}" | sort)
-for key in "${sorted_keys[@]}"; do
+for key in "${!data[@]}"; do
     value=$(remove_accents "${data[$key]}")
     if [[ $value =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
         json_output=$(echo "$json_output" | jq --arg key "$key" --argjson val "$value" '.[$key] = $val')
@@ -184,67 +222,58 @@ LOCK_FILE="/var/lock/inventory_html.lock"; exec 200>"$LOCK_FILE"; flock -x 200
 if [ ! -f "$HTML_FILE" ]; then
     echo "ERRO: Arquivo HTML template não encontrado em $HTML_FILE."; flock -u 200; exit 1;
 fi
-backup_stamp=$(date +%Y%m%d%H%M%S)
-backup_file="$INVENTORY_DIR/inventario_web.${backup_stamp}.bak.html"
-if cp --preserve=mode,ownership,timestamps "$HTML_FILE" "$backup_file"; then
-    echo "Backup do HTML original criado em $backup_file"
-else
-    flock -u 200
-    echo "ERRO: não foi possível criar o backup de $HTML_FILE em $backup_file." >&2
-    exit 1
-fi
 echo "Atualizando bloco JSON no HTML (modo robusto)..."
-temp_html=$(mktemp "$(dirname "$HTML_FILE")/inventario_web.html.XXXXXX")
-trap 'rm -f "$temp_html"' EXIT
+temp_html=$(mktemp)
 current_content=$(cat "$HTML_FILE")
-marker_counts=$(printf '%s\n' "$current_content" | awk '
+marker_counts=$(printf '%s\n' "$current_content" | awk -v start="$MARCADOR_DADOS_INI" -v end="$MARCADOR_DADOS_FIM" '
     {
         line = $0
         sub(/^[[:space:]]*/, "", line)
         sub(/[[:space:]]*$/, "", line)
-        if (line == "//<DATA_START>") starts++
-        if (line == "//<DATA_END>") ends++
+        if (line == start) starts++
+        if (line == end) ends++
     }
     END { printf "%d %d", starts + 0, ends + 0 }
 ')
 start_count=${marker_counts%% *}
 end_count=${marker_counts##* }
 if [ "$start_count" -lt 1 ] || [ "$end_count" -lt 1 ]; then
+    echo "ERRO: HTML invalido: marcadores $MARCADOR_DADOS_INI/$MARCADOR_DADOS_FIM nao encontrados."
     flock -u 200
-    echo "ERRO: HTML invalido: marcadores //<DATA_START>/ //<DATA_END> nao encontrados." >&2
+    rm -f "$temp_html"
     exit 1
 fi
 if [ "$start_count" -gt 1 ] || [ "$end_count" -gt 1 ]; then
     echo "AVISO: HTML continha blocos de dados duplicados; a regravacao vai manter apenas o primeiro bloco dentro do script."
 fi
-before_data=$(printf '%s\n' "$current_content" | awk '
+before_data=$(printf '%s\n' "$current_content" | awk -v start="$MARCADOR_DADOS_INI" '
     {
         line = $0
         sub(/^[[:space:]]*/, "", line)
         sub(/[[:space:]]*$/, "", line)
-        if (line == "//<DATA_START>") exit
+        if (line == start) exit
         print
     }
 ')
-json_part=$(printf '%s\n' "$current_content" | awk '
+json_part=$(printf '%s\n' "$current_content" | awk -v start="$MARCADOR_DADOS_INI" -v end="$MARCADOR_DADOS_FIM" '
     {
         line = $0
         sub(/^[[:space:]]*/, "", line)
         sub(/[[:space:]]*$/, "", line)
-        if (line == "//<DATA_START>" && !captured) { in_block = 1; next }
-        if (line == "//<DATA_END>" && in_block) { captured = 1; in_block = 0; exit }
+        if (line == start && !captured) { in_block = 1; next }
+        if (line == end && in_block) { captured = 1; in_block = 0; exit }
         if (in_block) print
     }
 ' | sed 's/^[[:space:]]*var inventoryData = //; s/;[[:space:]]*$//')
-after_data=$(printf '%s\n' "$current_content" | awk '
+after_data=$(printf '%s\n' "$current_content" | awk -v start="$MARCADOR_DADOS_INI" -v end="$MARCADOR_DADOS_FIM" '
     {
         line = $0
         sub(/^[[:space:]]*/, "", line)
         sub(/[[:space:]]*$/, "", line)
-        if (!after_first && line == "//<DATA_END>") { after_first = 1; next }
+        if (!after_first && line == end) { after_first = 1; next }
         if (!after_first) next
-        if (line == "//<DATA_START>") { skip_extra = 1; next }
-        if (skip_extra && line == "//<DATA_END>") { skip_extra = 0; next }
+        if (line == start) { skip_extra = 1; next }
+        if (skip_extra && line == end) { skip_extra = 0; next }
         if (!skip_extra) print
     }
 ')
@@ -253,45 +282,13 @@ updated_json=$(printf '%s\n' "$json_part" | jq --argjson new_entry "$json_output
     echo "ERRO: falha ao processar JSON atual com jq."; flock -u 200; exit 1;
 }
 printf '%s\n' "$before_data" > "$temp_html"
-printf '%s\n' "//<DATA_START>" >> "$temp_html"
+printf '%s\n' "$MARCADOR_DADOS_INI" >> "$temp_html"
 printf '    var inventoryData = %s;\n' "$updated_json" >> "$temp_html"
-printf '%s\n' "    //<DATA_END>" >> "$temp_html"
+printf '%s\n' "    $MARCADOR_DADOS_FIM" >> "$temp_html"
 printf '%s\n' "$after_data" >> "$temp_html"
-finalize_html_update() {
-    if ! printf '%s\n' "$updated_json" > "$AGGREGATED_JSON_PATH"; then
-        flock -u 200
-        echo "ERRO: não foi possível atualizar o JSON agregado em $AGGREGATED_JSON_PATH." >&2
-        exit 1
-    fi
-    flock -u 200
-    echo "$1"
-}
-mv_err_file=$(mktemp)
-if mv -f "$temp_html" "$HTML_FILE" 2>"$mv_err_file"; then
-    mv_exit=$?
-    rm -f "$mv_err_file"
-    finalize_html_update "Arquivo HTML atualizado com sucesso."
-else
-    mv_exit=$?
-    mv_err_msg=$(cat "$mv_err_file")
-    rm -f "$mv_err_file"
-    if printf '%s' "$mv_err_msg" | grep -qiE 'Permission denied|Operation not permitted'; then
-        echo "Aviso: mv falhou com código $mv_exit devido a permissão. Tentando fallback..." >&2
-        if cat "$temp_html" > "$HTML_FILE"; then
-            finalize_html_update "Arquivo HTML atualizado com sucesso via fallback."
-        else
-            flock -u 200
-            echo "ERRO: fallback de escrita falhou para $HTML_FILE." >&2
-            exit 1
-        fi
-    else
-        flock -u 200
-        printf '%s\n' "$mv_err_msg" >&2
-        echo "ERRO: não foi possível atualizar o arquivo HTML em $HTML_FILE (código $mv_exit)." >&2
-        exit 1
-    fi
-fi
-trap - EXIT
+mv "$temp_html" "$HTML_FILE"
+flock -u 200
+echo "Arquivo HTML atualizado com sucesso."
 
 # --- SALVAR ARQUIVOS INDIVIDUAIS E CORRIGIR PERMISSÕES ---
 JSON_DESTINO="$INVENTORY_DIR/$HOSTNAME.json"
@@ -300,7 +297,7 @@ echo "Inventário individual salvo em $JSON_DESTINO"
 HTML_DESTINO="$INVENTORY_DIR/$HOSTNAME.html"
 echo "Gerando relatório HTML individual..."
 html_rows=""
-for key in "${sorted_keys[@]}"; do
+for key in "${!data[@]}"; do
     value=${data[$key]:-"Indisponivel"}
     html_rows+="<tr><td><b>$key</b></td><td>$value</td></tr>"
 done
@@ -310,7 +307,7 @@ EOF
 echo "Relatório individual salvo em $HTML_DESTINO"
 
 if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
-    chown "$SUDO_USER:$SUDO_USER" "$HTML_FILE" "$JSON_DESTINO" "$HTML_DESTINO" "$AGGREGATED_JSON_PATH" 2>/dev/null
+    chown "$SUDO_USER:$SUDO_USER" "$HTML_FILE" "$JSON_DESTINO" "$HTML_DESTINO" 2>/dev/null
     echo "Permissões dos arquivos gerados corrigidas para o usuário '$SUDO_USER'."
 fi
 

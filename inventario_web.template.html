@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿﻿﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -77,6 +77,21 @@
         .modal-actions .apply-btn:hover { background-color: #218838; }
         .modal-actions .cancel-btn { background-color: #6c757d; color: white; border: none; }
         .modal-actions .cancel-btn:hover { background-color: #5a6268; }
+        .pie-charts-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            margin-bottom: 30px; /* Add some space between rows of charts */
+        }
+        .pie-charts-row canvas {
+            max-width: 48%; /* Adjust as needed for spacing */
+            margin-bottom: 30px; /* Keep margin for vertical spacing within the row */
+        }
+        /* Adjust max-height for all canvases to be consistent */
+        #dashboardContainer canvas {
+            max-height: 300px; /* Keep consistent height */
+            margin-bottom: 30px; /* Ensure consistent spacing */
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -125,9 +140,16 @@
 
     <div id="dashboardContainer" style="display:none; padding:20px;">
         <h2>Dashboard do Inventário</h2>
-        <canvas id="osChart" style="max-height:300px; margin-bottom:30px;"></canvas>
+        <div class="pie-charts-row">
+            <canvas id="osChart" style="max-height:300px; margin-bottom:30px;"></canvas>
+            <canvas id="chassisChart" style="max-height:300px; margin-bottom:30px;"></canvas>
+        </div>
+        <div class="pie-charts-row">
+            <canvas id="antivirusChart" style="max-height:300px; margin-bottom:30px;"></canvas>
+            <canvas id="diskTypeChart" style="max-height:300px;"></canvas>
+        </div>
         <canvas id="cpuChart" style="max-height:300px; margin-bottom:30px;"></canvas>
-        <canvas id="ramChart" style="max-height:300px;"></canvas>
+        <canvas id="ramChart" style="max-height:300px; margin-bottom:30px;"></canvas>
     </div>
 
 
@@ -147,8 +169,8 @@
     </div>
 
     <script>
-    //<DATA_START>
-    var inventoryData = [{"Computador":"ADMINBAMRJ","Usuario":"adminsti","IP":"10.2.43.22","MAC":"04-7C-16-9B-3A-F8","Computador_Fabricante":"LENOVO","Computador_Modelo":"30GUS69R00","Computador_Serial":"PE0C4CSR","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 11 Pro","Build":"26100","Data_Instalacao":"2025-08-13","Uptime_Horas":"10.2","Uptime_Formatado":"0d 10h 10m","Dominio_ou_Grupo":"bambrj.ad","Status_Ativacao":"Ativado","Canal_Licenca":"OEM","Chave_Parcial":"KW3W6","Chave_OEM_BIOS":"Nao Coletado","CPU":"13th Gen Intel(R) Core(TM) i5-13500","Arquitetura":"64 bits","CPU_Cores":14,"CPU_Threads":20,"CPU_Clock_MHz":2500,"PlacaMae_Fabricante":"LENOVO","PlacaMae_Modelo":"1064","PlacaMae_Serial":"                        ","BIOS_Versao":"S0IKT30A","BIOS_Data":"","RAM_GB_Total":32,"Qtd_Pentes":2,"RAM_Detalhes":"[16GB/Tipo /5600MHz/SK Hynix]; [16GB/Tipo /5600MHz/SK Hynix]","Armazenamento_C_GB":279,"Espaco_Livre_C_GB":162,"Espaco_Livre_C_Perc":58,"Discos_Fisicos":"HDD - WDC WD10EZEX-00WN4A0 (932GB) | SSD - WD PC SN810 SDCQNRY-512G-1001 (477GB)","Volumes":"[E: 195GB livre de 195GB]; [C: 162GB livre de 279GB]; [D: 915GB livre de 932GB]","Modelo_Disco_Principal":"WD PC SN810 SDCQNRY-512G-1001","GPU":"Intel(R) UHD Graphics 770","Monitores":"HPN - HP P22a G4; LEN - T22i-30","Resolucao_Tela":"1920x1080","Bateria":"Desktop/Sem bateria","Impressoras":"CLTI ADM; Epson ESC/P 9pin V4 Class Driver; EPSON L3150 Series (Copiar 1); EPSON L3150 Series (Copiar 2); EPSON L3150 Series; EPSONF0FE67 (L5290 Series); Microsoft Print to PDF; OneNote (Desktop); PDFCreator; RICOH MP 402SPF - CLTIAB; RICOH MP 402SPF PCL 6","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Nao","Servidor_WSUS":"","DataHora_Coleta":"2025-09-11 14:02:12","AdminsLocais":"","UpdatesPendentes":0,"UltimaInstalacaoUpdates":"2025-09-10 15:10","PortasTCP_Abertas":"135, 139, 623, 2968, 3306, 5040, 5357, 16960, 16992, 19293, 30523, 42050, 49664, 49665, 49668, 49669, 49670, 49671, 49672, 49718, 49729, 49758, 55228, 61209, 62354","PortasUDP_Abertas":"123, 137, 138, 500, 1900, 2968, 3702, 4500, 5050, 5353, 5355, 15000, 15001, 49664, 49665, 49666, 49669, 50216, 50217, 51545, 51546, 51547, 51548, 53179, 54062, 55617, 56325, 60592, 60593, 60722, 60812, 60847, 61322, 63875, 64040, 64528, 64529, 65345, 65480","SaudeDiscoSMART":"Nao suportado ou sem permissao","NumeroSerieMonitores":"BRC20602D7; VAB20124","GatewayPadrao":"10.2.32.1","ServidoresDNS":"10.200.192.62, 10.205.145.64","ServidorDHCP":null,"DHCPAtivado":false,"ConsumoCPU_Percentual":20,"ConsumoRAM_Percentual":43.46,"Top5ProcessosCPU":"DecodeProcess (CPU: 2.324,69s); PlayControlClient (CPU: 856,19s); explorer (CPU: 722,50s); firefox (CPU: 587,78s); HCWebControlService (CPU: 493,61s)","Top5ProcessosRAM":"firefox (RAM: 1.026,72MB); firefox (RAM: 712,97MB); explorer (RAM: 582,06MB); javaw (RAM: 543,48MB); firefox (RAM: 419,04MB)"},{"Computador":"DEPMSMRJ-CPD","Usuario":"Administrator","IP":"10.7.48.222","MAC":"0C-9D-92-8E-80-82","Computador_Fabricante":"System manufacturer","Computador_Modelo":"System Product Name","Computador_Serial":"System Serial Number","Chassis_Tipo":"Desktop","SO":"Microsoft Windows 11 Pro","Build":"22635","Data_Instalacao":"2024-08-30","Uptime_Horas":"97.6","Uptime_Formatado":"4d 1h 38m","Dominio_ou_Grupo":"depmsm.ad","Status_Ativacao":"Nao Ativado","Canal_Licenca":"Desconhecido","Chave_Parcial":"N/A","Chave_OEM_BIOS":"Nao Coletado","CPU":"AMD Athlon 220GE with Radeon Vega Graphics","Arquitetura":"64 bits","CPU_Cores":2,"CPU_Threads":4,"CPU_Clock_MHz":3400,"PlacaMae_Fabricante":"ASUSTeK COMPUTER INC.","PlacaMae_Modelo":"PRIME A320M-K/BR","PlacaMae_Serial":"190443384303204","BIOS_Versao":"5007","BIOS_Data":"","RAM_GB_Total":8,"Qtd_Pentes":null,"RAM_Detalhes":"[8GB/DDR4/2666MHz/Kingston]","Armazenamento_C_GB":223,"Espaco_Livre_C_GB":25,"Espaco_Livre_C_Perc":11,"Discos_Fisicos":"HDD - TOSHIBA DT01ACA100 (932GB) | SSD - SSD 240GB (224GB)","Volumes":"[C: 25GB livre de 223GB]; [D: 228GB livre de 931GB]","Modelo_Disco_Principal":"SSD 240GB","GPU":"AMD Radeon(TM) Vega 3 Graphics","Monitores":"GSM - LG FULL HD","Resolucao_Tela":"1920x1080","Bateria":"Desktop/Sem bateria","Impressoras":"RICOH IM 430 PCL 6; Microsoft Print to PDF","Antivirus":"Kaspersky Endpoint Security for Windows","Antivirus_Status":"Ativo","Firewall_Ativo":"Sim","Usa_WSUS":"Sim","Servidor_WSUS":"http://10.200.192.117:8530","DataHora_Coleta":"2025-09-22 09:15:16","AdminsLocais":"Domain Admins; adminclti; Administrador","UpdatesPendentes":1,"UltimaInstalacaoUpdates":"2025-09-22 10:41","PortasTCP_Abertas":"135, 139, 445, 5040, 7680, 13000, 14000, 30523, 49664, 49665, 49666, 49667, 49668, 49669, 49680, 60319, 60797","PortasUDP_Abertas":"123, 137, 138, 500, 951, 974, 1900, 3702, 4500, 5050, 5353, 5355, 15000, 15001, 49656, 49657, 49658, 49659, 49660, 51614, 53143, 55161, 55400, 55401, 57377, 57847, 58579, 59249, 65500","SaudeDiscoSMART":"","NumeroSerieMonitores":"205AZVN5B391","GatewayPadrao":"10.7.48.1","ServidoresDNS":"10.200.192.161, 10.205.145.64","ServidorDHCP":null,"DHCPAtivado":false,"ConsumoCPU_Percentual":0,"ConsumoRAM_Percentual":78.27,"Top5ProcessosCPU":"avp (CPU: 31.459,02s); System (CPU: 1.375,50s); svchost (CPU: 467,27s); svchost (CPU: 287,20s); klnagent (CPU: 232,55s)","Top5ProcessosRAM":"firefox (RAM: 339,68MB); firefox (RAM: 310,23MB); firefox (RAM: 291,98MB); explorer (RAM: 270,12MB); powershell (RAM: 253,61MB)"}];
+//<DATA_START>
+    var inventoryData = [];
     //<DATA_END>
     
     document.addEventListener('DOMContentLoaded', function() {
@@ -206,17 +228,8 @@
         btnCancelColumns.addEventListener('click', () => { columnsModal.style.display = 'none'; });
         btnApplyColumns.addEventListener('click', () => {
             const selectedCheckboxes = modalColumnsList.querySelectorAll('input[type="checkbox"]:checked');
-            visibleColumnIndexes = Array.from(selectedCheckboxes)
-                .map(cb => parseInt(cb.value, 10))
-                .filter(index => !Number.isNaN(index) && index >= 0 && index < allHeaders.length);
-            const visibleColumnNames = visibleColumnIndexes
-                .map(index => allHeaders[index])
-                .filter(name => typeof name === 'string');
-            if (visibleColumnNames.length > 0 || selectedCheckboxes.length === 0) {
-                localStorage.setItem(DEFAULT_VISIBLE_COLUMNS_KEY, JSON.stringify(visibleColumnNames));
-            } else {
-                localStorage.removeItem(DEFAULT_VISIBLE_COLUMNS_KEY);
-            }
+            visibleColumnIndexes = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
+            localStorage.setItem(DEFAULT_VISIBLE_COLUMNS_KEY, JSON.stringify(visibleColumnIndexes));
             columnsModal.style.display = 'none';
             currentPage = 1;
             renderHeaderAndFilterRows();
@@ -253,59 +266,321 @@ function renderDashboard() {
     if (window.osChartInstance) window.osChartInstance.destroy();
     if (window.cpuChartInstance) window.cpuChartInstance.destroy();
     if (window.ramChartInstance) window.ramChartInstance.destroy();
+    if (window.chassisChartInstance) window.chassisChartInstance.destroy(); // New
+    if (window.antivirusChartInstance) window.antivirusChartInstance.destroy(); // New
+    if (window.diskTypeChartInstance) window.diskTypeChartInstance.destroy(); // New
+
+    let dashboardContainer = document.getElementById('dashboardContainer');
+    let osChartCanvas = document.getElementById('osChart');
+    let cpuChartCanvas = document.getElementById('cpuChart');
+    let ramChartCanvas = document.getElementById('ramChart');
+    let chassisChartCanvas = document.getElementById('chassisChart'); // New
+    let antivirusChartCanvas = document.getElementById('antivirusChart'); // New
+    let diskTypeChartCanvas = document.getElementById('diskTypeChart'); // New
+
+    // Hide all canvases initially and show a message if no data
+    osChartCanvas.style.display = 'none';
+    cpuChartCanvas.style.display = 'none';
+    ramChartCanvas.style.display = 'none';
+    chassisChartCanvas.style.display = 'none'; // New
+    antivirusChartCanvas.style.display = 'none'; // New
+    diskTypeChartCanvas.style.display = 'none'; // New
+
+    if (!inventoryData || inventoryData.length === 0) {
+        dashboardContainer.innerHTML = '<p style="text-align: center; margin-top: 50px;">Nenhum dado de inventário disponível para gerar gráficos.</p>';
+        return;
+    } else {
+        // Restore original dashboard content if it was replaced by a message
+        if (dashboardContainer.querySelector('p')) {
+            dashboardContainer.innerHTML = '<h2>Dashboard do Inventário</h2><canvas id="osChart" style="max-height:300px; margin-bottom:30px;"></canvas><canvas id="cpuChart" style="max-height:300px; margin-bottom:30px;"></canvas><canvas id="ramChart" style="max-height:300px; margin-bottom:30px;"></canvas><canvas id="chassisChart" style="max-height:300px; margin-bottom:30px;"></canvas><canvas id="antivirusChart" style="max-height:300px; margin-bottom:30px;"></canvas><canvas id="diskTypeChart" style="max-height:300px;"></canvas>';
+            // Re-get canvas elements after recreating them
+            osChartCanvas = document.getElementById('osChart');
+            cpuChartCanvas = document.getElementById('cpuChart');
+            ramChartCanvas = document.getElementById('ramChart');
+            chassisChartCanvas = document.getElementById('chassisChart'); // New
+            antivirusChartCanvas = document.getElementById('antivirusChart'); // New
+            diskTypeChartCanvas = document.getElementById('diskTypeChart'); // New
+        }
+    }
+
+    // Define a larger color palette for pie charts
+    const chartColors = [
+        '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#17a2b8', '#fd7e14', '#20c997', '#e83e8c', '#6c757d',
+        '#0056b3', '#1e7e34', '#d39e00', '#bd2130', '#5a2d9e', '#117a8b', '#c85a00', '#159d73', '#b82c74', '#545b62'
+    ];
 
     // Gráfico de Sistemas Operacionais
     const osCounts = {};
     inventoryData.forEach(d => {
-        osCounts[d.SO] = (osCounts[d.SO] || 0) + 1;
+        const osName = d.SO ? d.SO.replace('Microsoft Windows', 'Win').replace('Professional', 'Pro').trim() : 'Desconhecido';
+        osCounts[osName] = (osCounts[osName] || 0) + 1;
     });
-    window.osChartInstance = new Chart(document.getElementById('osChart'), {
-        type: 'pie',
-        data: {
-            labels: Object.keys(osCounts),
-            datasets: [{
-                data: Object.values(osCounts),
-                backgroundColor: ['#007bff','#28a745','#ffc107','#dc3545','#6f42c1']
-            }]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-    });
+
+    const osLabels = Object.keys(osCounts);
+    const osData = Object.values(osCounts);
+
+    if (osLabels.length > 0) {
+        osChartCanvas.style.display = 'block';
+        window.osChartInstance = new Chart(osChartCanvas, {
+            type: 'pie',
+            data: {
+                labels: osLabels,
+                datasets: [{
+                    data: osData,
+                    backgroundColor: chartColors.slice(0, osLabels.length) // Use enough colors from the palette
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    title: {
+                        display: true,
+                        text: 'Distribuição de Sistemas Operacionais',
+                        font: { size: 16 }
+                    }
+                }
+            }
+        });
+    } else {
+        osChartCanvas.insertAdjacentHTML('afterend', '<p style="text-align: center;">Dados insuficientes para o gráfico de Sistemas Operacionais.</p>');
+    }
 
     // Gráfico de CPUs
     const cpuCounts = {};
     inventoryData.forEach(d => {
-        cpuCounts[d.CPU] = (cpuCounts[d.CPU] || 0) + 1;
+        const cpuName = d.CPU ? d.CPU.trim() : 'Desconhecido';
+        cpuCounts[cpuName] = (cpuCounts[cpuName] || 0) + 1;
     });
-    window.cpuChartInstance = new Chart(document.getElementById('cpuChart'), {
-        type: 'bar',
-        data: {
-            labels: Object.keys(cpuCounts),
-            datasets: [{
-                label: 'Quantidade',
-                data: Object.values(cpuCounts),
-                backgroundColor: '#17a2b8'
-            }]
-        },
-        options: { responsive: true, indexAxis: 'y' }
-    });
+
+    let cpuDataArray = Object.keys(cpuCounts).map(key => ({ name: key, count: cpuCounts[key] }));
+    cpuDataArray.sort((a, b) => b.count - a.count); // Sort by count descending
+
+    const TOP_N_CPUS = 10;
+    let cpuLabels = [];
+    let cpuData = [];
+    let otherCpuCount = 0;
+
+    for (let i = 0; i < cpuDataArray.length; i++) {
+        if (i < TOP_N_CPUS) {
+            cpuLabels.push(cpuDataArray[i].name);
+            cpuData.push(cpuDataArray[i].count);
+        } else {
+            otherCpuCount += cpuDataArray[i].count;
+        }
+    }
+
+    if (otherCpuCount > 0) {
+        cpuLabels.push('Outros');
+        cpuData.push(otherCpuCount);
+    }
+
+    if (cpuLabels.length > 0) {
+        cpuChartCanvas.style.display = 'block';
+        window.cpuChartInstance = new Chart(cpuChartCanvas, {
+            type: 'bar',
+            data: {
+                labels: cpuLabels,
+                datasets: [{
+                    label: 'Quantidade',
+                    data: cpuData,
+                    backgroundColor: '#17a2b8' // Keep a single color for bar charts
+                }]
+            },
+            options: {
+                responsive: true,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false }, // Hide legend for single dataset bar chart
+                    title: {
+                        display: true,
+                        text: 'Distribuição de Processadores (Top ' + TOP_N_CPUS + ')',
+                        font: { size: 16 }
+                    }
+                },
+                scales: {
+                    x: { beginAtZero: true }
+                }
+            }
+        });
+    } else {
+        cpuChartCanvas.insertAdjacentHTML('afterend', '<p style="text-align: center;">Dados insuficientes para o gráfico de CPUs.</p>');
+    }
 
     // Gráfico de RAM
     const ramCounts = {};
     inventoryData.forEach(d => {
-        ramCounts[d.RAM_GB_Total] = (ramCounts[d.RAM_GB_Total] || 0) + 1;
+        const ramGB = parseFloat(d.RAM_GB_Total);
+        if (!isNaN(ramGB)) {
+            ramCounts[ramGB] = (ramCounts[ramGB] || 0) + 1;
+        } else {
+            ramCounts['Desconhecido'] = (ramCounts['Desconhecido'] || 0) + 1;
+        }
     });
-    window.ramChartInstance = new Chart(document.getElementById('ramChart'), {
-        type: 'bar',
-        data: {
-            labels: Object.keys(ramCounts).map(r => r + ' GB'),
-            datasets: [{
-                label: 'Quantidade de Máquinas',
-                data: Object.values(ramCounts),
-                backgroundColor: '#ffc107'
-            }]
-        },
-        options: { responsive: true }
+
+    let ramDataArray = Object.keys(ramCounts).map(key => ({ ram: key, count: ramCounts[key] }));
+    ramDataArray.sort((a, b) => {
+        const ramA = parseFloat(a.ram);
+        const ramB = parseFloat(b.ram);
+        if (isNaN(ramA) && isNaN(ramB)) return 0;
+        if (isNaN(ramA)) return 1; // 'Desconhecido' goes to the end
+        if (isNaN(ramB)) return -1;
+        return ramA - ramB; // Sort numerically ascending
     });
+
+    const ramLabels = ramDataArray.map(item => item.ram + ' GB');
+    const ramData = ramDataArray.map(item => item.count);
+
+    if (ramLabels.length > 0) {
+        ramChartCanvas.style.display = 'block';
+        window.ramChartInstance = new Chart(ramChartCanvas, {
+            type: 'bar',
+            data: {
+                labels: ramLabels,
+                datasets: [{
+                    label: 'Quantidade de Máquinas',
+                    data: ramData,
+                    backgroundColor: '#ffc107'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: 'Distribuição de Memória RAM',
+                        font: { size: 16 }
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    } else {
+        ramChartCanvas.insertAdjacentHTML('afterend', '<p style="text-align: center;">Dados insuficientes para o gráfico de RAM.</p>');
+    }
+
+    // Gráfico de Tipos de Chassis
+    const chassisCounts = {};
+    inventoryData.forEach(d => {
+        const chassisType = d.Chassis_Tipo ? d.Chassis_Tipo.trim() : 'Desconhecido';
+        chassisCounts[chassisType] = (chassisCounts[chassisType] || 0) + 1;
+    });
+
+    const chassisLabels = Object.keys(chassisCounts);
+    const chassisData = Object.values(chassisCounts);
+
+    if (chassisLabels.length > 0) {
+        chassisChartCanvas.style.display = 'block';
+        window.chassisChartInstance = new Chart(chassisChartCanvas, {
+            type: 'pie',
+            data: {
+                labels: chassisLabels,
+                datasets: [{
+                    data: chassisData,
+                    backgroundColor: chartColors.slice(0, chassisLabels.length)
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    title: {
+                        display: true,
+                        text: 'Distribuição por Tipo de Chassis',
+                        font: { size: 16 }
+                    }
+                }
+            }
+        });
+    } else {
+        chassisChartCanvas.insertAdjacentHTML('afterend', '<p style="text-align: center;">Dados insuficientes para o gráfico de Tipo de Chassis.</p>');
+    }
+
+    // Gráfico de Status do Antivírus
+    const antivirusCounts = {};
+    inventoryData.forEach(d => {
+        const antivirusStatus = d.Antivirus_Status ? d.Antivirus_Status.trim() : 'Desconhecido';
+        antivirusCounts[antivirusStatus] = (antivirusCounts[antivirusStatus] || 0) + 1;
+    });
+
+    const antivirusLabels = Object.keys(antivirusCounts);
+    const antivirusData = Object.values(antivirusCounts);
+
+    if (antivirusLabels.length > 0) {
+        antivirusChartCanvas.style.display = 'block';
+        window.antivirusChartInstance = new Chart(antivirusChartCanvas, {
+            type: 'pie',
+            data: {
+                labels: antivirusLabels,
+                datasets: [{
+                    data: antivirusData,
+                    backgroundColor: chartColors.slice(0, antivirusLabels.length)
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    title: {
+                        display: true,
+                        text: 'Status do Antivírus',
+                        font: { size: 16 }
+                    }
+                }
+            }
+        });
+    } else {
+        antivirusChartCanvas.insertAdjacentHTML('afterend', '<p style="text-align: center;">Dados insuficientes para o gráfico de Status do Antivírus.</p>');
+    }
+
+    // Gráfico de Tipos de Disco (SSD/HDD)
+    const diskTypeCounts = {
+        'SSD': 0,
+        'HDD': 0,
+        'Outro/Desconhecido': 0
+    };
+    inventoryData.forEach(d => {
+        const physicalDisks = d.Discos_Fisicos ? d.Discos_Fisicos.toLowerCase() : '';
+        if (physicalDisks.includes('ssd')) {
+            diskTypeCounts['SSD']++;
+        } else if (physicalDisks.includes('hdd')) {
+            diskTypeCounts['HDD']++;
+        }
+    });
+
+    // Filter out categories with 0 count for cleaner chart
+    const filteredDiskTypeLabels = Object.keys(diskTypeCounts).filter(key => diskTypeCounts[key] > 0);
+    const filteredDiskTypeData = filteredDiskTypeLabels.map(key => diskTypeCounts[key]);
+
+    if (filteredDiskTypeLabels.length > 0) {
+        diskTypeChartCanvas.style.display = 'block';
+        window.diskTypeChartInstance = new Chart(diskTypeChartCanvas, {
+            type: 'pie',
+            data: {
+                labels: filteredDiskTypeLabels,
+                datasets: [{
+                    data: filteredDiskTypeData,
+                    backgroundColor: chartColors.slice(0, filteredDiskTypeLabels.length)
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    title: {
+                        display: true,
+                        text: 'Distribuição por Tipo de Disco',
+                        font: { size: 16 }
+                    }
+                }
+            }
+        });
+    } else {
+        diskTypeChartCanvas.insertAdjacentHTML('afterend', '<p style="text-align: center;">Dados insuficientes para o gráfico de Tipo de Disco.</p>');
+    }
 }
 
 
@@ -558,83 +833,23 @@ function renderDashboard() {
             
             try {
                 if (typeof inventoryData !== 'undefined' && Array.isArray(inventoryData) && inventoryData.length > 0) {
-                    const headerSet = new Set();
-                    inventoryData.forEach(record => {
-                        if (record && typeof record === 'object' && !Array.isArray(record)) {
-                            Object.keys(record).forEach(key => headerSet.add(key));
-                        }
-                    });
-
-                    const prioritizedDefaults = DEFAULT_COLUMN_NAMES.filter(name => headerSet.has(name));
-                    const additionalHeaders = Array.from(headerSet)
-                        .filter(key => !DEFAULT_COLUMN_NAMES.includes(key))
-                        .sort((a, b) => a.localeCompare(b));
-
-                    allHeaders = [...prioritizedDefaults, ...additionalHeaders];
+                    allHeaders = Object.keys(inventoryData[0]);
                     originalDataset = inventoryData;
 
                     const storedVisible = localStorage.getItem(DEFAULT_VISIBLE_COLUMNS_KEY);
                     if (storedVisible) {
                         try {
-                            const parsed = JSON.parse(storedVisible);
-                            if (Array.isArray(parsed)) {
-                                if (parsed.every(item => typeof item === 'string')) {
-                                    visibleColumnIndexes = parsed
-                                        .map(name => allHeaders.indexOf(name))
-                                        .filter(index => index !== -1);
-                                    const sanitizedNames = visibleColumnIndexes.map(index => allHeaders[index]);
-                                    if (sanitizedNames.length !== parsed.length) {
-                                        localStorage.setItem(DEFAULT_VISIBLE_COLUMNS_KEY, JSON.stringify(sanitizedNames));
-                                    }
-                                } else if (parsed.every(item => typeof item === 'number')) {
-                                    visibleColumnIndexes = parsed
-                                        .filter(idx => Number.isInteger(idx) && idx >= 0 && idx < allHeaders.length);
-                                    const convertedNames = visibleColumnIndexes
-                                        .map(index => allHeaders[index])
-                                        .filter(name => typeof name === 'string');
-                                    if (convertedNames.length > 0 || parsed.length === 0) {
-                                        localStorage.setItem(DEFAULT_VISIBLE_COLUMNS_KEY, JSON.stringify(convertedNames));
-                                    } else {
-                                        localStorage.removeItem(DEFAULT_VISIBLE_COLUMNS_KEY);
-                                    }
-                                } else {
-                                    const derivedIndexes = [];
-                                    parsed.forEach(item => {
-                                        if (typeof item === 'string') {
-                                            const idx = allHeaders.indexOf(item);
-                                            if (idx !== -1) derivedIndexes.push(idx);
-                                        } else if (typeof item === 'number' && Number.isInteger(item) && item >= 0 && item < allHeaders.length) {
-                                            derivedIndexes.push(item);
-                                        }
-                                    });
-                                    visibleColumnIndexes = derivedIndexes;
-                                    const normalizedNames = visibleColumnIndexes
-                                        .map(index => allHeaders[index])
-                                        .filter(name => typeof name === 'string');
-                                    if (parsed.some(item => typeof item === 'number')) {
-                                        if (normalizedNames.length > 0 || parsed.length === 0) {
-                                            localStorage.setItem(DEFAULT_VISIBLE_COLUMNS_KEY, JSON.stringify(normalizedNames));
-                                        } else {
-                                            localStorage.removeItem(DEFAULT_VISIBLE_COLUMNS_KEY);
-                                        }
-                                    } else if (normalizedNames.length !== parsed.length) {
-                                        localStorage.setItem(DEFAULT_VISIBLE_COLUMNS_KEY, JSON.stringify(normalizedNames));
-                                    }
-                                }
-                            } else {
-                                visibleColumnIndexes = [];
-                            }
+                            let parsed = JSON.parse(storedVisible);
+                            visibleColumnIndexes = parsed.filter(idx => typeof idx === 'number' && idx >=0 && idx < allHeaders.length);
                             if(visibleColumnIndexes.length === 0 && allHeaders.length > 0) { visibleColumnIndexes = allHeaders.map((_,i) => i); }
                         } catch (e) {
                             console.warn("Erro ao ler colunas visíveis do localStorage.", e);
                             visibleColumnIndexes = allHeaders.map((_,i) => i);
                         }
                     } else {
-                        visibleColumnIndexes = DEFAULT_COLUMN_NAMES.map(name => allHeaders.indexOf(name)).filter(index => index!== -1);
+                        visibleColumnIndexes = DEFAULT_COLUMN_NAMES.map(name => allHeaders.indexOf(name)).filter(index => index !== -1);
                         if (visibleColumnIndexes.length === 0) { visibleColumnIndexes = allHeaders.map((_,i) => i); }
                     }
-
-
 
                     btnConfigureColumns.disabled = false;
                     Object.values(document.querySelectorAll('.top-controls button, .pagination-controls button, .pagination-controls select')).forEach(el => el.disabled = false);
@@ -658,4 +873,5 @@ function renderDashboard() {
     });
     </script>
 </body>
+
 </html>

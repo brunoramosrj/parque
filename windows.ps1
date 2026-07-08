@@ -1,7 +1,40 @@
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
-# Caminho do arquivo HTML centralizado que servirá como banco de dados
-$arquivoHtml = "P:\ADMIN\parque3.0\inventario_web.html"
 $dataHora = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+
+# --- CARREGA CONFIGURACAO (parque.conf) ---
+# Defaults calculados a partir da pasta do proprio script.
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$cfg = @{
+    PROJECT_DIR            = $scriptDir
+    HTML_FILE              = 'inventario_web.html'
+    INVENTORY_DIR          = 'inventario'
+    TENTATIVAS_GRAVACAO    = 5
+    ESPERA_GRAVACAO_SEG    = 3
+    MARCADOR_DADOS_INI     = '//<DATA_START>'
+    MARCADOR_DADOS_FIM     = '//<DATA_END>'
+}
+$configFile = Join-Path $scriptDir 'parque.conf'
+if (Test-Path $configFile) {
+    Get-Content $configFile -Encoding UTF8 | ForEach-Object {
+        $line = $_.Trim()
+        if ($line -and -not $line.StartsWith('#') -and $line.Contains('=')) {
+            $eq = $line.IndexOf('=')
+            $k = $line.Substring(0, $eq).Trim()
+            $v = $line.Substring($eq + 1).Trim()
+            if ($k -and $v) { $cfg[$k] = $v }
+        }
+    }
+}
+# Resolve caminhos derivados (relativos a PROJECT_DIR quando nao forem absolutos)
+function Resolve-CfgPath($p) {
+    if ([string]::IsNullOrWhiteSpace($p)) { return $p }
+    if ([System.IO.Path]::IsPathRooted($p)) { return $p }
+    return (Join-Path $cfg.PROJECT_DIR $p)
+}
+$cfg.HTML_FILE     = Resolve-CfgPath $cfg.HTML_FILE
+$cfg.INVENTORY_DIR = Resolve-CfgPath $cfg.INVENTORY_DIR
+# Caminho do arquivo HTML centralizado que servira como banco de dados
+$arquivoHtml = $cfg.HTML_FILE
 
 Write-Host "Iniciando coleta de dados para $env:COMPUTERNAME..."
 
@@ -196,10 +229,10 @@ foreach ($prop in $dadosColetados.PSObject.Properties) {
 
 Write-Host "Coleta finalizada. Tentando gravar de forma segura no arquivo: $arquivoHtml"
 
-$startMarker = "//<DATA_START>"
-$endMarker = "//<DATA_END>"
-$tentativas = 5
-$esperaSegundos = 3
+$startMarker = $cfg.MARCADOR_DADOS_INI
+$endMarker = $cfg.MARCADOR_DADOS_FIM
+$tentativas = [int]$cfg.TENTATIVAS_GRAVACAO
+$esperaSegundos = [int]$cfg.ESPERA_GRAVACAO_SEG
 $sucesso = $false
 
 if (-not (Test-Path $arquivoHtml)) {
@@ -287,7 +320,7 @@ if (-not $sucesso) { Write-Error "NÃO FOI POSSÍVEL GRAVAR NO ARQUIVO HTML apó
 # ============================
 
 try {
-    $jsonDestino = "P:\ADMIN\parque3.0\inventario\$($env:COMPUTERNAME).json"
+    $jsonDestino = Join-Path $cfg.INVENTORY_DIR "$($env:COMPUTERNAME).json"
     $json = $dadosColetados | ConvertTo-Json -Depth 10 -Compress
     [System.IO.File]::WriteAllText($jsonDestino, $json, [System.Text.Encoding]::UTF8)
     Write-Host "Inventário individual salvo em $jsonDestino"
@@ -301,7 +334,7 @@ catch {
 # ============================
 
 try {
-    $htmlDestino = "P:\ADMIN\parque3.0\inventario\$($env:COMPUTERNAME).html"
+    $htmlDestino = Join-Path $cfg.INVENTORY_DIR "$($env:COMPUTERNAME).html"
 
     $categorias = [ordered]@{
         "Computador e Usuario" = @("Computador", "Usuario", "Dominio_ou_Grupo")
@@ -394,6 +427,13 @@ td:first-child { width: 25%; background-color: #ecf0f1; font-weight: bold; color
 catch {
     Write-Warning "Falha ao salvar relatório HTML individual: $($_.Exception.Message)"
 }
-$dadosColetados | Add-Member -NotePropertyName "RelatorioHTML" -NotePropertyValue ".\inventario\$($env:COMPUTERNAME).html"
+# Caminho relativo ao PROJECT_DIR para o relatorio individual (usado como link).
+if ($cfg.INVENTORY_DIR -like "$($cfg.PROJECT_DIR)*") {
+    $invRel = $cfg.INVENTORY_DIR.Substring($cfg.PROJECT_DIR.Length).TrimStart('\','/')
+    $relatorioHtmlRelativo = ".\$invRel\$($env:COMPUTERNAME).html"
+} else {
+    $relatorioHtmlRelativo = Join-Path $cfg.INVENTORY_DIR "$($env:COMPUTERNAME).html"
+}
+$dadosColetados | Add-Member -NotePropertyName "RelatorioHTML" -NotePropertyValue $relatorioHtmlRelativo
 $stopwatch.Stop()
 Write-Host ("`nTempo total de execucao: {0:N2} segundos" -f $stopwatch.Elapsed.TotalSeconds)
