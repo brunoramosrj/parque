@@ -13,6 +13,8 @@ $cfg = @{
     MARCADOR_DADOS_INI     = '//<DATA_START>'
     MARCADOR_DADOS_FIM     = '//<DATA_END>'
 }
+$schemaVersao = 1
+$coletorVersao = '3.1'
 $configFile = Join-Path $scriptDir 'parque.conf'
 if (Test-Path $configFile) {
     Get-Content $configFile -Encoding UTF8 | ForEach-Object {
@@ -44,6 +46,7 @@ function Remove-Accents { param([string]$InputString); if ([string]::IsNullOrEmp
 
 # --- Cria um objeto para armazenar os dados ---
 $dadosColetados = [PSCustomObject]@{
+    SchemaVersao = $schemaVersao; Plataforma = 'Windows'; Coletor = 'windows.ps1'; Coletor_Versao = $coletorVersao;
     Computador = $env:COMPUTERNAME; Usuario = $env:USERNAME; IP = 'Nao encontrado'; MAC = 'Nao encontrado'; Computador_Fabricante = 'Indisponivel'; Computador_Modelo = 'Indisponivel'; Computador_Serial = 'Indisponivel'; Chassis_Tipo = 'Indisponivel'; SO = 'Indisponivel'; Build = ''; Data_Instalacao = ''; Uptime_Horas = '0.0'; Uptime_Formatado = 'Indisponivel'; Dominio_ou_Grupo = 'Indisponivel';
     Status_Ativacao = 'Desconhecido'; Canal_Licenca = 'Desconhecido'; Chave_Parcial = 'N/A'; Chave_OEM_BIOS = 'Nao Coletado';
     CPU = 'Indisponivel'; Arquitetura = ''; CPU_Cores = 0; CPU_Threads = 0; CPU_Clock_MHz = 0; PlacaMae_Fabricante = 'Indisponivel'; PlacaMae_Modelo = 'Indisponivel'; PlacaMae_Serial = 'Indisponivel'; BIOS_Versao = 'Indisponivel'; BIOS_Data = ''; RAM_GB_Total = 0; Qtd_Pentes = 0; RAM_Detalhes = 'Falha ao ler RAM'; Armazenamento_C_GB = 0; Espaco_Livre_C_GB = 0; Espaco_Livre_C_Perc = 0; Discos_Fisicos = 'Falha ao ler discos'; Volumes = 'Falha ao ler volumes'; Modelo_Disco_Principal = 'Indisponivel'; GPU = 'Indisponivel'; Monitores = 'Falha ao ler monitores'; Resolucao_Tela = 'Indisponivel'; Bateria = 'Indisponivel'; Impressoras = 'Falha ao ler impressoras'; Antivirus = 'Desconhecido'; Antivirus_Status = 'Indisponivel'; Firewall_Ativo = 'Nao'; Usa_WSUS = 'Nao'; Servidor_WSUS = ''; DataHora_Coleta = $dataHora;
@@ -226,6 +229,15 @@ foreach ($prop in $dadosColetados.PSObject.Properties) {
     }
 }
 
+$htmlDestino = Join-Path $cfg.INVENTORY_DIR "$($env:COMPUTERNAME).html"
+if ($cfg.INVENTORY_DIR -like "$($cfg.PROJECT_DIR)*") {
+    $invRel = $cfg.INVENTORY_DIR.Substring($cfg.PROJECT_DIR.Length).TrimStart('\','/')
+    $relatorioHtmlRelativo = ".\$invRel\$($env:COMPUTERNAME).html"
+} else {
+    $relatorioHtmlRelativo = $htmlDestino
+}
+$dadosColetados | Add-Member -NotePropertyName "RelatorioHTML" -NotePropertyValue $relatorioHtmlRelativo
+
 # ============================
 # Salvar inventário individual
 # ============================
@@ -245,8 +257,6 @@ catch {
 # ============================
 
 try {
-    $htmlDestino = Join-Path $cfg.INVENTORY_DIR "$($env:COMPUTERNAME).html"
-
     $categorias = [ordered]@{
         "Computador e Usuario" = @("Computador", "Usuario", "Dominio_ou_Grupo")
         "Sistema Operacional"  = @("SO", "Build", "Arquitetura", "Data_Instalacao", "Uptime_Formatado", "Status_Ativacao", "Canal_Licenca", "Chave_Parcial", "Chave_OEM_BIOS")
@@ -338,13 +348,5 @@ td:first-child { width: 25%; background-color: #ecf0f1; font-weight: bold; color
 catch {
     Write-Warning "Falha ao salvar relatório HTML individual: $($_.Exception.Message)"
 }
-# Caminho relativo ao PROJECT_DIR para o relatorio individual (usado como link).
-if ($cfg.INVENTORY_DIR -like "$($cfg.PROJECT_DIR)*") {
-    $invRel = $cfg.INVENTORY_DIR.Substring($cfg.PROJECT_DIR.Length).TrimStart('\','/')
-    $relatorioHtmlRelativo = ".\$invRel\$($env:COMPUTERNAME).html"
-} else {
-    $relatorioHtmlRelativo = Join-Path $cfg.INVENTORY_DIR "$($env:COMPUTERNAME).html"
-}
-$dadosColetados | Add-Member -NotePropertyName "RelatorioHTML" -NotePropertyValue $relatorioHtmlRelativo
 $stopwatch.Stop()
 Write-Host ("`nTempo total de execucao: {0:N2} segundos" -f $stopwatch.Elapsed.TotalSeconds)

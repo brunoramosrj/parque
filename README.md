@@ -89,6 +89,7 @@ parque3.1/
 ├── install_deps_ubuntu.sh    # Instala dependências do linux.sh (Ubuntu/Debian)
 ├── consolidar_inventario.ps1 # Consolida inventario/*.json no dashboard
 ├── consolidar_inventario.sh  # Consolidador equivalente para Linux
+├── inventario_schema.json    # Lista canonica de campos do inventario
 ├── teste.ps1 / teste.bat     # Scripts de benchmark (não production)
 ├── inventario_web.template.html # Dashboard publicável sem dados reais
 ├── inventario_web.html       # Dashboard operacional local com dados inline
@@ -110,6 +111,7 @@ documentação, modelos e templates:
 - `windows.ps1`, `linux.sh`, `agente.ps1`, `agente.bat`
 - `1 - coletar.bat`, `install_deps_ubuntu.sh`
 - `consolidar_inventario.ps1`, `consolidar_inventario.sh`
+- `inventario_schema.json`
 - `inventario_web.template.html`
 
 Ficam fora do Git por padrão: `parque.conf`, `inventario_web.html`,
@@ -140,6 +142,7 @@ editar o `parque.conf` para personalizar.
 | `HTML_FILE` | `inventario_web.html` | Arquivo HTML central (dashboard + dados). |
 | `HTML_TEMPLATE_FILE` | `inventario_web.template.html` | Template usado para criar o HTML operacional se ele não existir. |
 | `INVENTORY_DIR` | `inventario` | Pasta dos inventários individuais por máquina. |
+| `SCHEMA_FILE` | `inventario_schema.json` | Schema com a lista canônica de campos. |
 | `COMANDOS_DIR` | `comandos` | Fila de comandos (`<HOSTNAME>.json`). |
 | `EXECUTADOS_DIR` | `executados` | Histórico de comandos processados. |
 | `RETORNO_DIR` | `retorno` | Logs por máquina (`<HOSTNAME>.log`). |
@@ -196,6 +199,13 @@ O coletor **não escreve mais diretamente** no `inventario_web.html`. A
 consolidação do dashboard é feita por `consolidar_inventario.ps1`, lendo todos
 os JSONs individuais de `inventario/`.
 
+Os JSONs gerados incluem metadados de padronização:
+
+- `SchemaVersao`
+- `Plataforma`
+- `Coletor`
+- `Coletor_Versao`
+
 **Campos coletados:** identidade (hostname, usuário, domínio), SO (versão, build,
 data de instalação, uptime, **status de licença/ativação**, chave parcial), CPU
 (modelo, núcleos, threads, clock), placa-mãe, BIOS, RAM (total, pentes, tipo,
@@ -249,6 +259,11 @@ Instala as dependências de sistema do `linux.sh` em Ubuntu/Debian
 Lê todos os arquivos `inventario/*.json`, ignora entradas inválidas, remove
 duplicidades por `Computador`, ordena os registros e atualiza o bloco
 `inventoryData` do `inventario_web.html`.
+
+Antes de gerar o dashboard, o consolidador normaliza cada registro conforme
+`inventario_schema.json`: todos os computadores passam a ter a mesma lista de
+campos, na mesma ordem. Campos ausentes em inventários antigos são preenchidos
+com `null`.
 
 O consolidador cria um backup do HTML antes de regravar e também gera
 `inventario/inventario_web.json` como espelho agregado dos dados consolidados.

@@ -7,6 +7,7 @@ PROJECT_DIR="$SCRIPT_DIR"
 HTML_FILE="inventario_web.html"
 HTML_TEMPLATE_FILE="inventario_web.template.html"
 INVENTORY_DIR="inventario"
+SCHEMA_FILE="inventario_schema.json"
 MARCADOR_DADOS_INI="//<DATA_START>"
 MARCADOR_DADOS_FIM="//<DATA_END>"
 CONFIG_FILE="$SCRIPT_DIR/parque.conf"
@@ -28,6 +29,7 @@ if [ -f "$CONFIG_FILE" ]; then
                     HTML_FILE)          [ -n "$val" ] && HTML_FILE="$val" ;;
                     HTML_TEMPLATE_FILE) [ -n "$val" ] && HTML_TEMPLATE_FILE="$val" ;;
                     INVENTORY_DIR)      [ -n "$val" ] && INVENTORY_DIR="$val" ;;
+                    SCHEMA_FILE)        [ -n "$val" ] && SCHEMA_FILE="$val" ;;
                     MARCADOR_DADOS_INI) [ -n "$val" ] && MARCADOR_DADOS_INI="$val" ;;
                     MARCADOR_DADOS_FIM) [ -n "$val" ] && MARCADOR_DADOS_FIM="$val" ;;
                 esac
@@ -47,6 +49,7 @@ resolve_path() {
 HTML_FILE="$(resolve_path "$HTML_FILE" "inventario_web.html")"
 HTML_TEMPLATE_FILE="$(resolve_path "$HTML_TEMPLATE_FILE" "inventario_web.template.html")"
 INVENTORY_DIR="$(resolve_path "$INVENTORY_DIR" "inventario")"
+SCHEMA_FILE="$(resolve_path "$SCHEMA_FILE" "inventario_schema.json")"
 AGGREGATED_JSON_FILE="$INVENTORY_DIR/inventario_web.json"
 
 if ! command -v jq >/dev/null 2>&1; then
@@ -56,6 +59,11 @@ fi
 
 if [ ! -d "$INVENTORY_DIR" ]; then
     echo "ERRO: Pasta de inventario nao encontrada: $INVENTORY_DIR" >&2
+    exit 1
+fi
+
+if [ ! -f "$SCHEMA_FILE" ]; then
+    echo "ERRO: Arquivo de schema nao encontrado: $SCHEMA_FILE" >&2
     exit 1
 fi
 
@@ -74,7 +82,25 @@ tmp_items="$(mktemp)"
 printf '%s\n' '[]' > "$tmp_items"
 
 while IFS= read -r -d '' json_file; do
-    if ! item="$(jq -c 'select(type == "object" and (.Computador // "") != "")' "$json_file" 2>/dev/null)"; then
+    if ! item="$(jq -c --slurpfile schema "$SCHEMA_FILE" '
+        select(type == "object" and (.Computador // "") != "")
+        | . as $item
+        | ($schema[0].Campos // []) as $fields
+        | ($schema[0].SchemaVersao // 1) as $schema_version
+        | reduce $fields[] as $field (
+            {};
+            .[$field] = (
+                if $item | has($field) then
+                    $item[$field]
+                elif $field == "SchemaVersao" then
+                    $schema_version
+                else
+                    null
+                end
+            )
+        )
+        + ($item | with_entries(select(.key as $key | ($fields | index($key) | not))))
+    ' "$json_file" 2>/dev/null)"; then
         echo "AVISO: ignorando JSON invalido: $json_file" >&2
         continue
     fi

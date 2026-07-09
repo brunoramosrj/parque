@@ -6,6 +6,7 @@ $cfg = @{
     HTML_FILE          = 'inventario_web.html'
     HTML_TEMPLATE_FILE = 'inventario_web.template.html'
     INVENTORY_DIR      = 'inventario'
+    SCHEMA_FILE        = 'inventario_schema.json'
     MARCADOR_DADOS_INI = '//<DATA_START>'
     MARCADOR_DADOS_FIM = '//<DATA_END>'
 }
@@ -32,12 +33,43 @@ function Resolve-CfgPath([string]$PathValue, [string]$DefaultValue) {
 $htmlFile = Resolve-CfgPath $cfg.HTML_FILE 'inventario_web.html'
 $templateFile = Resolve-CfgPath $cfg.HTML_TEMPLATE_FILE 'inventario_web.template.html'
 $inventoryDir = Resolve-CfgPath $cfg.INVENTORY_DIR 'inventario'
+$schemaFile = Resolve-CfgPath $cfg.SCHEMA_FILE 'inventario_schema.json'
 $aggregatedJsonFile = Join-Path $inventoryDir 'inventario_web.json'
 $startMarker = [string]$cfg.MARCADOR_DADOS_INI
 $endMarker = [string]$cfg.MARCADOR_DADOS_FIM
 
 if (-not (Test-Path $inventoryDir)) {
     throw "Pasta de inventario nao encontrada: $inventoryDir"
+}
+
+if (-not (Test-Path $schemaFile)) {
+    throw "Arquivo de schema nao encontrado: $schemaFile"
+}
+
+$schema = Get-Content -Path $schemaFile -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
+$schemaVersion = [int]$schema.SchemaVersao
+$schemaFields = @($schema.Campos)
+if (-not $schemaFields -or $schemaFields.Count -eq 0) {
+    throw "Schema invalido: lista Campos vazia em $schemaFile"
+}
+
+function Normalize-InventoryItem($Item) {
+    $normalized = [ordered]@{}
+    foreach ($field in $schemaFields) {
+        if ($Item.PSObject.Properties.Name -contains $field) {
+            $normalized[$field] = $Item.$field
+        } elseif ($field -eq 'SchemaVersao') {
+            $normalized[$field] = $schemaVersion
+        } else {
+            $normalized[$field] = $null
+        }
+    }
+    foreach ($property in $Item.PSObject.Properties) {
+        if (-not $normalized.Contains($property.Name)) {
+            $normalized[$property.Name] = $property.Value
+        }
+    }
+    return [PSCustomObject]$normalized
 }
 
 if (-not (Test-Path $htmlFile)) {
@@ -69,7 +101,7 @@ foreach ($file in $jsonFiles) {
             Write-Warning "Ignorando JSON sem campo Computador: $($file.FullName)"
             continue
         }
-        $itemsByComputer[[string]$item.Computador] = $item
+        $itemsByComputer[[string]$item.Computador] = (Normalize-InventoryItem $item)
     } catch {
         Write-Warning "Ignorando JSON invalido: $($file.FullName) - $($_.Exception.Message)"
     }

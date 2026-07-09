@@ -66,6 +66,8 @@ fi
 HOSTNAME=$(hostname)
 DATA_HORA=$(date +"%Y-%m-%d %H:%M:%S")
 STOPWATCH_START=$(date +%s.%N)
+SCHEMA_VERSAO=1
+COLETOR_VERSAO="3.1"
 
 echo "Iniciando coleta de dados para $HOSTNAME..."
 mkdir -p "$INVENTORY_DIR"
@@ -89,6 +91,10 @@ remove_accents() {
 echo "Coletando informações..."
 
 declare -A data
+data["SchemaVersao"]="$SCHEMA_VERSAO"
+data["Plataforma"]="Linux"
+data["Coletor"]="linux.sh"
+data["Coletor_Versao"]="$COLETOR_VERSAO"
 data["Computador"]="$HOSTNAME"
 data["Usuario"]=$(get_data "logname" "$USER")
 data["IP"]=$(get_data "hostname -I | awk '{print \$1}'" "Nao encontrado")
@@ -185,6 +191,13 @@ if systemctl is-active --quiet ufw || systemctl is-active --quiet firewalld; the
 data["Firewall_Ativo"]="$FW_STATUS"
 data["Usa_WSUS"]="N/A"; data["Servidor_WSUS"]=""
 data["DataHora_Coleta"]="$DATA_HORA"
+case "$INVENTORY_DIR" in
+    "$PROJECT_DIR"/*)
+        INV_REL="${INVENTORY_DIR#$PROJECT_DIR/}"
+        data["RelatorioHTML"]="./$INV_REL/$HOSTNAME.html"
+        ;;
+    *) data["RelatorioHTML"]="$INVENTORY_DIR/$HOSTNAME.html" ;;
+esac
 data["AdminsLocais"]=$(get_data "(getent group sudo || getent group wheel) | cut -d: -f4 | tr ',' ';'" "Nao Coletado")
 UPDATES="Nao Coletado"
 if command -v apt-get &> /dev/null; then UPDATES=$(get_data "apt-get -s upgrade | grep -c '^Inst'"); fi

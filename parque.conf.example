@@ -23,6 +23,7 @@ PROJECT_DIR=
 HTML_FILE=inventario_web.html
 HTML_TEMPLATE_FILE=inventario_web.template.html
 INVENTORY_DIR=inventario
+SCHEMA_FILE=inventario_schema.json
 COMANDOS_DIR=comandos
 EXECUTADOS_DIR=executados
 RETORNO_DIR=retorno
