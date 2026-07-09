@@ -216,80 +216,6 @@ for key in "${!data[@]}"; do
     fi
 done
 
-# --- GRAVAÇÃO SEGURA NO HTML ---
-echo "Tentando gravar de forma segura no arquivo: $HTML_FILE"
-LOCK_FILE="/var/lock/inventory_html.lock"; exec 200>"$LOCK_FILE"; flock -x 200
-if [ ! -f "$HTML_FILE" ]; then
-    echo "ERRO: Arquivo HTML template não encontrado em $HTML_FILE."; flock -u 200; exit 1;
-fi
-echo "Atualizando bloco JSON no HTML (modo robusto)..."
-temp_html=$(mktemp)
-current_content=$(cat "$HTML_FILE")
-marker_counts=$(printf '%s\n' "$current_content" | awk -v start="$MARCADOR_DADOS_INI" -v end="$MARCADOR_DADOS_FIM" '
-    {
-        line = $0
-        sub(/^[[:space:]]*/, "", line)
-        sub(/[[:space:]]*$/, "", line)
-        if (line == start) starts++
-        if (line == end) ends++
-    }
-    END { printf "%d %d", starts + 0, ends + 0 }
-')
-start_count=${marker_counts%% *}
-end_count=${marker_counts##* }
-if [ "$start_count" -lt 1 ] || [ "$end_count" -lt 1 ]; then
-    echo "ERRO: HTML invalido: marcadores $MARCADOR_DADOS_INI/$MARCADOR_DADOS_FIM nao encontrados."
-    flock -u 200
-    rm -f "$temp_html"
-    exit 1
-fi
-if [ "$start_count" -gt 1 ] || [ "$end_count" -gt 1 ]; then
-    echo "AVISO: HTML continha blocos de dados duplicados; a regravacao vai manter apenas o primeiro bloco dentro do script."
-fi
-before_data=$(printf '%s\n' "$current_content" | awk -v start="$MARCADOR_DADOS_INI" '
-    {
-        line = $0
-        sub(/^[[:space:]]*/, "", line)
-        sub(/[[:space:]]*$/, "", line)
-        if (line == start) exit
-        print
-    }
-')
-json_part=$(printf '%s\n' "$current_content" | awk -v start="$MARCADOR_DADOS_INI" -v end="$MARCADOR_DADOS_FIM" '
-    {
-        line = $0
-        sub(/^[[:space:]]*/, "", line)
-        sub(/[[:space:]]*$/, "", line)
-        if (line == start && !captured) { in_block = 1; next }
-        if (line == end && in_block) { captured = 1; in_block = 0; exit }
-        if (in_block) print
-    }
-' | sed 's/^[[:space:]]*var inventoryData = //; s/;[[:space:]]*$//')
-after_data=$(printf '%s\n' "$current_content" | awk -v start="$MARCADOR_DADOS_INI" -v end="$MARCADOR_DADOS_FIM" '
-    {
-        line = $0
-        sub(/^[[:space:]]*/, "", line)
-        sub(/[[:space:]]*$/, "", line)
-        if (!after_first && line == end) { after_first = 1; next }
-        if (!after_first) next
-        if (line == start) { skip_extra = 1; next }
-        if (skip_extra && line == end) { skip_extra = 0; next }
-        if (!skip_extra) print
-    }
-')
-if [ -z "$(printf '%s' "$json_part" | tr -d '[:space:]')" ]; then json_part="[]"; fi
-updated_json=$(printf '%s\n' "$json_part" | jq --argjson new_entry "$json_output" '[.[] | select(.Computador != $new_entry.Computador)] + [$new_entry]') || {
-    echo "ERRO: falha ao processar JSON atual com jq."; flock -u 200; exit 1;
-}
-printf '%s\n' "$before_data" > "$temp_html"
-printf '%s\n' "$MARCADOR_DADOS_INI" >> "$temp_html"
-printf '    var inventoryData = %s;\n' "$updated_json" >> "$temp_html"
-printf '%s\n' "    $MARCADOR_DADOS_FIM" >> "$temp_html"
-printf '%s\n' "$after_data" >> "$temp_html"
-mv "$temp_html" "$HTML_FILE"
-flock -u 200
-echo "Arquivo HTML atualizado com sucesso."
-
 # --- SALVAR ARQUIVOS INDIVIDUAIS E CORRIGIR PERMISSÕES ---
 JSON_DESTINO="$INVENTORY_DIR/$HOSTNAME.json"
 echo "$json_output" > "$JSON_DESTINO"
@@ -307,7 +233,7 @@ EOF
 echo "Relatório individual salvo em $HTML_DESTINO"
 
 if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
-    chown "$SUDO_USER:$SUDO_USER" "$HTML_FILE" "$JSON_DESTINO" "$HTML_DESTINO" 2>/dev/null
+    chown "$SUDO_USER:$SUDO_USER" "$JSON_DESTINO" "$HTML_DESTINO" 2>/dev/null
     echo "Permissões dos arquivos gerados corrigidas para o usuário '$SUDO_USER'."
 fi
 

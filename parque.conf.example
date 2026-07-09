@@ -21,6 +21,7 @@ PROJECT_DIR=
 # absolutos). Deixe em branco para usar os defaults abaixo.
 # -------------------------------------------------------------------------
 HTML_FILE=inventario_web.html
+HTML_TEMPLATE_FILE=inventario_web.template.html
 INVENTORY_DIR=inventario
 COMANDOS_DIR=comandos
 EXECUTADOS_DIR=executados
@@ -29,6 +30,8 @@ RETORNO_DIR=retorno
 # Scripts coletores (usados pelo agente para disparar a coleta).
 COLETOR_WINDOWS=windows.ps1
 COLETOR_LINUX=linux.sh
+CONSOLIDADOR_WINDOWS=consolidar_inventario.ps1
+CONSOLIDADOR_LINUX=consolidar_inventario.sh
 
 # -------------------------------------------------------------------------
 # PARAMETROS DE EXECUCAO

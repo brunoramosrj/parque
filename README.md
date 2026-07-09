@@ -49,7 +49,7 @@ operador e máquinas. A pasta compartilhada é o meio de troca.
         ┌─────────────────────────────────────────────────────┐
         │           PASTA COMPARTILHADA (parque)              │
         │                                                     │
-        │  inventario_web.html   ◄── "BD central" (dashboard) │
+        │  inventario_web.html   ◄── dashboard consolidado    │
         │  parque.conf           ◄── configuração única       │
         │  inventario/           ◄── JSON/HTML por máquina    │
         │  comandos/<PC>.json    ◄── fila de comandos por PC  │
@@ -58,7 +58,7 @@ operador e máquinas. A pasta compartilhada é o meio de troca.
         │  softwares/            ◄── instaladores             │
         └─────────────────────────────────────────────────────┘
              ▲  operador solta comando            ▲  agente grava inventário
-             │  (JSON em comandos/)               │  (HTML + JSON)
+             │  (JSON em comandos/)               │  (JSON/HTML individual)
              │                                     │
    ┌─────────┴──────────┐              ┌──────────┴──────────────────────┐
    │  POSTO DO OPERADOR │              │  AGENTE (1 por máquina)         │
@@ -87,6 +87,8 @@ parque3.1/
 ├── agente.bat                # Lançador do agente (Windows)
 ├── 1 - coletar.bat           # Lançador manual da coleta (Windows)
 ├── install_deps_ubuntu.sh    # Instala dependências do linux.sh (Ubuntu/Debian)
+├── consolidar_inventario.ps1 # Consolida inventario/*.json no dashboard
+├── consolidar_inventario.sh  # Consolidador equivalente para Linux
 ├── teste.ps1 / teste.bat     # Scripts de benchmark (não production)
 ├── inventario_web.template.html # Dashboard publicável sem dados reais
 ├── inventario_web.html       # Dashboard operacional local com dados inline
@@ -107,6 +109,7 @@ documentação, modelos e templates:
 - `README.md`, `.gitignore`, `parque.conf.example`
 - `windows.ps1`, `linux.sh`, `agente.ps1`, `agente.bat`
 - `1 - coletar.bat`, `install_deps_ubuntu.sh`
+- `consolidar_inventario.ps1`, `consolidar_inventario.sh`
 - `inventario_web.template.html`
 
 Ficam fora do Git por padrão: `parque.conf`, `inventario_web.html`,
@@ -135,15 +138,18 @@ editar o `parque.conf` para personalizar.
 |---|---|---|
 | `PROJECT_DIR` | *(pasta dos scripts)* | Pasta raiz do projeto. Deixe vazio para usar a pasta onde os scripts estão. |
 | `HTML_FILE` | `inventario_web.html` | Arquivo HTML central (dashboard + dados). |
+| `HTML_TEMPLATE_FILE` | `inventario_web.template.html` | Template usado para criar o HTML operacional se ele não existir. |
 | `INVENTORY_DIR` | `inventario` | Pasta dos inventários individuais por máquina. |
 | `COMANDOS_DIR` | `comandos` | Fila de comandos (`<HOSTNAME>.json`). |
 | `EXECUTADOS_DIR` | `executados` | Histórico de comandos processados. |
 | `RETORNO_DIR` | `retorno` | Logs por máquina (`<HOSTNAME>.log`). |
 | `COLETOR_WINDOWS` | `windows.ps1` | Script coletor Windows (usado pelo agente). |
 | `COLETOR_LINUX` | `linux.sh` | Script coletor Linux. |
+| `CONSOLIDADOR_WINDOWS` | `consolidar_inventario.ps1` | Script que consolida `inventario/*.json` no dashboard. |
+| `CONSOLIDADOR_LINUX` | `consolidar_inventario.sh` | Consolidador equivalente para Linux. |
 | `INTERVALO_AGENTE_SEG` | `60` | Segundos entre verificações do agente. |
-| `TENTATIVAS_GRAVACAO` | `5` | Tentativas de gravar o HTML central (Windows). |
-| `ESPERA_GRAVACAO_SEG` | `3` | Segundos de espera entre tentativas. |
+| `TENTATIVAS_GRAVACAO` | `5` | Reservado para rotinas que precisem repetir gravações. |
+| `ESPERA_GRAVACAO_SEG` | `3` | Reservado para intervalo entre tentativas. |
 | `MARCADOR_DADOS_INI` | `//<DATA_START>` | Marcador de início do bloco JSON no HTML. |
 | `MARCADOR_DADOS_FIM` | `//<DATA_END>` | Marcador de fim do bloco JSON no HTML. |
 
@@ -181,13 +187,14 @@ INTERVALO_AGENTE_SEG=15
 ### `windows.ps1` — Coletor (Windows)
 
 Coleta ~60 campos de uma máquina Windows via WMI/CIM (`Get-CimInstance`), registro,
-COM do Windows Update e APIs de hardware. Gera **três saídas**:
+COM do Windows Update e APIs de hardware. Gera **duas saídas por máquina**:
 
-1. Atualiza a entrada da máquina no `inventario_web.html` central (entre os
-   marcadores `//<DATA_START>` e `//<DATA_END>`), com **lock de arquivo**
-   (`FileShare.None`) e **retries** para evitar corrupção por gravação concorrente.
-2. Salva `inventario/<HOSTNAME>.json` (inventário individual em JSON).
-3. Gera `inventario/<HOSTNAME>.html` (relatório HTML bonito por máquina).
+1. Salva `inventario/<HOSTNAME>.json` (inventário individual em JSON).
+2. Gera `inventario/<HOSTNAME>.html` (relatório HTML bonito por máquina).
+
+O coletor **não escreve mais diretamente** no `inventario_web.html`. A
+consolidação do dashboard é feita por `consolidar_inventario.ps1`, lendo todos
+os JSONs individuais de `inventario/`.
 
 **Campos coletados:** identidade (hostname, usuário, domínio), SO (versão, build,
 data de instalação, uptime, **status de licença/ativação**, chave parcial), CPU
@@ -201,7 +208,8 @@ TCP/UDP abertas, updates pendentes, top-5 processos por CPU e RAM, etc.
 
 Equivalente do `windows.ps1` para Linux. Usa `dmidecode`, `lscpu`, `lsblk`,
 `xrandr`, `upower`, `ss`, `smartctl`, `jq`, entre outros. **Requer root** e
-gera as mesmas três saídas. O lock de arquivo usa `flock`.
+gera as mesmas duas saídas individuais. Ele também não escreve diretamente no
+HTML central.
 
 > **Dependências:** rode `sudo ./install_deps_ubuntu.sh` (Ubuntu/Debian) antes
 > da primeira execução para instalar `jq`, `dmidecode`, `smartmontools`, etc.
@@ -217,7 +225,7 @@ solicitada, depois move o arquivo para `executados/` e registra tudo em
 
 | Ação | Comportamento |
 |---|---|
-| `inventario` | Executa `windows.ps1` (coleta e consolida inventário). |
+| `inventario` | Executa `windows.ps1` e atualiza os arquivos individuais da máquina. |
 | `instalar` | Instala software silenciosamente: `.msi` via `msiexec /i ... /qn`, `.exe` direto. Registra código de saída. |
 | `copiar` | *(Apenas registra no log — ainda não implementada.)* |
 
@@ -235,6 +243,16 @@ Lançador **manual** da coleta — mostra um banner e executa `windows.ps1`.
 
 Instala as dependências de sistema do `linux.sh` em Ubuntu/Debian
 (`apt-get install jq dmidecode smartmontools ...`).
+
+### `consolidar_inventario.ps1` / `consolidar_inventario.sh`
+
+Lê todos os arquivos `inventario/*.json`, ignora entradas inválidas, remove
+duplicidades por `Computador`, ordena os registros e atualiza o bloco
+`inventoryData` do `inventario_web.html`.
+
+O consolidador cria um backup do HTML antes de regravar e também gera
+`inventario/inventario_web.json` como espelho agregado dos dados consolidados.
+Esse arquivo agregado é operacional e fica fora do Git.
 
 ### `teste.ps1` / `teste.bat` — Benchmark
 
@@ -256,7 +274,9 @@ Ou, no Linux:
 ```bash
 sudo ./linux.sh
 ```
-O inventário da máquina é gravado no dashboard central e em `inventario/`.
+O inventário da máquina é gravado em `inventario/<HOSTNAME>.json` e
+`inventario/<HOSTNAME>.html`. Rode o consolidador para atualizar o dashboard
+central.
 
 ### 2. Coletar remotamente via agente
 
@@ -300,6 +320,19 @@ Coloque o instalador em `softwares/` (acessível pela máquina-alvo) e crie:
 
 ### 4. Visualizar o inventário consolidado
 
+Depois de rodar coletas em uma ou mais máquinas, consolide os arquivos
+individuais:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File .\consolidar_inventario.ps1
+```
+
+No Linux:
+
+```bash
+./consolidar_inventario.sh
+```
+
 Abra `inventario_web.html` em qualquer navegador. Não é necessário servidor —
 o arquivo é autossuficiente (HTML + CSS + JS + dados JSON inline).
 
@@ -308,28 +341,28 @@ o arquivo é autossuficiente (HTML + CSS + JS + dados JSON inline).
 ## Dashboard web
 
 Use `inventario_web.template.html` como base publicável do dashboard. Em uma
-instalação real, copie esse template para `inventario_web.html`; os coletores
-passam a atualizar o bloco JSON local entre `//<DATA_START>` e
-`//<DATA_END>`.
+instalação real, o consolidador copia esse template para `inventario_web.html`
+se o HTML operacional ainda não existir.
 
 O `inventario_web.html` operacional não deve ir para o Git, porque contém dados
 consolidados reais do parque.
 
 O `inventario_web.html` é um arquivo único e autossuficiente que contém:
 
-- **Os dados** — array JavaScript `inventoryData` embutido entre os marcadores
-  `//<DATA_START>` e `//<DATA_END>`. É o "banco de dados" do sistema.
+- **Os dados consolidados** — array JavaScript `inventoryData` embutido entre
+  os marcadores `//<DATA_START>` e `//<DATA_END>`, gerado a partir de
+  `inventario/*.json`.
 - **A interface** — tabela com paginação, ordenação por coluna, filtros por
   coluna, busca global, tema claro/escuro, gráficos (pizza) e modal de seleção
   de colunas.
 
 Por isso, **basta abrir o arquivo no navegador** para ver o parque consolidado.
-Os scripts de coleta atualizam o array `inventoryData` in-place (removendo a
-entrada antiga daquela máquina e inserindo a nova), com lock para evitar
-corrupção por gravações simultâneas.
+Os scripts de coleta atualizam apenas os JSONs individuais. O consolidador é o
+único responsável por atualizar o array `inventoryData` do dashboard, reduzindo
+o risco de corrupção por gravações simultâneas.
 
 > **Atenção:** nunca edite manualmente a região entre `//<DATA_START>` e
-> `//<DATA_END>` — ela é gerenciada pelos scripts. Estruture do dashboard
+> `//<DATA_END>` — ela é gerenciada pelo consolidador. A estrutura do dashboard
 > (HTML/CSS/JS) pode ser editada livremente fora dessa região.
 
 ---
@@ -358,6 +391,10 @@ corrupção por gravações simultâneas.
 3. Execute a coleta:
    ```bash
    sudo ./linux.sh
+   ```
+4. No posto operador, consolide:
+   ```bash
+   ./consolidar_inventario.sh
    ```
    > **Nota:** ainda não há `agente.sh` para Linux. Hoje o agente de automação
    > (loop de comandos) só existe para Windows. A coleta em Linux é manual.
@@ -394,9 +431,9 @@ corrupção por gravações simultâneas.
 
 ### O HTML central corrompe / perde dados
 
-- Isso só ocorre com gravações simultâneas se o lock falhar. Os scripts usam
-  lock de arquivo + retries (`TENTATIVAS_GRAVACAO` / `ESPERA_GRAVACAO_SEG`).
-  Se persistir, aumente os valores no `parque.conf`.
+- Os coletores não gravam mais diretamente no HTML central. Rode novamente
+  `consolidar_inventario.ps1` ou `consolidar_inventario.sh`; o consolidador
+  recria o bloco central a partir dos JSONs individuais e deixa backup do HTML.
 - Mantenha os marcadores `//<DATA_START>` / `//<DATA_END>` intactos no HTML.
 
 ### Caminhos não resolvem

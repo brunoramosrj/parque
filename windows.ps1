@@ -33,8 +33,9 @@ function Resolve-CfgPath($p) {
 }
 $cfg.HTML_FILE     = Resolve-CfgPath $cfg.HTML_FILE
 $cfg.INVENTORY_DIR = Resolve-CfgPath $cfg.INVENTORY_DIR
-# Caminho do arquivo HTML centralizado que servira como banco de dados
-$arquivoHtml = $cfg.HTML_FILE
+if (-not (Test-Path $cfg.INVENTORY_DIR)) {
+    New-Item -ItemType Directory -Path $cfg.INVENTORY_DIR -Force | Out-Null
+}
 
 Write-Host "Iniciando coleta de dados para $env:COMPUTERNAME..."
 
@@ -224,96 +225,6 @@ foreach ($prop in $dadosColetados.PSObject.Properties) {
         $prop.Value = Remove-Accents -InputString $prop.Value
     }
 }
-
-# --- GRAVAÇÃO SEGURA NO HTML COM FILE LOCKING E MARCADORES ---
-
-Write-Host "Coleta finalizada. Tentando gravar de forma segura no arquivo: $arquivoHtml"
-
-$startMarker = $cfg.MARCADOR_DADOS_INI
-$endMarker = $cfg.MARCADOR_DADOS_FIM
-$tentativas = [int]$cfg.TENTATIVAS_GRAVACAO
-$esperaSegundos = [int]$cfg.ESPERA_GRAVACAO_SEG
-$sucesso = $false
-
-if (-not (Test-Path $arquivoHtml)) {
-    Write-Error "Arquivo HTML template não encontrado em $arquivoHtml. Crie o arquivo a partir do código fornecido."
-    return
-}
-
-for ($i = 1; $i -le $tentativas; $i++) {
-    $fileStream = $null
-    try {
-        $fileStream = [System.IO.File]::Open($arquivoHtml, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
-        Write-Host "Bloqueio de arquivo obtido na tentativa $i."
-        
-        $streamReader = [System.IO.StreamReader]::new($fileStream, [System.Text.Encoding]::UTF8, $true, 1024, $true)
-        $htmlContent = $streamReader.ReadToEnd()
-        $streamReader.Dispose()
-
-        $startIndex = $htmlContent.IndexOf($startMarker) + $startMarker.Length
-        $endIndex = $htmlContent.IndexOf($endMarker, $startIndex)
-
-        if ($startIndex -ge $startMarker.Length -and $endIndex -ge 0) {
-            
-            $dataBlock = $htmlContent.Substring($startIndex, $endIndex - $startIndex)
-            $startIndexJson = $dataBlock.IndexOf('[')
-            $endIndexJson = $dataBlock.LastIndexOf(']')
-            
-            [System.Collections.ArrayList]$dadosAtuais = @()
-            
-            if ($startIndexJson -ne -1 -and $endIndexJson -ne -1 -and $endIndexJson -gt $startIndexJson) {
-                $jsonString = $dataBlock.Substring($startIndexJson, $endIndexJson - $startIndexJson + 1)
-                if ($jsonString.Trim() -ne "[]") {
-                    try {
-                        $dadosConvertidos = $jsonString | ConvertFrom-Json -ErrorAction Stop
-                        if ($dadosConvertidos -isnot [array]) {
-                            $dadosAtuais.Add($dadosConvertidos) | Out-Null
-                        } else {
-                            $dadosAtuais.AddRange($dadosConvertidos)
-                        }
-                    } catch {
-                        Write-Warning "JSON no HTML parece corrompido. Ignorando. Erro: $($_.Exception.Message)"
-                    }
-                }
-            }
-
-            $dadosFiltrados = @($dadosAtuais | Where-Object { $_.Computador -ne $dadosColetados.Computador })
-            
-            $novosDados = $dadosFiltrados + $dadosColetados
-            
-            $novoArrayJson = $novosDados | ConvertTo-Json -Depth 10 -Compress
-            
-            $before = $htmlContent.Substring(0, $startIndex)
-            $after = $htmlContent.Substring($endIndex)
-            $novoHtmlContent = $before + "`r`n    var inventoryData = " + $novoArrayJson + ";`r`n    " + $after
-
-            $fileStream.Seek(0, 'Begin') | Out-Null
-            $fileStream.SetLength(0)
-            $streamWriter = [System.IO.StreamWriter]::new($fileStream, [System.Text.Encoding]::UTF8)
-            $streamWriter.Write($novoHtmlContent)
-            $streamWriter.Flush()
-            $streamWriter.Close()
-            
-            Write-Host "Arquivo HTML atualizado com sucesso."
-            $sucesso = $true
-            break 
-        } else {
-            Write-Warning "Não foi possível encontrar os marcadores de dados no arquivo HTML. A gravação foi cancelada."
-            break
-        }
-    } catch {
-        Write-Warning "Falha ao acessar o arquivo na tentativa $i. Erro: $($_.Exception.Message)"
-    } finally {
-        if ($fileStream) { $fileStream.Close(); $fileStream.Dispose() }
-    }
-
-    if (-not $sucesso -and $i -lt $tentativas) {
-        Write-Warning "Aguardando $esperaSegundos segundos para tentar novamente..."
-        Start-Sleep -Seconds $esperaSegundos
-    }
-}
-
-if (-not $sucesso) { Write-Error "NÃO FOI POSSÍVEL GRAVAR NO ARQUIVO HTML após $tentativas tentativas." -ErrorAction Stop }
 
 # ============================
 # Salvar inventário individual
