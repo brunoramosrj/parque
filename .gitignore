@@ -34,3 +34,4 @@ Copy #*
 Thumbs.db
 *.tmp
 *.swp
+*.lock

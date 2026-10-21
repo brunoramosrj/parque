@@ -1,4 +1,4 @@
-# Parque 3.1 — Sistema de Inventário e Gestão Computacional
+# Parque 3.2 — Sistema de Inventário e Gestão Computacional
 
 Sistema de coleta de inventário de TI e automação remota para um parque de
 computadores **Windows e Linux**, sem necessidade de servidor dedicado ou banco
@@ -79,7 +79,7 @@ não há serviço de rede, não há agendador central.
 ## Estrutura de arquivos
 
 ```
-parque3.1/
+parque/
 ├── parque.conf.example       # Modelo versionável de configuração
 ├── parque.conf               # Configuração local (não versionar)
 ├── windows.ps1               # Coletor de inventário para Windows
@@ -190,8 +190,9 @@ INTERVALO_AGENTE_SEG=15
 
 ### `windows.ps1` — Coletor (Windows)
 
-Coleta ~60 campos de uma máquina Windows via WMI/CIM (`Get-CimInstance`), registro,
-COM do Windows Update e APIs de hardware. Gera **duas saídas por máquina**:
+Coleta 68 campos de uma máquina Windows via WMI/CIM (`Get-CimInstance`), registro,
+COM do Windows Update e APIs de hardware (lista canônica em
+`inventario_schema.json`). Gera **duas saídas por máquina**:
 
 1. Salva `inventario/<HOSTNAME>.json` (inventário individual em JSON).
 2. Gera `inventario/<HOSTNAME>.html` (relatório HTML bonito por máquina).
@@ -490,6 +491,10 @@ Exemplo: máquina com RAM 4 GB (−9), 9 updates pendentes (−9), coleta com
 
 ## Notas de versão
 
+- **3.2** — Dashboard gerencial (Plus) como template: abas Dashboard/Alertas/
+  Inventário, score de saúde por máquina, top prioridades e exportação CSV;
+  funciona offline (sem CDN). Correção do bloco `inventoryData` para dentro
+  de `<script>`. Documentação do cálculo do score no README.
 - **3.1** — Centralização da configuração em `parque.conf`; remoção de caminhos
   hardcoded dos scripts (`windows.ps1`, `linux.sh`, `agente.ps1`). O sistema
   agora funciona zero-config e é portável entre ambientes.
