@@ -187,6 +187,13 @@ PROJECT_DIR=/mnt/parque
 INTERVALO_AGENTE_SEG=15
 ```
 
+**Cenário 4 — restringir o que o agente pode tocar (recomendado):**
+```ini
+# Só aceita arquivos dentro dessas pastas; timeout de 10 min por comando
+PERMITIR_CAMINHOS=C:\softwares;\\servidor\parque\softwares
+TEMPO_MAX_COMANDO_SEG=600
+```
+
 ---
 
 ## Scripts
@@ -528,8 +535,25 @@ Exemplo: máquina com RAM 4 GB (−9), 9 updates pendentes (−9), coleta com
 - Verifique se o arquivo tem o nome **exato** do host da máquina-alvo
   (`comandos/<HOSTNAME>.json`), incluindo maiúsculas/minúsculas.
 - Confira se o JSON está bem-formado (vírgulas, aspas). Veja os erros em
-  `retorno/<HOSTNAME>.log` — erros de parse aparecem lá.
+  `retorno/<HOSTNAME>.log` — erros de parse aparecem lá. Após 3 leituras com
+  erro, o arquivo é arquivado como
+  `executados/<HOST>.invalido-<timestamp>.json` (a fila é liberada; corrija e
+  publique de novo). O `retorno/<HOSTNAME>.json` mostra o status estruturado
+  do último comando (`Sucesso`, `CodigoSaida`, `Mensagem`).
 - Confirme o `INTERVALO_AGENTE_SEG` no `parque.conf` (padrão: 60s).
+
+### Comando bloqueado pela allowlist
+
+- `Caminho fora da allowlist (PERMITIR_CAMINHOS)` no log = origem/destino
+  fora das pastas liberadas. Ajuste `PERMITIR_CAMINHOS` no `parque.conf`
+  (lista separada por `;`) ou mova os arquivos para dentro dela.
+
+### Comando interrompido por timeout
+
+- `excedeu o timeout` no log = processo travou além de
+  `TEMPO_MAX_COMANDO_SEG` (padrão 600s) e foi finalizado. Para `executar`,
+  use `timeout_seg` próprio no JSON; a saída parcial fica em
+  `retorno/<HOST>-executar.out.log`.
 
 ### A instalação remota falha
 
