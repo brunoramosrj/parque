@@ -1,877 +1,1007 @@
-﻿﻿﻿﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parque Computacional Avançado</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 10px 20px;
-            background-color: #f4f4f4;
-            color: #333;
-            transition: background-color 0.3s, color 0.3s;
-        }
-        body.dark-theme { background-color: #222; color: #eee; }
-        body.dark-theme h1, body.dark-theme .modal-content h2 { color: #eee; }
-        body.dark-theme table { background-color: #333; border-color: #555; }
-        body.dark-theme th.main-header-cell { background-color: #0056b3; border-color: #555; }
-        body.dark-theme .column-filter-row th { background-color: #383838; border-color: #555; }
-        body.dark-theme .column-filter-row input { background-color: #555; color: #eee; border-color: #666; }
-        body.dark-theme td { border-color: #444; }
-        body.dark-theme tr:nth-child(even) { background-color: #3a3a3a; }
-        body.dark-theme tr:not(.header-row):not(.column-filter-row):hover { background-color: #4a4a4a; }
-        body.dark-theme .modal-content { background-color: #444; color: #eee; }
-        body.dark-theme .modal-columns-list label { color: #eee; }
-        body.dark-theme .controls button, body.dark-theme .top-controls button,
-        body.dark-theme .pagination-controls button,
-        body.dark-theme .modal-quick-actions button,
-        body.dark-theme .modal-actions button { background-color: #555; border-color: #666; }
-        body.dark-theme .modal-quick-actions button:hover,
-        body.dark-theme .modal-actions .apply-btn:hover,
-        body.dark-theme .modal-actions .cancel-btn:hover { background-color: #666; }
-        body.dark-theme #status { color: #bbb; }
-        body.dark-theme input[type="text"], 
-        body.dark-theme input[type="search"],
-        body.dark-theme select { background-color: #555; color: #eee; border-color: #666; }
-        h1 { text-align: center; font-size: 1.8em; margin-top: 10px; margin-bottom: 15px; }
-        .top-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
-        .top-controls .search-filter-box { display: flex; gap: 10px; align-items: center; margin-bottom: 5px; }
-        .top-controls input[type="text"], .top-controls input[type="search"] { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9em; }
-        .top-controls .action-buttons button { margin-left: 10px; }
-        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 5px 0; }
-        .controls button, .top-controls button, .pagination-controls button { padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; white-space: nowrap; }
-        .controls button:hover, .top-controls button:hover, .pagination-controls button:hover { background-color: #0056b3; }
-        .controls button:disabled, .top-controls button:disabled, .pagination-controls button:disabled { background-color: #cccccc; color: #666666; cursor: not-allowed; }
-        #status { font-style: italic; font-size: 0.95em; color: #555; flex-grow: 1; margin-right: 15px; }
-        .column-filter-row th { padding: 5px; }
-        .column-filter-row input { width: 90%; padding: 4px; font-size: 0.8em; border: 1px solid #ccc; border-radius: 3px; box-sizing: border-box; }
-        table { width: 100%; border-collapse: collapse; box-shadow: 0 2px 5px rgba(0,0,0,0.1); background-color: #fff; }
-        th, td { border: 1px solid #ddd; padding: 10px 12px; text-align: left; font-size: 0.85em; white-space: nowrap; }
-        th.main-header-cell { background-color: #007bff; color: white; font-weight: bold; position: sticky; top: 0; z-index: 10; cursor: pointer; user-select: none; }
-        .column-filter-row th { position: sticky; top: 40px; z-index: 9; background-color: #f0f0f0; }
-        th .sort-indicator { margin-left: 5px; font-size: 0.8em; opacity: 0.7; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        tr:not(.header-row):not(.column-filter-row):hover { background-color: #e9ecef; }
-        tr.selected-row td { background-color: #cce5ff !important; color: #004085; }
-        #tableContainer { max-height: calc(100vh - 230px); overflow: auto; border: 1px solid #ccc; }
-        .pagination-controls { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; margin-top: 10px; }
-        .pagination-controls span { font-size: 0.9em; }
-        .pagination-controls select { padding: 6px; margin: 0 10px; border-radius: 4px; border: 1px solid #ccc; }
-        .loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(255, 255, 255, 0.7); display: none; justify-content: center; align-items: center; z-index: 2000; }
-        body.dark-theme .loader-overlay { background-color: rgba(0, 0, 0, 0.7); }
-        .loader { border: 8px solid #f3f3f3; border-top: 8px solid #3498db; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background-color: white; padding: 25px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto; display: flex; flex-direction: column; }
-        .modal-content h2 { margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .modal-quick-actions { display: flex; gap: 10px; margin-bottom: 20px; }
-        .modal-quick-actions button { flex-grow: 1; padding: 8px 12px; font-size: 0.9em; background-color: #e9ecef; border: 1px solid #ced4da; color: #495057; border-radius: 4px; cursor: pointer; }
-        .modal-quick-actions button:hover { background-color: #dee2e6; }
-        .modal-columns-list { margin-bottom: 20px; flex-grow: 1; overflow-y: auto; padding-right: 10px; }
-        .modal-columns-list label { display: block; margin-bottom: 10px; font-size: 0.95em; cursor: pointer; }
-        .modal-columns-list input[type="checkbox"] { margin-right: 8px; vertical-align: middle; }
-        .modal-actions { text-align: right; padding-top: 15px; border-top: 1px solid #eee; flex-shrink: 0; }
-        .modal-actions button { padding: 10px 18px; margin-left: 10px; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
-        .modal-actions .apply-btn { background-color: #28a745; color: white; border: none; }
-        .modal-actions .apply-btn:hover { background-color: #218838; }
-        .modal-actions .cancel-btn { background-color: #6c757d; color: white; border: none; }
-        .modal-actions .cancel-btn:hover { background-color: #5a6268; }
-        .pie-charts-row {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-around;
-            margin-bottom: 30px; /* Add some space between rows of charts */
-        }
-        .pie-charts-row canvas {
-            max-width: 48%; /* Adjust as needed for spacing */
-            margin-bottom: 30px; /* Keep margin for vertical spacing within the row */
-        }
-        /* Adjust max-height for all canvases to be consistent */
-        #dashboardContainer canvas {
-            max-height: 300px; /* Keep consistent height */
-            margin-bottom: 30px; /* Ensure consistent spacing */
-        }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-    <div class="loader-overlay" id="loaderOverlay"><div class="loader"></div></div>
-
-    <h1>Parque Computacional do DepMSMRJ</h1>
-
-    <div class="top-controls">
-        <div class="search-filter-box">
-            <input type="search" id="globalSearchInput" placeholder="Busca global...">
-        </div>
-        <div class="action-buttons">
-            <button id="btnGoToDashboard" title="Visualizar Dashboard">📊 Dashboard</button>
-            <button id="btnExportCSV" title="Exportar visão atual para CSV">📤 Exportar</button>
-            <button id="btnToggleTheme" title="Alternar Tema Claro/Escuro">🎨</button>
-            <button id="btnResetView" title="Resetar Filtros e Visualização">🔄</button>
-        </div>
-    </div>
-
-    <div class="controls">
-        <div id="status">Carregando dados...</div>
-        <button id="btnConfigureColumns" disabled>Configurar Colunas</button>
-    </div>
-
-    <div id="tableContainer">
-        <table id="csvTable">
-            <thead id="csvTableHead"></thead>
-            <tbody id="csvTableBody"></tbody>
-        </table>
-    </div>
-
-    <div class="pagination-controls">
-        <button id="btnPrevPage" disabled>Anterior</button>
-        <span>Página <span id="currentPage">1</span> de <span id="totalPages">1</span></span>
-        <select id="rowsPerPageSelect">
-            <option value="10">10</option>
-            <option value="25" selected>25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-            <option value="500">Todos</option>
-        </select>
-        <span>linhas por página</span>
-        <button id="btnNextPage" disabled>Próximo</button>
-    </div>
-
-    <div id="dashboardContainer" style="display:none; padding:20px;">
-        <h2>Dashboard do Inventário</h2>
-        <div class="pie-charts-row">
-            <canvas id="osChart" style="max-height:300px; margin-bottom:30px;"></canvas>
-            <canvas id="chassisChart" style="max-height:300px; margin-bottom:30px;"></canvas>
-        </div>
-        <div class="pie-charts-row">
-            <canvas id="antivirusChart" style="max-height:300px; margin-bottom:30px;"></canvas>
-            <canvas id="diskTypeChart" style="max-height:300px;"></canvas>
-        </div>
-        <canvas id="cpuChart" style="max-height:300px; margin-bottom:30px;"></canvas>
-        <canvas id="ramChart" style="max-height:300px; margin-bottom:30px;"></canvas>
-    </div>
-
-
-    <div id="columnsModal" class="modal-overlay">
-        <div class="modal-content">
-            <h2>Selecionar Colunas para Exibição</h2>
-            <div class="modal-quick-actions">
-                <button id="btnToggleAllColumns">Marcar / Desmarcar Tudo</button>
-                <button id="btnSelectDefaultColumns">Seleção Padrão</button>
-            </div>
-            <div id="modalColumnsList" class="modal-columns-list"></div>
-            <div class="modal-actions">
-                <button id="btnCancelColumns" class="cancel-btn">Cancelar</button>
-                <button id="btnApplyColumns" class="apply-btn">Aplicar</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parque Computacional DepMSMRJ - Dashboard Plus</title>
 //<DATA_START>
     var inventoryData = [];
     //<DATA_END>
-    
-    document.addEventListener('DOMContentLoaded', function() {
-        const loaderOverlay = document.getElementById('loaderOverlay');
-        const statusDiv = document.getElementById('status');
-        const tableHead = document.getElementById('csvTableHead');
-        const tableBody = document.getElementById('csvTableBody');
+<style>
+:root{
+    --bg:#f4f7fb;
+    --panel:#ffffff;
+    --panel2:#f8fafc;
+    --text:#172033;
+    --muted:#667085;
+    --line:#d8e0ea;
+    --brand:#0d6efd;
+    --brand2:#0b5ed7;
+    --good:#198754;
+    --warn:#f59f00;
+    --bad:#dc3545;
+    --info:#0dcaf0;
+    --purple:#6f42c1;
+    --shadow:0 10px 24px rgba(15,23,42,.08);
+    --radius:16px;
+}
+body.dark-theme{
+    --bg:#121826;
+    --panel:#1d2638;
+    --panel2:#263247;
+    --text:#e5ecf7;
+    --muted:#a9b4c6;
+    --line:#344158;
+    --brand:#4da3ff;
+    --brand2:#237bd3;
+    --shadow:0 10px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:Segoe UI, Arial, sans-serif;
+}
+.header{
+    padding:18px 24px;
+    background:linear-gradient(135deg,#0d6efd,#083b87);
+    color:white;
+    box-shadow:var(--shadow);
+}
+.header h1{
+    margin:0;
+    font-size:24px;
+    letter-spacing:.2px;
+}
+.header .subtitle{
+    margin-top:6px;
+    opacity:.86;
+    font-size:13px;
+}
+.app{
+    padding:18px 22px 28px;
+}
+.toolbar{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+}
+.toolbar-left,.toolbar-right{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+button,.btn{
+    border:1px solid transparent;
+    background:var(--brand);
+    color:white;
+    border-radius:10px;
+    padding:9px 13px;
+    cursor:pointer;
+    font-weight:600;
+    font-size:13px;
+}
+button:hover{background:var(--brand2)}
+button.secondary{
+    background:var(--panel);
+    color:var(--text);
+    border-color:var(--line);
+}
+button.secondary:hover{background:var(--panel2)}
+input,select{
+    background:var(--panel);
+    color:var(--text);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:9px 12px;
+    font-size:13px;
+}
+#globalSearchInput{min-width:280px}
+.statusline{
+    color:var(--muted);
+    font-size:13px;
+    margin:8px 0 14px;
+}
+.tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+}
+.tab-btn{
+    background:var(--panel);
+    color:var(--text);
+    border:1px solid var(--line);
+}
+.tab-btn.active{
+    background:var(--brand);
+    color:white;
+}
+.view{display:none}
+.view.active{display:block}
+.grid-cards{
+    display:grid;
+    grid-template-columns:repeat(6,minmax(150px,1fr));
+    gap:12px;
+    margin-bottom:16px;
+}
+.card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:14px;
+    min-height:92px;
+}
+.card .label{
+    color:var(--muted);
+    font-size:12px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+}
+.card .value{
+    font-size:28px;
+    font-weight:800;
+    margin-top:8px;
+}
+.card .hint{
+    color:var(--muted);
+    font-size:12px;
+    margin-top:4px;
+}
+.card.good .value{color:var(--good)}
+.card.warn .value{color:var(--warn)}
+.card.bad .value{color:var(--bad)}
+.card.info .value{color:var(--brand)}
+.dashboard-grid{
+    display:grid;
+    grid-template-columns:1.3fr 1fr;
+    gap:14px;
+}
+.panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:16px;
+    overflow:hidden;
+}
+.panel h2{
+    margin:0 0 12px;
+    font-size:17px;
+}
+.panel h3{
+    margin:0 0 10px;
+    font-size:15px;
+}
+.chart-list{
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+}
+.bar-row{
+    display:grid;
+    grid-template-columns: minmax(120px, 240px) 1fr 48px;
+    align-items:center;
+    gap:10px;
+    font-size:13px;
+}
+.bar-label{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.bar-track{
+    height:12px;
+    background:var(--panel2);
+    border-radius:999px;
+    overflow:hidden;
+    border:1px solid var(--line);
+}
+.bar-fill{
+    height:100%;
+    background:linear-gradient(90deg,var(--brand),#67b7ff);
+    border-radius:999px;
+}
+.bar-fill.good{background:linear-gradient(90deg,var(--good),#78d9a0)}
+.bar-fill.warn{background:linear-gradient(90deg,var(--warn),#ffd166)}
+.bar-fill.bad{background:linear-gradient(90deg,var(--bad),#ff8a8a)}
+.mini-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:14px;
+    margin-top:14px;
+}
+.table-wrap{
+    max-height:calc(100vh - 260px);
+    overflow:auto;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    background:var(--panel);
+    box-shadow:var(--shadow);
+}
+table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    background:var(--panel);
+}
+th,td{
+    border-bottom:1px solid var(--line);
+    border-right:1px solid var(--line);
+    padding:9px 10px;
+    text-align:left;
+    font-size:12.5px;
+    white-space:nowrap;
+}
+th{
+    position:sticky;
+    top:0;
+    z-index:4;
+    background:var(--brand);
+    color:white;
+    font-weight:800;
+    cursor:pointer;
+}
+.filter-row th{
+    top:36px;
+    background:var(--panel2);
+    z-index:3;
+    cursor:default;
+}
+.filter-row input{
+    width:100%;
+    padding:6px 8px;
+    border-radius:7px;
+}
+tbody tr:hover{background:rgba(13,110,253,.08)}
+.badge{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    border-radius:999px;
+    padding:4px 8px;
+    font-size:12px;
+    font-weight:700;
+}
+.badge.good{background:rgba(25,135,84,.12); color:var(--good)}
+.badge.warn{background:rgba(245,159,0,.16); color:#b56f00}
+.badge.bad{background:rgba(220,53,69,.12); color:var(--bad)}
+.badge.info{background:rgba(13,110,253,.12); color:var(--brand)}
+.alert-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    max-height:560px;
+    overflow:auto;
+    padding-right:4px;
+}
+.alert-item{
+    border:1px solid var(--line);
+    background:var(--panel2);
+    border-radius:13px;
+    padding:11px;
+}
+.alert-title{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    align-items:center;
+    font-weight:800;
+    margin-bottom:7px;
+}
+.alert-reasons{
+    color:var(--muted);
+    font-size:12.5px;
+    line-height:1.4;
+}
+.score{
+    min-width:54px;
+    text-align:center;
+}
+.pagination{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-top:12px;
+    flex-wrap:wrap;
+}
+.modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    z-index:2000;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+}
+.modal{
+    width:min(980px,96vw);
+    max-height:88vh;
+    overflow:auto;
+    background:var(--panel);
+    color:var(--text);
+    border-radius:18px;
+    box-shadow:0 24px 64px rgba(0,0,0,.35);
+    border:1px solid var(--line);
+}
+.modal-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:16px 18px;
+    border-bottom:1px solid var(--line);
+}
+.modal-head h2{margin:0;font-size:19px}
+.modal-body{padding:16px 18px}
+.detail-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(220px,1fr));
+    gap:12px;
+}
+.detail-section{
+    background:var(--panel2);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px;
+}
+.detail-section h3{margin:0 0 8px}
+.kv{
+    display:grid;
+    grid-template-columns:145px 1fr;
+    gap:6px;
+    border-bottom:1px dashed var(--line);
+    padding:5px 0;
+    font-size:12.5px;
+}
+.kv b{color:var(--muted)}
+.column-modal-list{
+    columns:3;
+    gap:18px;
+}
+.column-modal-list label{
+    display:block;
+    margin-bottom:7px;
+    font-size:13px;
+}
+.actions-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:12px;
+}
+.hidden{display:none!important}
+@media(max-width:1200px){
+    .grid-cards{grid-template-columns:repeat(3,1fr)}
+    .dashboard-grid{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+    .grid-cards{grid-template-columns:1fr}
+    .mini-grid{grid-template-columns:1fr}
+    .detail-grid{grid-template-columns:1fr}
+    #globalSearchInput{min-width:100%}
+}
+</style>
+</head>
+<body>
+<header class="header">
+    <h1>Parque Computacional do DepMSMRJ</h1>
+    <div class="subtitle">Dashboard gerencial, alertas e inventário detalhado. Agora com menos cara de planilha triste.</div>
+</header>
 
-        const btnConfigureColumns = document.getElementById('btnConfigureColumns');
-        const columnsModal = document.getElementById('columnsModal');
-        const modalColumnsList = document.getElementById('modalColumnsList');
-        const btnApplyColumns = document.getElementById('btnApplyColumns');
-        const btnCancelColumns = document.getElementById('btnCancelColumns');
-        const btnToggleAllColumns = document.getElementById('btnToggleAllColumns');
-        const btnSelectDefaultColumns = document.getElementById('btnSelectDefaultColumns');
+<main class="app">
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <input type="search" id="globalSearchInput" placeholder="Busca global por máquina, IP, usuário, SO, CPU...">
+            <select id="quickFilter">
+                <option value="todos">Todos</option>
+                <option value="criticos">Somente críticos</option>
+                <option value="atencao">Somente atenção</option>
+                <option value="disco">Disco C abaixo de 20%</option>
+                <option value="ram">RAM abaixo de 8 GB</option>
+                <option value="win10">Windows 10</option>
+                <option value="win11">Windows 11</option>
+                <option value="semwsus">Sem WSUS</option>
+                <option value="semativacao">Windows não ativado</option>
+            </select>
+        </div>
+        <div class="toolbar-right">
+            <button class="secondary" id="btnTheme">🎨 Tema</button>
+            <button class="secondary" id="btnColumns">⚙️ Colunas</button>
+            <button class="secondary" id="btnReset">🔄 Limpar</button>
+            <button id="btnExport">📤 Exportar CSV</button>
+        </div>
+    </div>
 
-        const globalSearchInput = document.getElementById('globalSearchInput');
-        const btnResetView = document.getElementById('btnResetView');
-        const btnToggleTheme = document.getElementById('btnToggleTheme');
-        const btnGoToDashboard = document.getElementById('btnGoToDashboard');
-        const btnExportCSV = document.getElementById('btnExportCSV');
+    <div class="tabs">
+        <button class="tab-btn active" data-view="dashboardView">📊 Dashboard</button>
+        <button class="tab-btn" data-view="alertsView">🚨 Alertas</button>
+        <button class="tab-btn" data-view="inventoryView">📋 Inventário</button>
+    </div>
 
-        const btnPrevPage = document.getElementById('btnPrevPage');
-        const btnNextPage = document.getElementById('btnNextPage');
-        const currentPageSpan = document.getElementById('currentPage');
-        const totalPagesSpan = document.getElementById('totalPages');
-        const rowsPerPageSelect = document.getElementById('rowsPerPageSelect');
+    <div id="status" class="statusline">Carregando dados...</div>
 
-        let allHeaders = []; 
-        let originalDataset = []; 
-        let filteredAndSortedDataset = []; 
-        
-        let visibleColumnIndexes = []; 
-        let columnFilters = {}; 
+    <section id="dashboardView" class="view active">
+        <div class="grid-cards" id="cardsContainer"></div>
 
-        let currentSortKey = null;
-        let currentSortDirection = 'asc';
+        <div class="dashboard-grid">
+            <div class="panel">
+                <h2>Visão geral</h2>
+                <div class="mini-grid">
+                    <div>
+                        <h3>Sistemas operacionais</h3>
+                        <div id="chartOS" class="chart-list"></div>
+                    </div>
+                    <div>
+                        <h3>Faixas de RAM</h3>
+                        <div id="chartRAM" class="chart-list"></div>
+                    </div>
+                    <div>
+                        <h3>Espaço livre no C:</h3>
+                        <div id="chartDisk" class="chart-list"></div>
+                    </div>
+                    <div>
+                        <h3>WSUS / Segurança</h3>
+                        <div id="chartSecurity" class="chart-list"></div>
+                    </div>
+                </div>
+            </div>
 
-        let currentPage = 1;
-        let rowsPerPage = parseInt(rowsPerPageSelect.value);
-        
-        const DEFAULT_COLUMN_NAMES = [ "Computador", "Usuario", "IP", "SO", "CPU", "RAM_GB_Total", "Modelo_Disco_Principal", "Antivirus", "DataHora_Coleta" ];
-        const DEFAULT_VISIBLE_COLUMNS_KEY = 'visibleColumnsInventario';
-        const THEME_KEY = 'inventarioTheme';
-        
-        let columnFilterDebounceTimer = null; 
-        let globalSearchDebounceTimer = null;
-        const DEBOUNCE_DELAY = 700;
+            <div class="panel">
+                <h2>Top prioridades</h2>
+                <div id="topAlerts" class="alert-list"></div>
+            </div>
+        </div>
 
-        function showLoader(show) { loaderOverlay.style.display = show ? 'flex' : 'none'; }
-        function toggleTheme() { document.body.classList.toggle('dark-theme'); localStorage.setItem(THEME_KEY, document.body.classList.contains('dark-theme') ? 'dark' : 'light'); }
-        function loadTheme() { if (localStorage.getItem(THEME_KEY) === 'dark') document.body.classList.add('dark-theme'); }
-        
-        btnConfigureColumns.addEventListener('click', () => { if (allHeaders.length > 0) { populateModalColumns(); columnsModal.style.display = 'flex'; }});
-        btnCancelColumns.addEventListener('click', () => { columnsModal.style.display = 'none'; });
-        btnApplyColumns.addEventListener('click', () => {
-            const selectedCheckboxes = modalColumnsList.querySelectorAll('input[type="checkbox"]:checked');
-            visibleColumnIndexes = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
-            localStorage.setItem(DEFAULT_VISIBLE_COLUMNS_KEY, JSON.stringify(visibleColumnIndexes));
-            columnsModal.style.display = 'none';
-            currentPage = 1;
-            renderHeaderAndFilterRows();
-            applyFiltersAndRender();
-        });
-        columnsModal.addEventListener('click', (event) => { if (event.target === columnsModal) columnsModal.style.display = 'none'; });
-        
-        let showingDashboard = false;
+        <div class="dashboard-grid" style="margin-top:14px;">
+            <div class="panel">
+                <h2>Top 10 menor espaço livre no C:</h2>
+                <div id="lowDiskTable"></div>
+            </div>
+            <div class="panel">
+                <h2>Top 10 updates pendentes</h2>
+                <div id="updatesTable"></div>
+            </div>
+        </div>
+    </section>
 
-btnGoToDashboard.addEventListener('click', () => {
-    const tableContainer = document.getElementById('tableContainer');
-    const paginationControls = document.querySelector('.pagination-controls');
-    const dashboardContainer = document.getElementById('dashboardContainer');
+    <section id="alertsView" class="view">
+        <div class="panel">
+            <h2>Alertas do parque</h2>
+            <div id="alertsContainer" class="alert-list"></div>
+        </div>
+    </section>
 
-    if (!showingDashboard) {
-        // Mostrar Dashboard
-        tableContainer.style.display = 'none';
-        paginationControls.style.display = 'none';
-        dashboardContainer.style.display = 'block';
-        btnGoToDashboard.textContent = '📋 Voltar à Tabela';
-        renderDashboard();
-    } else {
-        // Mostrar Tabela
-        tableContainer.style.display = 'block';
-        paginationControls.style.display = 'flex';
-        dashboardContainer.style.display = 'none';
-        btnGoToDashboard.textContent = '📊 Dashboard';
+    <section id="inventoryView" class="view">
+        <div class="table-wrap">
+            <table id="inventoryTable">
+                <thead id="inventoryHead"></thead>
+                <tbody id="inventoryBody"></tbody>
+            </table>
+        </div>
+        <div class="pagination">
+            <button class="secondary" id="prevPage">Anterior</button>
+            <span>Página <b id="currentPage">1</b> de <b id="totalPages">1</b></span>
+            <label>Linhas:
+                <select id="rowsPerPage">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="999999">Todos</option>
+                </select>
+            </label>
+            <button class="secondary" id="nextPage">Próximo</button>
+        </div>
+    </section>
+</main>
+
+<div id="detailModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-head">
+            <h2 id="detailTitle">Detalhes</h2>
+            <button class="secondary" id="closeDetail">Fechar</button>
+        </div>
+        <div class="modal-body" id="detailBody"></div>
+    </div>
+</div>
+
+<div id="columnsModal" class="modal-overlay">
+    <div class="modal">
+        <div class="modal-head">
+            <h2>Colunas visíveis</h2>
+            <button class="secondary" id="closeColumns">Fechar</button>
+        </div>
+        <div class="modal-body">
+            <div class="actions-row">
+                <button class="secondary" id="selectDefaultColumns">Padrão</button>
+                <button class="secondary" id="selectAllColumns">Todas</button>
+                <button class="secondary" id="selectNoColumns">Nenhuma</button>
+                <button id="applyColumns">Aplicar</button>
+            </div>
+            <hr style="border:none;border-top:1px solid var(--line);margin:14px 0;">
+            <div id="columnsList" class="column-modal-list"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+const DEFAULT_COLUMNS = [
+    "Computador","Usuario","IP","SO","Build","Arquitetura","CPU","RAM_GB_Total",
+    "Espaco_Livre_C_Perc","Espaco_Livre_C_GB","Usa_WSUS","Antivirus_Status",
+    "Firewall_Ativo","UpdatesPendentes","DataHora_Coleta"
+];
+
+const THEME_KEY = "parque3_theme_plus";
+const COLUMNS_KEY = "parque3_columns_plus";
+
+let data = [];
+let enriched = [];
+let headers = [];
+let visibleColumns = [];
+let filtered = [];
+let sortKey = null;
+let sortDir = "asc";
+let currentPage = 1;
+
+const $ = id => document.getElementById(id);
+
+function val(row, key, fallback=""){
+    return row && row[key] !== undefined && row[key] !== null ? row[key] : fallback;
+}
+function text(row, key){ return String(val(row,key,"")).trim(); }
+function num(row, key){
+    const raw = val(row,key,0);
+    if(typeof raw === "number") return raw;
+    const n = parseFloat(String(raw).replace(",",".").replace("%",""));
+    return Number.isFinite(n) ? n : 0;
+}
+function parseDateSafe(value){
+    if(!value) return null;
+    const s = String(value).trim();
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}):?(\d{2})?)?/);
+    if(m){
+        return new Date(+m[1], +m[2]-1, +m[3], +(m[4]||0), +(m[5]||0), +(m[6]||0));
     }
-    showingDashboard = !showingDashboard;
-});
+    const d = new Date(s);
+    return Number.isNaN(d.getTime()) ? null : d;
+}
+function daysSince(value){
+    const d = parseDateSafe(value);
+    if(!d) return 9999;
+    return Math.floor((new Date() - d) / 86400000);
+}
+function isWindows(row){
+    const plat = text(row,"Plataforma").toLowerCase();
+    if(plat) return plat.includes("windows");
+    return text(row,"SO").toLowerCase().includes("windows");
+}
+function isOldWindows(row){
+    if(!isWindows(row)) return false;
+    const so = text(row,"SO").toLowerCase();
+    const build = num(row,"Build");
+    return so.includes("windows 10") || (build && build < 22000);
+}
+function getReasons(row){
+    const reasons = [];
+    const diskPct = num(row,"Espaco_Livre_C_Perc");
+    const ram = num(row,"RAM_GB_Total");
+    const updates = num(row,"UpdatesPendentes");
+    const build = num(row,"Build");
+    const coletaDias = daysSince(text(row,"DataHora_Coleta"));
+    const ativacao = text(row,"Status_Ativacao").toLowerCase();
+    const firewall = text(row,"Firewall_Ativo").toLowerCase();
+    const av = (text(row,"Antivirus_Status") + " " + text(row,"Antivirus")).toLowerCase();
+    const wsus = text(row,"Usa_WSUS").toLowerCase();
+    const arch = text(row,"Arquitetura").toLowerCase();
+    const diskModel = text(row,"Discos_Fisicos").toLowerCase();
 
-function renderDashboard() {
-    // Limpar gráficos antigos se já existirem
-    if (window.osChartInstance) window.osChartInstance.destroy();
-    if (window.cpuChartInstance) window.cpuChartInstance.destroy();
-    if (window.ramChartInstance) window.ramChartInstance.destroy();
-    if (window.chassisChartInstance) window.chassisChartInstance.destroy(); // New
-    if (window.antivirusChartInstance) window.antivirusChartInstance.destroy(); // New
-    if (window.diskTypeChartInstance) window.diskTypeChartInstance.destroy(); // New
+    if(diskPct && diskPct < 10) reasons.push({level:"bad", text:`Disco C crítico: ${diskPct}% livre`});
+    else if(diskPct && diskPct < 20) reasons.push({level:"warn", text:`Disco C baixo: ${diskPct}% livre`});
 
-    let dashboardContainer = document.getElementById('dashboardContainer');
-    let osChartCanvas = document.getElementById('osChart');
-    let cpuChartCanvas = document.getElementById('cpuChart');
-    let ramChartCanvas = document.getElementById('ramChart');
-    let chassisChartCanvas = document.getElementById('chassisChart'); // New
-    let antivirusChartCanvas = document.getElementById('antivirusChart'); // New
-    let diskTypeChartCanvas = document.getElementById('diskTypeChart'); // New
+    if(ram && ram < 4) reasons.push({level:"bad", text:`RAM muito baixa: ${ram} GB`});
+    else if(ram && ram < 8) reasons.push({level:"warn", text:`RAM abaixo do ideal: ${ram} GB`});
 
-    // Hide all canvases initially and show a message if no data
-    osChartCanvas.style.display = 'none';
-    cpuChartCanvas.style.display = 'none';
-    ramChartCanvas.style.display = 'none';
-    chassisChartCanvas.style.display = 'none'; // New
-    antivirusChartCanvas.style.display = 'none'; // New
-    diskTypeChartCanvas.style.display = 'none'; // New
+    if(updates >= 20) reasons.push({level:"bad", text:`Muitos updates pendentes: ${updates}`});
+    else if(updates >= 5) reasons.push({level:"warn", text:`Updates pendentes: ${updates}`});
 
-    if (!inventoryData || inventoryData.length === 0) {
-        dashboardContainer.innerHTML = '<p style="text-align: center; margin-top: 50px;">Nenhum dado de inventário disponível para gerar gráficos.</p>';
-        return;
-    } else {
-        // Restore original dashboard content if it was replaced by a message
-        if (dashboardContainer.querySelector('p')) {
-            dashboardContainer.innerHTML = '<h2>Dashboard do Inventário</h2><canvas id="osChart" style="max-height:300px; margin-bottom:30px;"></canvas><canvas id="cpuChart" style="max-height:300px; margin-bottom:30px;"></canvas><canvas id="ramChart" style="max-height:300px; margin-bottom:30px;"></canvas><canvas id="chassisChart" style="max-height:300px; margin-bottom:30px;"></canvas><canvas id="antivirusChart" style="max-height:300px; margin-bottom:30px;"></canvas><canvas id="diskTypeChart" style="max-height:300px;"></canvas>';
-            // Re-get canvas elements after recreating them
-            osChartCanvas = document.getElementById('osChart');
-            cpuChartCanvas = document.getElementById('cpuChart');
-            ramChartCanvas = document.getElementById('ramChart');
-            chassisChartCanvas = document.getElementById('chassisChart'); // New
-            antivirusChartCanvas = document.getElementById('antivirusChart'); // New
-            diskTypeChartCanvas = document.getElementById('diskTypeChart'); // New
-        }
+    if(isWindows(row) && ativacao && !ativacao.includes("ativado") && !ativacao.includes("n/a")) reasons.push({level:"bad", text:`Windows não ativado`});
+    if(firewall && firewall !== "sim") reasons.push({level:"bad", text:`Firewall desativado/não detectado`});
+    if(av && (av.includes("inativo") || av.includes("nao") || av.includes("não"))) reasons.push({level:"bad", text:`Antivírus inativo/não detectado`});
+    if(isWindows(row) && (wsus === "nao" || wsus === "não")) reasons.push({level:"warn", text:`Sem WSUS configurado`});
+    if(coletaDias > 15) reasons.push({level:"bad", text:`Coleta antiga: ${coletaDias} dias`});
+    else if(coletaDias > 7) reasons.push({level:"warn", text:`Coleta com ${coletaDias} dias`});
+    if(arch.includes("32")) reasons.push({level:"warn", text:`Sistema 32 bits`});
+    if(isOldWindows(row)) reasons.push({level:"warn", text:`Windows 10/build antigo${build ? " ("+build+")" : ""}`});
+    if(diskModel.includes("hdd")) reasons.push({level:"info", text:`Disco mecânico HDD`});
+    return reasons;
+}
+function calcScore(row){
+    let score = 100;
+    for(const r of getReasons(row)){
+        if(r.level === "bad") score -= 18;
+        else if(r.level === "warn") score -= 9;
+        else score -= 3;
     }
+    const cpu = num(row,"ConsumoCPU_Percentual");
+    const ramUse = num(row,"ConsumoRAM_Percentual");
+    if(cpu > 85) score -= 8;
+    if(ramUse > 85) score -= 8;
+    return Math.max(0, Math.min(100, score));
+}
+function statusFromScore(score){
+    if(score < 60) return {label:"Crítico", cls:"bad"};
+    if(score < 80) return {label:"Atenção", cls:"warn"};
+    return {label:"OK", cls:"good"};
+}
+function enrichData(){
+    enriched = data.map(row => {
+        const copy = Object.assign({}, row);
+        copy.__score = calcScore(row);
+        copy.__reasons = getReasons(row);
+        copy.__status = statusFromScore(copy.__score).label;
+        return copy;
+    });
+}
+function countBy(rows, getter){
+    const map = {};
+    rows.forEach(r => {
+        const key = getter(r) || "Não informado";
+        map[key] = (map[key] || 0) + 1;
+    });
+    return map;
+}
+function renderBars(containerId, map, opts={}){
+    const el = $(containerId);
+    const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0, opts.limit || 12);
+    const max = Math.max(1, ...entries.map(e=>e[1]));
+    if(entries.length === 0){ el.innerHTML = "<div class='statusline'>Sem dados.</div>"; return; }
+    el.innerHTML = entries.map(([label,count]) => {
+        const pct = Math.round((count/max)*100);
+        const cls = opts.cls ? opts.cls(label,count) : "";
+        return `<div class="bar-row" title="${escapeHtml(label)}: ${count}">
+            <div class="bar-label">${escapeHtml(label)}</div>
+            <div class="bar-track"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div>
+            <div><b>${count}</b></div>
+        </div>`;
+    }).join("");
+}
+function escapeHtml(v){
+    return String(v ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+}
+function renderCards(){
+    const total = enriched.length;
+    const crit = enriched.filter(r=>r.__score < 60).length;
+    const warn = enriched.filter(r=>r.__score >= 60 && r.__score < 80).length;
+    const ok = enriched.filter(r=>r.__score >= 80).length;
+    const semWsus = enriched.filter(r=>["nao","não",""].includes(text(r,"Usa_WSUS").toLowerCase())).length;
+    const discoBaixo = enriched.filter(r=>num(r,"Espaco_Livre_C_Perc") > 0 && num(r,"Espaco_Livre_C_Perc") < 20).length;
+    const win10 = enriched.filter(r=>text(r,"SO").toLowerCase().includes("windows 10")).length;
+    const oldCollect = enriched.filter(r=>daysSince(text(r,"DataHora_Coleta")) > 7).length;
 
-    // Define a larger color palette for pie charts
-    const chartColors = [
-        '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1', '#17a2b8', '#fd7e14', '#20c997', '#e83e8c', '#6c757d',
-        '#0056b3', '#1e7e34', '#d39e00', '#bd2130', '#5a2d9e', '#117a8b', '#c85a00', '#159d73', '#b82c74', '#545b62'
+    const cards = [
+        ["Total", total, "Máquinas no inventário", "info"],
+        ["OK", ok, "Score de saúde ≥ 80", "good"],
+        ["Atenção", warn, "Score entre 60 e 79", "warn"],
+        ["Críticas", crit, "Score abaixo de 60", "bad"],
+        ["Disco baixo", discoBaixo, "C: com menos de 20% livre", discoBaixo ? "bad" : "good"],
+        ["Sem WSUS", semWsus, "Máquinas sem WSUS informado", semWsus ? "warn" : "good"],
+        ["Windows 10", win10, "Planejar atualização/migração", win10 ? "warn" : "good"],
+        ["Coleta antiga", oldCollect, "Mais de 7 dias", oldCollect ? "warn" : "good"],
     ];
 
-    // Gráfico de Sistemas Operacionais
-    const osCounts = {};
-    inventoryData.forEach(d => {
-        const osName = d.SO ? d.SO.replace('Microsoft Windows', 'Win').replace('Professional', 'Pro').trim() : 'Desconhecido';
-        osCounts[osName] = (osCounts[osName] || 0) + 1;
-    });
-
-    const osLabels = Object.keys(osCounts);
-    const osData = Object.values(osCounts);
-
-    if (osLabels.length > 0) {
-        osChartCanvas.style.display = 'block';
-        window.osChartInstance = new Chart(osChartCanvas, {
-            type: 'pie',
-            data: {
-                labels: osLabels,
-                datasets: [{
-                    data: osData,
-                    backgroundColor: chartColors.slice(0, osLabels.length) // Use enough colors from the palette
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom' },
-                    title: {
-                        display: true,
-                        text: 'Distribuição de Sistemas Operacionais',
-                        font: { size: 16 }
-                    }
-                }
-            }
-        });
-    } else {
-        osChartCanvas.insertAdjacentHTML('afterend', '<p style="text-align: center;">Dados insuficientes para o gráfico de Sistemas Operacionais.</p>');
-    }
-
-    // Gráfico de CPUs
-    const cpuCounts = {};
-    inventoryData.forEach(d => {
-        const cpuName = d.CPU ? d.CPU.trim() : 'Desconhecido';
-        cpuCounts[cpuName] = (cpuCounts[cpuName] || 0) + 1;
-    });
-
-    let cpuDataArray = Object.keys(cpuCounts).map(key => ({ name: key, count: cpuCounts[key] }));
-    cpuDataArray.sort((a, b) => b.count - a.count); // Sort by count descending
-
-    const TOP_N_CPUS = 10;
-    let cpuLabels = [];
-    let cpuData = [];
-    let otherCpuCount = 0;
-
-    for (let i = 0; i < cpuDataArray.length; i++) {
-        if (i < TOP_N_CPUS) {
-            cpuLabels.push(cpuDataArray[i].name);
-            cpuData.push(cpuDataArray[i].count);
-        } else {
-            otherCpuCount += cpuDataArray[i].count;
-        }
-    }
-
-    if (otherCpuCount > 0) {
-        cpuLabels.push('Outros');
-        cpuData.push(otherCpuCount);
-    }
-
-    if (cpuLabels.length > 0) {
-        cpuChartCanvas.style.display = 'block';
-        window.cpuChartInstance = new Chart(cpuChartCanvas, {
-            type: 'bar',
-            data: {
-                labels: cpuLabels,
-                datasets: [{
-                    label: 'Quantidade',
-                    data: cpuData,
-                    backgroundColor: '#17a2b8' // Keep a single color for bar charts
-                }]
-            },
-            options: {
-                responsive: true,
-                indexAxis: 'y',
-                plugins: {
-                    legend: { display: false }, // Hide legend for single dataset bar chart
-                    title: {
-                        display: true,
-                        text: 'Distribuição de Processadores (Top ' + TOP_N_CPUS + ')',
-                        font: { size: 16 }
-                    }
-                },
-                scales: {
-                    x: { beginAtZero: true }
-                }
-            }
-        });
-    } else {
-        cpuChartCanvas.insertAdjacentHTML('afterend', '<p style="text-align: center;">Dados insuficientes para o gráfico de CPUs.</p>');
-    }
-
-    // Gráfico de RAM
-    const ramCounts = {};
-    inventoryData.forEach(d => {
-        const ramGB = parseFloat(d.RAM_GB_Total);
-        if (!isNaN(ramGB)) {
-            ramCounts[ramGB] = (ramCounts[ramGB] || 0) + 1;
-        } else {
-            ramCounts['Desconhecido'] = (ramCounts['Desconhecido'] || 0) + 1;
-        }
-    });
-
-    let ramDataArray = Object.keys(ramCounts).map(key => ({ ram: key, count: ramCounts[key] }));
-    ramDataArray.sort((a, b) => {
-        const ramA = parseFloat(a.ram);
-        const ramB = parseFloat(b.ram);
-        if (isNaN(ramA) && isNaN(ramB)) return 0;
-        if (isNaN(ramA)) return 1; // 'Desconhecido' goes to the end
-        if (isNaN(ramB)) return -1;
-        return ramA - ramB; // Sort numerically ascending
-    });
-
-    const ramLabels = ramDataArray.map(item => item.ram + ' GB');
-    const ramData = ramDataArray.map(item => item.count);
-
-    if (ramLabels.length > 0) {
-        ramChartCanvas.style.display = 'block';
-        window.ramChartInstance = new Chart(ramChartCanvas, {
-            type: 'bar',
-            data: {
-                labels: ramLabels,
-                datasets: [{
-                    label: 'Quantidade de Máquinas',
-                    data: ramData,
-                    backgroundColor: '#ffc107'
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { display: false },
-                    title: {
-                        display: true,
-                        text: 'Distribuição de Memória RAM',
-                        font: { size: 16 }
-                    }
-                },
-                scales: {
-                    y: { beginAtZero: true }
-                }
-            }
-        });
-    } else {
-        ramChartCanvas.insertAdjacentHTML('afterend', '<p style="text-align: center;">Dados insuficientes para o gráfico de RAM.</p>');
-    }
-
-    // Gráfico de Tipos de Chassis
-    const chassisCounts = {};
-    inventoryData.forEach(d => {
-        const chassisType = d.Chassis_Tipo ? d.Chassis_Tipo.trim() : 'Desconhecido';
-        chassisCounts[chassisType] = (chassisCounts[chassisType] || 0) + 1;
-    });
-
-    const chassisLabels = Object.keys(chassisCounts);
-    const chassisData = Object.values(chassisCounts);
-
-    if (chassisLabels.length > 0) {
-        chassisChartCanvas.style.display = 'block';
-        window.chassisChartInstance = new Chart(chassisChartCanvas, {
-            type: 'pie',
-            data: {
-                labels: chassisLabels,
-                datasets: [{
-                    data: chassisData,
-                    backgroundColor: chartColors.slice(0, chassisLabels.length)
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom' },
-                    title: {
-                        display: true,
-                        text: 'Distribuição por Tipo de Chassis',
-                        font: { size: 16 }
-                    }
-                }
-            }
-        });
-    } else {
-        chassisChartCanvas.insertAdjacentHTML('afterend', '<p style="text-align: center;">Dados insuficientes para o gráfico de Tipo de Chassis.</p>');
-    }
-
-    // Gráfico de Status do Antivírus
-    const antivirusCounts = {};
-    inventoryData.forEach(d => {
-        const antivirusStatus = d.Antivirus_Status ? d.Antivirus_Status.trim() : 'Desconhecido';
-        antivirusCounts[antivirusStatus] = (antivirusCounts[antivirusStatus] || 0) + 1;
-    });
-
-    const antivirusLabels = Object.keys(antivirusCounts);
-    const antivirusData = Object.values(antivirusCounts);
-
-    if (antivirusLabels.length > 0) {
-        antivirusChartCanvas.style.display = 'block';
-        window.antivirusChartInstance = new Chart(antivirusChartCanvas, {
-            type: 'pie',
-            data: {
-                labels: antivirusLabels,
-                datasets: [{
-                    data: antivirusData,
-                    backgroundColor: chartColors.slice(0, antivirusLabels.length)
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom' },
-                    title: {
-                        display: true,
-                        text: 'Status do Antivírus',
-                        font: { size: 16 }
-                    }
-                }
-            }
-        });
-    } else {
-        antivirusChartCanvas.insertAdjacentHTML('afterend', '<p style="text-align: center;">Dados insuficientes para o gráfico de Status do Antivírus.</p>');
-    }
-
-    // Gráfico de Tipos de Disco (SSD/HDD)
-    const diskTypeCounts = {
-        'SSD': 0,
-        'HDD': 0,
-        'Outro/Desconhecido': 0
-    };
-    inventoryData.forEach(d => {
-        const physicalDisks = d.Discos_Fisicos ? d.Discos_Fisicos.toLowerCase() : '';
-        if (physicalDisks.includes('ssd')) {
-            diskTypeCounts['SSD']++;
-        } else if (physicalDisks.includes('hdd')) {
-            diskTypeCounts['HDD']++;
-        }
-    });
-
-    // Filter out categories with 0 count for cleaner chart
-    const filteredDiskTypeLabels = Object.keys(diskTypeCounts).filter(key => diskTypeCounts[key] > 0);
-    const filteredDiskTypeData = filteredDiskTypeLabels.map(key => diskTypeCounts[key]);
-
-    if (filteredDiskTypeLabels.length > 0) {
-        diskTypeChartCanvas.style.display = 'block';
-        window.diskTypeChartInstance = new Chart(diskTypeChartCanvas, {
-            type: 'pie',
-            data: {
-                labels: filteredDiskTypeLabels,
-                datasets: [{
-                    data: filteredDiskTypeData,
-                    backgroundColor: chartColors.slice(0, filteredDiskTypeLabels.length)
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: { position: 'bottom' },
-                    title: {
-                        display: true,
-                        text: 'Distribuição por Tipo de Disco',
-                        font: { size: 16 }
-                    }
-                }
-            }
-        });
-    } else {
-        diskTypeChartCanvas.insertAdjacentHTML('afterend', '<p style="text-align: center;">Dados insuficientes para o gráfico de Tipo de Disco.</p>');
-    }
+    $("cardsContainer").innerHTML = cards.map(c => `
+        <div class="card ${c[3]}">
+            <div class="label">${c[0]}</div>
+            <div class="value">${c[1]}</div>
+            <div class="hint">${c[2]}</div>
+        </div>
+    `).join("");
 }
+function ramBucket(r){
+    const ram = num(r,"RAM_GB_Total");
+    if(!ram) return "Não informado";
+    if(ram < 4) return "< 4 GB";
+    if(ram < 8) return "4 a 7 GB";
+    if(ram < 16) return "8 a 15 GB";
+    if(ram < 32) return "16 a 31 GB";
+    return "32 GB ou mais";
+}
+function diskBucket(r){
+    const p = num(r,"Espaco_Livre_C_Perc");
+    if(!p) return "Não informado";
+    if(p < 10) return "< 10% crítico";
+    if(p < 20) return "10% a 19% baixo";
+    if(p < 50) return "20% a 49%";
+    return "50% ou mais";
+}
+function renderDashboard(){
+    renderCards();
+    renderBars("chartOS", countBy(enriched, r => text(r,"SO").replace("Microsoft ","")), {limit:10});
+    renderBars("chartRAM", countBy(enriched, ramBucket), {cls: label => label.includes("< 4") || label.includes("4 a 7") ? "warn" : "good"});
+    renderBars("chartDisk", countBy(enriched, diskBucket), {cls: label => label.includes("crítico") ? "bad" : label.includes("baixo") ? "warn" : "good"});
+    renderBars("chartSecurity", {
+        "Com WSUS": enriched.filter(r=>text(r,"Usa_WSUS").toLowerCase()==="sim").length,
+        "Sem WSUS": enriched.filter(r=>text(r,"Usa_WSUS").toLowerCase()!=="sim").length,
+        "Firewall ativo": enriched.filter(r=>text(r,"Firewall_Ativo").toLowerCase()==="sim").length,
+        "Firewall não ativo": enriched.filter(r=>text(r,"Firewall_Ativo").toLowerCase()!=="sim").length,
+        "Antivírus ativo": enriched.filter(r=>text(r,"Antivirus_Status").toLowerCase()==="ativo").length
+    }, {cls: label => label.includes("Sem") || label.includes("não") ? "warn" : "good"});
 
+    const top = [...enriched].sort((a,b)=>a.__score-b.__score).slice(0,8);
+    $("topAlerts").innerHTML = top.map(alertHtml).join("") || "<div class='statusline'>Sem alertas.</div>";
+    $("alertsContainer").innerHTML = [...enriched].filter(r=>r.__reasons.length).sort((a,b)=>a.__score-b.__score).map(alertHtml).join("") || "<div class='statusline'>Sem alertas.</div>";
 
-        btnToggleAllColumns.addEventListener('click', () => {
-            const checkboxes = modalColumnsList.querySelectorAll('input[type="checkbox"]');
-            if (checkboxes.length === 0) return;
-            const shouldCheck = !checkboxes[0].checked;
-            checkboxes.forEach(cb => cb.checked = shouldCheck);
-        });
-
-        btnSelectDefaultColumns.addEventListener('click', () => {
-            const defaultIndexes = DEFAULT_COLUMN_NAMES.map(name => allHeaders.indexOf(name)).filter(index => index !== -1); 
-            const checkboxes = modalColumnsList.querySelectorAll('input[type="checkbox"]');
-            checkboxes.forEach(cb => { cb.checked = defaultIndexes.includes(parseInt(cb.value)); });
-        });
-
-        function populateModalColumns() {
-            modalColumnsList.innerHTML = ''; 
-            if (!allHeaders || allHeaders.length === 0) return;
-            allHeaders.forEach((header, index) => {
-                const label = document.createElement('label');
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox'; checkbox.value = index; 
-                checkbox.checked = visibleColumnIndexes.includes(index);
-                label.appendChild(checkbox);
-                label.appendChild(document.createTextNode(' ' + header));
-                modalColumnsList.appendChild(label);
-            });
+    renderSmallTable("lowDiskTable",
+        [...enriched].filter(r=>num(r,"Espaco_Livre_C_Perc")>0).sort((a,b)=>num(a,"Espaco_Livre_C_Perc")-num(b,"Espaco_Livre_C_Perc")).slice(0,10),
+        ["Computador","Usuario","Espaco_Livre_C_Perc","Espaco_Livre_C_GB","SO"]
+    );
+    renderSmallTable("updatesTable",
+        [...enriched].sort((a,b)=>num(b,"UpdatesPendentes")-num(a,"UpdatesPendentes")).slice(0,10),
+        ["Computador","Usuario","UpdatesPendentes","UltimaInstalacaoUpdates","SO"]
+    );
+}
+function alertHtml(r){
+    const st = statusFromScore(r.__score);
+    const reasons = r.__reasons.length ? r.__reasons.map(x=>`• ${escapeHtml(x.text)}`).join("<br>") : "Sem problemas relevantes.";
+    return `<div class="alert-item">
+        <div class="alert-title">
+            <span>${escapeHtml(text(r,"Computador"))} <span class="badge ${st.cls}">${st.label}</span></span>
+            <span class="badge ${st.cls} score">${r.__score}/100</span>
+        </div>
+        <div class="alert-reasons">${reasons}</div>
+    </div>`;
+}
+function renderSmallTable(id, rows, cols){
+    const html = `<table><thead><tr>${cols.map(c=>`<th>${escapeHtml(c)}</th>`).join("")}</tr></thead><tbody>` +
+        rows.map(r=>`<tr>${cols.map(c=>`<td>${escapeHtml(val(r,c,""))}</td>`).join("")}</tr>`).join("") +
+        `</tbody></table>`;
+    $(id).innerHTML = html;
+}
+function applyFilters(){
+    const q = $("globalSearchInput").value.trim().toLowerCase();
+    const quick = $("quickFilter").value;
+    filtered = enriched.filter(r => {
+        let ok = true;
+        if(q){
+            ok = headers.some(h => String(val(r,h,"")).toLowerCase().includes(q));
         }
-        
-        function applyFiltersAndRender() {
-            let dataToProcess = [...originalDataset];
-            const globalSearchTerm = globalSearchInput.value.toLowerCase().trim();
+        if(!ok) return false;
 
-            if (globalSearchTerm) {
-                dataToProcess = dataToProcess.filter(row => 
-                    visibleColumnIndexes.some(colIndex => {
-                        if (colIndex < 0 || colIndex >= allHeaders.length) return false;
-                        const headerKey = allHeaders[colIndex];
-                        return (row[headerKey] || '').toString().toLowerCase().includes(globalSearchTerm);
-                    })
-                );
-            }
-
-            Object.keys(columnFilters).forEach(headerKey => {
-                const filterTerm = (columnFilters[headerKey] || '').toLowerCase().trim();
-                if (filterTerm) {
-                    dataToProcess = dataToProcess.filter(row =>
-                        (row[headerKey] || '').toString().toLowerCase().includes(filterTerm)
-                    );
-                }
-            });
-
-            if (currentSortKey && allHeaders.includes(currentSortKey)) {
-                dataToProcess.sort((objA, objB) => {
-                    let valA = (objA[currentSortKey] || '').toString().trim();
-                    let valB = (objB[currentSortKey] || '').toString().trim();
-                    const numA = parseFloat(valA.replace(',', '.')); const numB = parseFloat(valB.replace(',', '.'));
-                    if (!isNaN(numA) && !isNaN(numB)) { valA = numA; valB = numB; }
-                    else { valA = valA.toLowerCase(); valB = valB.toLowerCase(); }
-                    if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
-                    if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
-                    return 0;
-                });
-            }
-            
-            filteredAndSortedDataset = dataToProcess;
-            updatePagination(); 
-            renderTableBody();
-        }
-        
-        function updatePagination() {
-            const totalRows = filteredAndSortedDataset.length;
-            let rpp = (rowsPerPageSelect.value === "500") ? (totalRows > 0 ? totalRows : 1) : parseInt(rowsPerPageSelect.value);
-            const totalPgs = Math.ceil(totalRows / rpp) || 1;
-            totalPagesSpan.textContent = totalPgs;
-            currentPage = Math.min(currentPage, totalPgs); 
-            currentPageSpan.textContent = currentPage;
-            btnPrevPage.disabled = currentPage === 1;
-            btnNextPage.disabled = currentPage === totalPgs || totalRows === 0;
-        }
-
-        function renderHeaderAndFilterRows() {
-            tableHead.innerHTML = ''; 
-            if (allHeaders.length === 0) return;
-
-            const headerRow = document.createElement('tr');
-            headerRow.classList.add('header-row');
-            visibleColumnIndexes.forEach(colIndex => {
-                if (colIndex < 0 || colIndex >= allHeaders.length) return; 
-                const headerText = allHeaders[colIndex];
-                const th = document.createElement('th');
-                th.classList.add('main-header-cell'); 
-                th.textContent = headerText.trim();
-                th.dataset.sortKey = headerText;
-                const sortIndicator = document.createElement('span');
-                sortIndicator.classList.add('sort-indicator');
-                if (headerText === currentSortKey) {
-                    sortIndicator.textContent = currentSortDirection === 'asc' ? '▲' : '▼';
-                }
-                th.appendChild(sortIndicator);
-                th.addEventListener('click', handleSort);
-                headerRow.appendChild(th);
-            });
-            tableHead.appendChild(headerRow);
-
-            const filterRow = document.createElement('tr');
-            filterRow.classList.add('column-filter-row');
-            visibleColumnIndexes.forEach(colIndex => {
-                if (colIndex < 0 || colIndex >= allHeaders.length) return; 
-                const headerText = allHeaders[colIndex];
-                const th = document.createElement('th');
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.placeholder = `Filtrar...`;
-                input.title = `Filtrar ${headerText}`;
-                input.dataset.headerKey = headerText;
-                input.value = columnFilters[headerText] || ''; 
-                input.addEventListener('input', handleColumnFilterInput);
-                th.appendChild(input);
-                filterRow.appendChild(th);
-            });
-            tableHead.appendChild(filterRow);
-        }
-
-        function renderTableBody() {
-            tableBody.innerHTML = ''; 
-            let rpp = (rowsPerPageSelect.value === "500") ? (filteredAndSortedDataset.length > 0 ? filteredAndSortedDataset.length : 1) : parseInt(rowsPerPageSelect.value);
-            statusDiv.textContent = `Exibindo ${filteredAndSortedDataset.length} registros. ${visibleColumnIndexes.length} de ${allHeaders.length} colunas visíveis.`;
-            if (visibleColumnIndexes.length === 0 && originalDataset.length > 0) { statusDiv.textContent += " Nenhuma coluna selecionada."; }
-            const startIndex = (currentPage - 1) * rpp;
-            const endIndex = startIndex + rpp;
-            const pageData = filteredAndSortedDataset.slice(startIndex, endIndex);
-            if (pageData.length === 0 && originalDataset.length > 0) {
-                const tr = tableBody.insertRow(); const td = tr.insertCell(); td.colSpan = Math.max(1, visibleColumnIndexes.length);
-                td.textContent = "Nenhum dado corresponde aos filtros aplicados."; td.style.textAlign = "center";
-            }
-            pageData.forEach(rowDataObject => {
-                const dataRow = document.createElement('tr');
-                visibleColumnIndexes.forEach(colIndex => {
-                    if (colIndex < 0 || colIndex >= allHeaders.length) return; 
-                    const headerKey = allHeaders[colIndex];
-                    const td = document.createElement('td');
-                    td.textContent = (rowDataObject[headerKey] || '').toString().trim();
-                    dataRow.appendChild(td);
-                });
-                tableBody.appendChild(dataRow);
-            });
-        }
-        
-        function handleSort(event) {
-            const sortKey = event.currentTarget.dataset.sortKey;
-            if (currentSortKey === sortKey) { currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc'; } 
-            else { currentSortKey = sortKey; currentSortDirection = 'asc'; }
-            currentPage = 1; 
-            renderHeaderAndFilterRows();
-            applyFiltersAndRender();
-        }
-
-        function handleColumnFilterInput(event) {
-            const headerKey = event.target.dataset.headerKey;
-            columnFilters[headerKey] = event.target.value; 
-            clearTimeout(columnFilterDebounceTimer);
-            columnFilterDebounceTimer = setTimeout(() => { currentPage = 1; applyFiltersAndRender(); }, DEBOUNCE_DELAY);
-        }
-        
-        function exportCurrentViewToCsv() {
-            if (!filteredAndSortedDataset || filteredAndSortedDataset.length === 0) { alert("Não há dados para exportar na visualização atual."); return; }
-            const headersToExport = visibleColumnIndexes.map(index => allHeaders[index]);
-            let csvContent = headersToExport.join(",") + "\r\n";
-            filteredAndSortedDataset.forEach(rowObject => {
-                const row = headersToExport.map(header => {
-                    let cell = rowObject[header] || "";
-                    if (typeof cell === 'string' && (cell.includes(',') || cell.includes('"'))) { cell = `"${cell.replace(/"/g, '""')}"`; }
-                    return cell;
-                });
-                csvContent += row.join(",") + "\r\n";
-            });
-            const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            const date = new Date().toISOString().slice(0, 10);
-            link.setAttribute("download", `inventario_filtrado_${date}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-        
-        btnExportCSV.addEventListener('click', exportCurrentViewToCsv);
-        globalSearchInput.addEventListener('input', () => { clearTimeout(globalSearchDebounceTimer); globalSearchDebounceTimer = setTimeout(() => { currentPage = 1; applyFiltersAndRender(); }, DEBOUNCE_DELAY); });
-        btnResetView.addEventListener('click', () => {
-            localStorage.removeItem(DEFAULT_VISIBLE_COLUMNS_KEY); 
-            if(allHeaders.length > 0) {
-                 const defaultIndexes = DEFAULT_COLUMN_NAMES.map(name => allHeaders.indexOf(name)).filter(index => index !== -1);
-                 visibleColumnIndexes = defaultIndexes.length > 0 ? defaultIndexes : allHeaders.map((_,i) => i);
-            }
-            currentSortKey = null; columnFilters = {}; globalSearchInput.value = ''; currentPage = 1; rowsPerPageSelect.value = "25";
-            renderHeaderAndFilterRows();
-            applyFiltersAndRender();
-        });
-        
-        btnToggleTheme.addEventListener('click', toggleTheme);
-        btnPrevPage.addEventListener('click', () => { if (currentPage > 1) { currentPage--; applyFiltersAndRender(); }});
-        btnNextPage.addEventListener('click', () => {
-            let rpp = (rowsPerPageSelect.value === "500") ? (filteredAndSortedDataset.length > 0 ? filteredAndSortedDataset.length : 1) : parseInt(rowsPerPageSelect.value);
-            const totalPgs = Math.ceil(filteredAndSortedDataset.length / rpp) || 1;
-            if (currentPage < totalPgs) { currentPage++; applyFiltersAndRender(); }
-        });
-        rowsPerPageSelect.addEventListener('change', (event) => {
-            rowsPerPage = (event.target.value === "500") ? Infinity : parseInt(event.target.value);
-            currentPage = 1; applyFiltersAndRender();
-        });
-        tableBody.addEventListener('click', function(event) {
-            const targetRow = event.target.closest('tr');
-            if (!targetRow || targetRow.classList.contains('header-row') || targetRow.classList.contains('column-filter-row')) return;
-            const previouslySelected = tableBody.querySelector('.selected-row');
-            if (previouslySelected) previouslySelected.classList.remove('selected-row');
-            if (previouslySelected !== targetRow) targetRow.classList.add('selected-row');
-        });
-
-		// Duplo clique para abrir o HTML individual
-		tableBody.addEventListener('dblclick', function(event) {
-			const targetRow = event.target.closest('tr');
-			if (!targetRow || targetRow.classList.contains('header-row') || targetRow.classList.contains('column-filter-row')) return;
-
-			const rowIndex = Array.from(tableBody.children).indexOf(targetRow);
-            
-            let rpp = (rowsPerPageSelect.value === "500") ? (filteredAndSortedDataset.length > 0 ? filteredAndSortedDataset.length : 1) : parseInt(rowsPerPageSelect.value);
-            const startIndex = (currentPage - 1) * rpp;
-            const dataIndex = startIndex + rowIndex;
-
-			const rowData = filteredAndSortedDataset[dataIndex];
-			if (!rowData) return;
-
-            const hostname = rowData.Computador;
-			if (hostname) {
-                const url = `inventario/${hostname}.html`;
-				window.open(url, '_blank');
-			} else {
-				alert("Não foi possível encontrar o nome do computador para esta linha.");
-			}
-		});
-
-
-        // --- FUNÇÃO DE INICIALIZAÇÃO CORRIGIDA ---
-        function initializeApp() {
-            loadTheme();
-            showLoader(true);
-            
-            try {
-                if (typeof inventoryData !== 'undefined' && Array.isArray(inventoryData) && inventoryData.length > 0) {
-                    allHeaders = Object.keys(inventoryData[0]);
-                    originalDataset = inventoryData;
-
-                    const storedVisible = localStorage.getItem(DEFAULT_VISIBLE_COLUMNS_KEY);
-                    if (storedVisible) {
-                        try {
-                            let parsed = JSON.parse(storedVisible);
-                            visibleColumnIndexes = parsed.filter(idx => typeof idx === 'number' && idx >=0 && idx < allHeaders.length);
-                            if(visibleColumnIndexes.length === 0 && allHeaders.length > 0) { visibleColumnIndexes = allHeaders.map((_,i) => i); }
-                        } catch (e) {
-                            console.warn("Erro ao ler colunas visíveis do localStorage.", e);
-                            visibleColumnIndexes = allHeaders.map((_,i) => i);
-                        }
-                    } else {
-                        visibleColumnIndexes = DEFAULT_COLUMN_NAMES.map(name => allHeaders.indexOf(name)).filter(index => index !== -1);
-                        if (visibleColumnIndexes.length === 0) { visibleColumnIndexes = allHeaders.map((_,i) => i); }
-                    }
-
-                    btnConfigureColumns.disabled = false;
-                    Object.values(document.querySelectorAll('.top-controls button, .pagination-controls button, .pagination-controls select')).forEach(el => el.disabled = false);
-
-                    renderHeaderAndFilterRows();
-                    applyFiltersAndRender();
-                } else {
-                    statusDiv.textContent = 'Nenhum dado de inventário encontrado. Rode o script de coleta nas máquinas.';
-                    btnConfigureColumns.disabled = true;
-                    Object.values(document.querySelectorAll('.top-controls button, .pagination-controls button, .pagination-controls select')).forEach(el => el.disabled = true);
-                }
-            } catch (e) {
-                console.error("Erro fatal durante a inicialização:", e);
-                statusDiv.textContent = "Ocorreu um erro fatal ao processar os dados. Verifique o console (F12).";
-            } finally {
-                showLoader(false);
-            }
-        }
-
-        initializeApp();
+        if(quick === "criticos") return r.__score < 60;
+        if(quick === "atencao") return r.__score >= 60 && r.__score < 80;
+        if(quick === "disco") return num(r,"Espaco_Livre_C_Perc") > 0 && num(r,"Espaco_Livre_C_Perc") < 20;
+        if(quick === "ram") return num(r,"RAM_GB_Total") > 0 && num(r,"RAM_GB_Total") < 8;
+        if(quick === "win10") return text(r,"SO").toLowerCase().includes("windows 10");
+        if(quick === "win11") return text(r,"SO").toLowerCase().includes("windows 11");
+        if(quick === "semwsus") return text(r,"Usa_WSUS").toLowerCase() !== "sim";
+        if(quick === "semativacao") return isWindows(r) && !text(r,"Status_Ativacao").toLowerCase().includes("ativado");
+        return true;
     });
-    </script>
-</body>
 
+    for(const [key,input] of Object.entries(columnFilters)){
+        const term = input.value.trim().toLowerCase();
+        if(term){
+            filtered = filtered.filter(r => String(val(r,key,"")).toLowerCase().includes(term));
+        }
+    }
+
+    if(sortKey){
+        filtered.sort((a,b)=>{
+            let va = val(a,sortKey,""), vb = val(b,sortKey,"");
+            const na = parseFloat(String(va).replace(",",".")), nb = parseFloat(String(vb).replace(",","."));
+            if(Number.isFinite(na) && Number.isFinite(nb)){ va=na; vb=nb; }
+            else { va=String(va).toLowerCase(); vb=String(vb).toLowerCase(); }
+            if(va<vb) return sortDir==="asc" ? -1 : 1;
+            if(va>vb) return sortDir==="asc" ? 1 : -1;
+            return 0;
+        });
+    }
+    currentPage = Math.min(currentPage, getTotalPages());
+    if(currentPage < 1) currentPage = 1;
+    renderTable();
+    updateStatus();
+}
+let columnFilters = {};
+function renderHeader(){
+    const head = $("inventoryHead");
+    const hrow = `<tr>${visibleColumns.map(h=>`<th data-key="${escapeHtml(h)}">${escapeHtml(h)} ${sortKey===h ? (sortDir==="asc"?"▲":"▼") : ""}</th>`).join("")}</tr>`;
+    const frow = `<tr class="filter-row">${visibleColumns.map(h=>`<th><input data-key="${escapeHtml(h)}" placeholder="Filtrar..."></th>`).join("")}</tr>`;
+    head.innerHTML = hrow + frow;
+
+    head.querySelectorAll("tr:first-child th").forEach(th=>{
+        th.addEventListener("click",()=>{
+            const key = th.dataset.key;
+            if(sortKey === key) sortDir = sortDir === "asc" ? "desc" : "asc";
+            else { sortKey = key; sortDir = "asc"; }
+            renderHeader();
+            applyFilters();
+        });
+    });
+    columnFilters = {};
+    head.querySelectorAll(".filter-row input").forEach(inp=>{
+        columnFilters[inp.dataset.key] = inp;
+        inp.addEventListener("input", debounce(()=>{currentPage=1; applyFilters();},250));
+    });
+}
+function getRowsPerPage(){ return parseInt($("rowsPerPage").value,10) || 20; }
+function getTotalPages(){ return Math.max(1, Math.ceil(filtered.length / getRowsPerPage())); }
+function renderTable(){
+    const body = $("inventoryBody");
+    const rpp = getRowsPerPage();
+    const start = (currentPage-1)*rpp;
+    const rows = filtered.slice(start,start+rpp);
+    body.innerHTML = rows.map((r,idx)=>{
+        const absoluteIndex = start + idx;
+        return `<tr data-index="${absoluteIndex}">${visibleColumns.map(h=>{
+            let value = val(r,h,"");
+            if(h === "__score"){
+                const st = statusFromScore(r.__score);
+                value = `<span class="badge ${st.cls}">${r.__score}/100</span>`;
+                return `<td>${value}</td>`;
+            }
+            return `<td>${escapeHtml(value)}</td>`;
+        }).join("")}</tr>`;
+    }).join("");
+    body.querySelectorAll("tr").forEach(tr=>{
+        tr.addEventListener("dblclick",()=>{
+            const r = filtered[parseInt(tr.dataset.index,10)];
+            openDetail(r);
+        });
+    });
+    $("currentPage").textContent = currentPage;
+    $("totalPages").textContent = getTotalPages();
+    $("prevPage").disabled = currentPage <= 1;
+    $("nextPage").disabled = currentPage >= getTotalPages();
+}
+function updateStatus(){
+    $("status").textContent = `Exibindo ${filtered.length} de ${enriched.length} registros. ${visibleColumns.length} de ${headers.length} colunas visíveis.`;
+}
+function openDetail(r){
+    $("detailTitle").textContent = `Detalhes - ${text(r,"Computador")}`;
+    const sections = {
+        "Resumo": ["Computador","Usuario","IP","MAC","SO","Build","DataHora_Coleta","Dominio_ou_Grupo","Status_Ativacao","Usa_WSUS","Servidor_WSUS"],
+        "Hardware": ["Computador_Fabricante","Computador_Modelo","Chassis_Tipo","CPU","Arquitetura","CPU_Cores","CPU_Threads","RAM_GB_Total","RAM_Detalhes","GPU","Monitores","Resolucao_Tela"],
+        "Discos": ["Armazenamento_C_GB","Espaco_Livre_C_GB","Espaco_Livre_C_Perc","Discos_Fisicos","Volumes","Modelo_Disco_Principal","SaudeDiscoSMART"],
+        "Segurança / Rede": ["Antivirus","Antivirus_Status","Firewall_Ativo","AdminsLocais","PortasTCP_Abertas","PortasUDP_Abertas","GatewayPadrao","ServidoresDNS","DHCPAtivado"],
+        "Uso / Updates": ["Uptime_Formatado","UpdatesPendentes","UltimaInstalacaoUpdates","ConsumoCPU_Percentual","ConsumoRAM_Percentual","Top5ProcessosCPU","Top5ProcessosRAM"]
+    };
+    const st = statusFromScore(r.__score);
+    let html = `<div style="margin-bottom:14px;">
+        <span class="badge ${st.cls}">Saúde: ${r.__score}/100 - ${st.label}</span>
+        <div class="statusline" style="margin-top:8px;">${r.__reasons.length ? r.__reasons.map(x=>"• "+escapeHtml(x.text)).join("<br>") : "Sem alertas relevantes."}</div>
+    </div><div class="detail-grid">`;
+    for(const [title,keys] of Object.entries(sections)){
+        html += `<div class="detail-section"><h3>${title}</h3>`;
+        keys.forEach(k => html += `<div class="kv"><b>${escapeHtml(k)}</b><span>${escapeHtml(val(r,k,""))}</span></div>`);
+        html += `</div>`;
+    }
+    html += `</div>
+    <div class="actions-row">
+        <button onclick="window.open('inventario/${escapeHtml(text(r,'Computador'))}.html','_blank')">Abrir HTML individual</button>
+    </div>`;
+    $("detailBody").innerHTML = html;
+    $("detailModal").style.display = "flex";
+}
+function debounce(fn,ms){
+    let t;
+    return function(){ clearTimeout(t); t = setTimeout(fn,ms); };
+}
+function exportCsv(){
+    const cols = visibleColumns.filter(c=>c !== "__score");
+    const lines = [cols.join(";")];
+    filtered.forEach(r=>{
+        lines.push(cols.map(c=>{
+            let v = String(val(r,c,""));
+            if(v.includes(";") || v.includes('"') || v.includes("\n")) v = `"${v.replace(/"/g,'""')}"`;
+            return v;
+        }).join(";"));
+    });
+    const blob = new Blob(["\ufeff" + lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `inventario_dashboard_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+function renderColumnsModal(){
+    $("columnsList").innerHTML = headers.map(h=>`
+        <label><input type="checkbox" value="${escapeHtml(h)}" ${visibleColumns.includes(h) ? "checked" : ""}> ${escapeHtml(h)}</label>
+    `).join("");
+}
+function applyColumns(){
+    const checked = Array.from($("columnsList").querySelectorAll("input:checked")).map(i=>i.value);
+    visibleColumns = checked.length ? checked : [...headers];
+    localStorage.setItem(COLUMNS_KEY, JSON.stringify(visibleColumns));
+    $("columnsModal").style.display = "none";
+    renderHeader();
+    applyFilters();
+}
+function init(){
+    if(localStorage.getItem(THEME_KEY)==="dark") document.body.classList.add("dark-theme");
+
+    if(typeof window.inventoryData === "undefined" || !Array.isArray(window.inventoryData) || window.inventoryData.length === 0){
+        $("status").textContent = "Nenhum dado encontrado. Rode ./consolidar_inventario.sh (ou .ps1) para gerar o bloco de dados.";
+        return;
+    }
+
+    data = window.inventoryData;
+    enrichData();
+    const set = new Set();
+    enriched.forEach(r => Object.keys(r).forEach(k => { if(!k.startsWith("__")) set.add(k); }));
+    const base = DEFAULT_COLUMNS.filter(c=>set.has(c));
+    const rest = Array.from(set).filter(c=>!base.includes(c)).sort((a,b)=>a.localeCompare(b));
+    headers = ["__score", ...base, ...rest];
+
+    const saved = localStorage.getItem(COLUMNS_KEY);
+    if(saved){
+        try{
+            visibleColumns = JSON.parse(saved).filter(c=>headers.includes(c));
+        }catch(e){ visibleColumns = []; }
+    }
+    if(!visibleColumns.length){
+        visibleColumns = ["__score", ...DEFAULT_COLUMNS.filter(c=>headers.includes(c))];
+    }
+
+    filtered = [...enriched];
+    renderDashboard();
+    renderHeader();
+    applyFilters();
+
+    $("globalSearchInput").addEventListener("input", debounce(()=>{currentPage=1; applyFilters();},250));
+    $("quickFilter").addEventListener("change", ()=>{currentPage=1; applyFilters();});
+    $("prevPage").addEventListener("click", ()=>{ if(currentPage>1){currentPage--; renderTable(); updateStatus();} });
+    $("nextPage").addEventListener("click", ()=>{ if(currentPage<getTotalPages()){currentPage++; renderTable(); updateStatus();} });
+    $("rowsPerPage").addEventListener("change", ()=>{currentPage=1; renderTable(); updateStatus();});
+    $("btnExport").addEventListener("click", exportCsv);
+    $("btnTheme").addEventListener("click", ()=>{
+        document.body.classList.toggle("dark-theme");
+        localStorage.setItem(THEME_KEY, document.body.classList.contains("dark-theme") ? "dark" : "light");
+    });
+    $("btnReset").addEventListener("click", ()=>{
+        $("globalSearchInput").value = "";
+        $("quickFilter").value = "todos";
+        sortKey = null; sortDir = "asc"; currentPage = 1;
+        visibleColumns = ["__score", ...DEFAULT_COLUMNS.filter(c=>headers.includes(c))];
+        localStorage.setItem(COLUMNS_KEY, JSON.stringify(visibleColumns));
+        renderHeader(); applyFilters();
+    });
+    $("btnColumns").addEventListener("click", ()=>{ renderColumnsModal(); $("columnsModal").style.display = "flex"; });
+    $("closeColumns").addEventListener("click", ()=> $("columnsModal").style.display = "none");
+    $("applyColumns").addEventListener("click", applyColumns);
+    $("selectDefaultColumns").addEventListener("click", ()=>{
+        $("columnsList").querySelectorAll("input").forEach(i=> i.checked = ["__score", ...DEFAULT_COLUMNS].includes(i.value));
+    });
+    $("selectAllColumns").addEventListener("click", ()=> $("columnsList").querySelectorAll("input").forEach(i=> i.checked = true));
+    $("selectNoColumns").addEventListener("click", ()=> $("columnsList").querySelectorAll("input").forEach(i=> i.checked = false));
+    $("closeDetail").addEventListener("click", ()=> $("detailModal").style.display = "none");
+    $("detailModal").addEventListener("click", e=>{ if(e.target === $("detailModal")) $("detailModal").style.display = "none"; });
+    $("columnsModal").addEventListener("click", e=>{ if(e.target === $("columnsModal")) $("columnsModal").style.display = "none"; });
+
+    document.querySelectorAll(".tab-btn").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+            document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+            document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+            btn.classList.add("active");
+            $(btn.dataset.view).classList.add("active");
+            if(btn.dataset.view === "dashboardView") renderDashboard();
+        });
+    });
+}
+document.addEventListener("DOMContentLoaded", init);
+})();
+</script>
+</body>
 </html>
