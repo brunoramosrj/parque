@@ -19,6 +19,7 @@ via **arquivos em uma pasta compartilhada**.
 - [Scripts](#scripts)
 - [Fluxos de uso](#fluxos-de-uso)
 - [Dashboard web](#dashboard-web)
+  - [Score de saúde](#score-de-saúde)
 - [Implantação](#implantação)
 - [Solução de problemas](#solução-de-problemas)
 
@@ -367,9 +368,12 @@ O `inventario_web.html` é um arquivo único e autossuficiente que contém:
 - **Os dados consolidados** — array JavaScript `inventoryData` embutido entre
   os marcadores `//<DATA_START>` e `//<DATA_END>`, gerado a partir de
   `inventario/*.json`.
-- **A interface** — tabela com paginação, ordenação por coluna, filtros por
-  coluna, busca global, tema claro/escuro, gráficos (pizza) e modal de seleção
-  de colunas.
+- **A interface** — 3 abas (Dashboard, Alertas, Inventário), cards gerenciais
+  (Total/OK/Atenção/Críticas/Disco baixo/Sem WSUS/Windows 10/Coleta antiga),
+  barras de distribuição (SO, RAM, disco, segurança), Top prioridades com
+  score de saúde, tabela com paginação, ordenação por coluna, filtros por
+  coluna, busca global, tema claro/escuro, detalhe por máquina (duplo-clique),
+  exportação CSV e modal de seleção de colunas. Funciona offline (sem CDN).
 
 Por isso, **basta abrir o arquivo no navegador** para ver o parque consolidado.
 Os scripts de coleta atualizam apenas os JSONs individuais. O consolidador é o
@@ -379,6 +383,31 @@ o risco de corrupção por gravações simultâneas.
 > **Atenção:** nunca edite manualmente a região entre `//<DATA_START>` e
 > `//<DATA_END>` — ela é gerenciada pelo consolidador. A estrutura do dashboard
 > (HTML/CSS/JS) pode ser editada livremente fora dessa região.
+
+### Score de saúde
+
+Cada máquina recebe uma nota de 0–100 calculada no navegador (`calcScore` /
+`getReasons` no template). Parte de 100 e desconta por motivo encontrado:
+
+| Peso | Motivos |
+|---|---|
+| −18 (`bad`) | Disco C com < 10% livre; RAM < 4 GB; ≥ 20 updates pendentes; Windows não ativado (só Windows); firewall desativado; antivírus inativo; coleta com > 15 dias |
+| −9 (`warn`) | Disco C com < 20% livre; RAM < 8 GB; ≥ 5 updates pendentes; sem WSUS (só Windows); coleta com > 7 dias; sistema 32 bits; Windows 10 ou build < 22000 (só Windows) |
+| −3 (`info`) | Disco mecânico (HDD) |
+| −8 cada | `ConsumoCPU_Percentual` > 85; `ConsumoRAM_Percentual` > 85 |
+
+Faixas: `< 60` Crítico, `60–79` Atenção, `≥ 80` OK. Regras marcadas
+"(só Windows)" usam `Plataforma` (com fallback para `SO`) e são ignoradas
+em Linux, onde os campos equivalentes valem `N/A`.
+
+Exemplo: máquina com RAM 4 GB (−9), 9 updates pendentes (−9), coleta com
+168 dias (−18), 32 bits (−9), Win10/build antigo (−9) e HDD (−3) = **43/100**.
+
+> **Notas:** o score decai com o tempo mesmo sem mudanças na máquina, pois a
+> idade da coleta (`DataHora_Coleta` vs. data atual) conta como motivo. E a
+> checagem de ativação usa substring (`includes("ativado")`), então o valor
+> padrão `Nao Ativado` do coletor não dispara o alerta — só textos que não
+> contenham "ativado".
 
 ---
 
