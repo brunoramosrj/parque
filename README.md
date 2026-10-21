@@ -237,9 +237,15 @@ solicitada, depois move o arquivo para `executados/` e registra tudo em
 
 | Ação | Comportamento |
 |---|---|
-| `inventario` | Executa `windows.ps1` e atualiza os arquivos individuais da máquina. |
+| `inventario` | Executa o coletor (`powershell` 5.1 ou `pwsh` 7+, o que existir) e checa o código de saída. Falha do coletor é registrada no log em vez de "concluído" falso. |
 | `instalar` | Instala software silenciosamente: `.msi` via `msiexec /i ... /qn`, `.exe` direto. Registra código de saída. |
 | `copiar` | *(Apenas registra no log — ainda não implementada.)* |
+
+Comandos processados são arquivados em `executados/<HOST>-<timestamp>.json`
+(o timestamp preserva o histórico em vez de sobrescrever). JSON inválido não
+trava a fila: após 3 leituras com erro de parse, o arquivo é arquivado como
+`<HOST>.invalido-<timestamp>.json` com 1 linha de erro no log — corrija e
+publique novamente em `comandos/`.
 
 ### `agente.bat`
 

@@ -1,9 +1,14 @@
 # ================================
-# Agente Parque 3.0 - Cliente
+# Agente Parque 3.2 - Cliente
 # ================================
 
-# Nome do computador
+# Nome do computador (COMPUTERNAME no Windows; HOSTNAME/hostname como fallback)
 $pcName = $env:COMPUTERNAME
+if ([string]::IsNullOrWhiteSpace($pcName)) { $pcName = $env:HOSTNAME }
+if ([string]::IsNullOrWhiteSpace($pcName)) {
+    try { $pcName = (hostname).Trim() } catch { $pcName = "" }
+}
+if ([string]::IsNullOrWhiteSpace($pcName)) { throw "Não foi possível determinar o nome do computador (COMPUTERNAME/HOSTNAME)." }
 
 # --- CARREGA CONFIGURACAO (parque.conf) ---
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
@@ -54,15 +59,35 @@ foreach ($p in @($executados, (Split-Path $retornoPath))) {
 
 Write-Host "Agente iniciado para $pcName. Monitorando $comandoPath ..."
 
+# Guarda anti poison-file: JSON inválido não pode travar a fila do host
+$falhasParse = 0
+$maxFalhasParse = 3
+
 # Loop infinito
 while ($true) {
     try {
         if (Test-Path $comandoPath) {
             Write-Host "Comando encontrado para $pcName."
 
-            # Lê o conteúdo do comando
-            $comando = Get-Content $comandoPath -Raw | ConvertFrom-Json
+            # Lê o conteúdo do comando (parse isolado: erro aqui não despacha nada)
+            $comando = $null
+            try {
+                $comando = Get-Content $comandoPath -Raw | ConvertFrom-Json
+                $falhasParse = 0
+            } catch {
+                $falhasParse++
+                if ($falhasParse -eq 1) {
+                    Add-Content $retornoPath "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Erro de parse em ${comandoPath}: $($_.Exception.Message)"
+                }
+                if ($falhasParse -ge $maxFalhasParse) {
+                    $destinoInv = Join-Path $executados ("$pcName.invalido-$(Get-Date -Format 'yyyyMMdd_HHmmss').json")
+                    Move-Item -Path $comandoPath -Destination $destinoInv -Force
+                    Add-Content $retornoPath "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] JSON inválido arquivado em $destinoInv após $falhasParse tentativas. Corrija e publique novamente em comandos/."
+                    $falhasParse = 0
+                }
+            }
 
+            if ($null -ne $comando) {
             # Log de início
             Add-Content $retornoPath "`n[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Iniciando ação: $($comando.acao)"
 
@@ -70,10 +95,20 @@ while ($true) {
                 "inventario" {
                     try {
                         Add-Content $retornoPath "Executando inventário..."
+                        # Localiza interpretador (powershell 5.1 ou pwsh 7+)
+                        $launcher = $null
+                        foreach ($cand in @('powershell.exe', 'pwsh.exe', 'pwsh', 'powershell')) {
+                            try { $launcher = (Get-Command $cand -ErrorAction Stop).Source; break } catch {}
+                        }
+                        if (-not $launcher) { throw "Nenhum interpretador PowerShell encontrado (powershell/pwsh)." }
                         # Executa o script de inventário
-                        powershell.exe -ExecutionPolicy Bypass -File $inventarioPS
-
-                        Add-Content $retornoPath "Inventário concluído. Atualizado em $inventarioHtml"
+                        & $launcher -NoProfile -ExecutionPolicy Bypass -File $inventarioPS
+                        $code = $LASTEXITCODE
+                        if ($code -ne 0) {
+                            Add-Content $retornoPath "Coleta terminou com código de saída: $code. Verifique o coletor ($inventarioPS)."
+                        } else {
+                            Add-Content $retornoPath "Coleta concluída. Rode o consolidador para atualizar o dashboard ($inventarioHtml)."
+                        }
                     }
                     catch {
                         Add-Content $retornoPath "Erro ao executar inventário: $($_.Exception.Message)"
@@ -124,11 +159,12 @@ while ($true) {
                 }
             }
 
-            # Move o comando para a pasta "executados"
-            $destinoCmd = Join-Path $executados (Split-Path $comandoPath -Leaf)
+            # Move o comando para a pasta "executados" (timestamp preserva histórico)
+            $destinoCmd = Join-Path $executados ("$pcName-$(Get-Date -Format 'yyyyMMdd_HHmmss').json")
             Move-Item -Path $comandoPath -Destination $destinoCmd -Force
 
-            Add-Content $retornoPath "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Ação concluída e comando arquivado.`n"
+            Add-Content $retornoPath "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Ação concluída e comando arquivado em $destinoCmd.`n"
+            } # if ($null -ne $comando)
         }
     }
     catch {
