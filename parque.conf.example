@@ -35,9 +35,20 @@ CONSOLIDADOR_WINDOWS=consolidar_inventario.ps1
 CONSOLIDADOR_LINUX=consolidar_inventario.sh
 
 # -------------------------------------------------------------------------
+# ALLOWLIST DE CAMINHOS (acoes instalar/copiar/executar/desinstalar)
+# - Lista de pastas separadas por ';'. Somente arquivos dentro delas sao
+#   aceitos. Ex.: PERMITIR_CAMINHOS=C:\softwares;\\servidor\parque\softwares
+# - Em branco => permite tudo (compatibilidade) e registra aviso no log.
+# -------------------------------------------------------------------------
+PERMITIR_CAMINHOS=
+
+# -------------------------------------------------------------------------
 # PARAMETROS DE EXECUCAO
 # -------------------------------------------------------------------------
 INTERVALO_AGENTE_SEG=60
+# Timeout máximo (s) por comando instalar/desinstalar/executar.
+# 'executar' aceita timeout_seg por comando para sobrescrever este valor.
+TEMPO_MAX_COMANDO_SEG=600
 TENTATIVAS_GRAVACAO=5
 ESPERA_GRAVACAO_SEG=3
 

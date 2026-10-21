@@ -1,4 +1,4 @@
-# Parque 3.2 — Sistema de Inventário e Gestão Computacional
+# Parque 3.3 — Sistema de Inventário e Gestão Computacional
 
 Sistema de coleta de inventário de TI e automação remota para um parque de
 computadores **Windows e Linux**, sem necessidade de servidor dedicado ou banco
@@ -85,6 +85,7 @@ parque/
 ├── windows.ps1               # Coletor de inventário para Windows
 ├── linux.sh                  # Coletor de inventário para Linux
 ├── agente.ps1                # Agente de automação (Windows)
+├── agente.sh                 # Agente de automação (Linux, só inventário)
 ├── agente.bat                # Lançador do agente (Windows)
 ├── 1 - coletar.bat           # Lançador manual da coleta (Windows)
 ├── install_deps_ubuntu.sh    # Instala dependências do linux.sh (Ubuntu/Debian)
@@ -109,7 +110,7 @@ O repositório deve guardar o produto, não os dados coletados. Versione scripts
 documentação, modelos e templates:
 
 - `README.md`, `.gitignore`, `parque.conf.example`
-- `windows.ps1`, `linux.sh`, `agente.ps1`, `agente.bat`
+- `windows.ps1`, `linux.sh`, `agente.ps1`, `agente.bat`, `agente.sh`
 - `1 - coletar.bat`, `install_deps_ubuntu.sh`
 - `consolidar_inventario.ps1`, `consolidar_inventario.sh`
 - `inventario_schema.json`
@@ -152,6 +153,8 @@ editar o `parque.conf` para personalizar.
 | `CONSOLIDADOR_WINDOWS` | `consolidar_inventario.ps1` | Script que consolida `inventario/*.json` no dashboard. |
 | `CONSOLIDADOR_LINUX` | `consolidar_inventario.sh` | Consolidador equivalente para Linux. |
 | `INTERVALO_AGENTE_SEG` | `60` | Segundos entre verificações do agente. |
+| `PERMITIR_CAMINHOS` | *(vazio = tudo)* | Allowlist de pastas (`;`) para `instalar/copiar/executar/desinstalar`. Vazio permite tudo + avisa no log. |
+| `TEMPO_MAX_COMANDO_SEG` | `600` | Timeout por comando (`instalar/desinstalar/executar`); `executar` aceita `timeout_seg` próprio. |
 | `TENTATIVAS_GRAVACAO` | `5` | Reservado para rotinas que precisem repetir gravações. |
 | `ESPERA_GRAVACAO_SEG` | `3` | Reservado para intervalo entre tentativas. |
 | `MARCADOR_DADOS_INI` | `//<DATA_START>` | Marcador de início do bloco JSON no HTML. |
@@ -238,14 +241,35 @@ solicitada, depois move o arquivo para `executados/` e registra tudo em
 | Ação | Comportamento |
 |---|---|
 | `inventario` | Executa o coletor (`powershell` 5.1 ou `pwsh` 7+, o que existir) e checa o código de saída. Falha do coletor é registrada no log em vez de "concluído" falso. |
-| `instalar` | Instala software silenciosamente: `.msi` via `msiexec /i ... /qn`, `.exe` direto. Registra código de saída. |
-| `copiar` | *(Apenas registra no log — ainda não implementada.)* |
+| `instalar` | Instala software silenciosamente: `.msi` via `msiexec /i ... /qn`, `.exe` direto. Respeita allowlist e timeout; registra código de saída. |
+| `desinstalar` | Remove software: aceita ProductCode `{GUID}`, caminho `.msi`/`.exe` ou DisplayName exato do registro (usa `QuietUninstallString`, senão converte `/I` em `/X`). Respeita allowlist e timeout. |
+| `executar` | Roda `.ps1`/`.bat`/`.cmd`/`.exe` com `parametros` (e `timeout_seg` opcional). Saída vai para `retorno/<HOST>-executar.out.log`. Respeita allowlist e timeout. |
+| `copiar` | Copia arquivo ou pasta (`origem` → `destino`, com `-Recurse`). Origem e destino precisam estar na allowlist. |
 
 Comandos processados são arquivados em `executados/<HOST>-<timestamp>.json`
 (o timestamp preserva o histórico em vez de sobrescrever). JSON inválido não
 trava a fila: após 3 leituras com erro de parse, o arquivo é arquivado como
 `<HOST>.invalido-<timestamp>.json` com 1 linha de erro no log — corrija e
 publique novamente em `comandos/`.
+
+Após cada comando (inclusive erros de parse e ações desconhecidas), o agente
+grava o status estruturado em `retorno/<HOSTNAME>.json`
+(`Computador, Acao, Inicio, Fim, Sucesso, CodigoSaida, Mensagem,
+ComandoOrigem, ArquivoArquivado, AgenteVersao`) — o `.log` segue como
+histórico legível.
+
+**Segurança:** `PERMITIR_CAMINHOS` (no `parque.conf`) limita quais caminhos
+`instalar/copiar/executar/desinstalar` aceitam. Vazio = permite tudo (com
+aviso no log). `TEMPO_MAX_COMANDO_SEG` (padrão 600s) interrompe processos
+travados; `executar` aceita `timeout_seg` próprio por comando.
+
+### `agente.sh` — Agente (Linux)
+
+Equivalente básico para Linux: loop com o mesmo protocolo de arquivos
+(`comandos/`, `executados/` com timestamp, `retorno/` + status JSON, guarda
+anti poison-file). Suporta **`inventario`** (roda `COLETOR_LINUX`, exige root
+para coleta completa); demais ações são logadas como não suportadas e
+arquivadas. Rode com `sudo ./agente.sh`.
 
 ### `agente.bat`
 
@@ -315,7 +339,7 @@ Em até `INTERVALO_AGENTE_SEG` segundos, o agente da máquina-alvo verá o coman
 executará `windows.ps1` e arquivará o comando em `executados/`. Acompanhe o
 resultado em `retorno/<HOSTNAME>.log`.
 
-### 3. Instalar software remotamente
+### 3. Instalar / desinstalar / executar / copiar remotamente
 
 Coloque o instalador em `softwares/` (acessível pela máquina-alvo) e crie:
 
@@ -340,6 +364,40 @@ Coloque o instalador em `softwares/` (acessível pela máquina-alvo) e crie:
 > **Importante:** o `arquivo` deve ser um caminho **válido na máquina-alvo**
 > (não no posto do operador). Para MSI, o agente aciona `msiexec /i ... /qn`
 > automaticamente e gera um log detalhado em `%TEMP%`.
+
+**`comandos/<HOSTNAME>.json` (desinstalar por ProductCode):**
+```json
+{
+  "acao": "desinstalar",
+  "arquivo": "{12345678-1234-1234-1234-123456789012}"
+}
+```
+Também aceita caminho `.msi`/`.exe` ou o DisplayName exato do
+Painel de Controle (ex.: `"arquivo": "K-Lite Codec Pack"`).
+
+**`comandos/<HOSTNAME>.json` (executar script, timeout próprio):**
+```json
+{
+  "acao": "executar",
+  "arquivo": "C:\\caminho\\para\\softwares\\rotina.ps1",
+  "parametros": "-Modo Rapido",
+  "timeout_seg": 120
+}
+```
+
+**`comandos/<HOSTNAME>.json` (copiar arquivo/pasta):**
+```json
+{
+  "acao": "copiar",
+  "origem": "\\\\servidor\\parque\\softwares\\manual.pdf",
+  "destino": "C:\\Manuais\\manual.pdf"
+}
+```
+
+Origem e destino de `copiar` (e `arquivo` de `instalar/executar/desinstalar`
+quando for caminho) precisam estar em `PERMITIR_CAMINHOS`. O resultado de
+todo comando sai em `retorno/<HOSTNAME>.log` e no status estruturado
+`retorno/<HOSTNAME>.json` (`Sucesso`, `CodigoSaida`, `Mensagem`).
 
 ### 4. Visualizar o inventário consolidado
 
@@ -447,8 +505,11 @@ Exemplo: máquina com RAM 4 GB (−9), 9 updates pendentes (−9), coleta com
    ```bash
    ./consolidar_inventario.sh
    ```
-   > **Nota:** ainda não há `agente.sh` para Linux. Hoje o agente de automação
-   > (loop de comandos) só existe para Windows. A coleta em Linux é manual.
+5. Para automação contínua no Linux, rode o agente como root
+   (só a ação `inventario`; demais ações são recusadas com log):
+   ```bash
+   sudo ./agente.sh
+   ```
 
 ### Permissões
 
@@ -497,6 +558,11 @@ Exemplo: máquina com RAM 4 GB (−9), 9 updates pendentes (−9), coleta com
 
 ## Notas de versão
 
+- **3.3** — Agente com novas ações: `desinstalar` (GUID/.msi/.exe/DisplayName),
+  `executar` (`.ps1`/`.bat`/`.exe` com timeout próprio) e `copiar` real;
+  allowlist `PERMITIR_CAMINHOS`, timeout `TEMPO_MAX_COMANDO_SEG`, status
+  estruturado em `retorno/<HOST>.json`, histórico com timestamp em
+  `executados/`; novo `agente.sh` para Linux (ação `inventario`).
 - **3.2** — Dashboard gerencial (Plus) como template: abas Dashboard/Alertas/
   Inventário, score de saúde por máquina, top prioridades e exportação CSV;
   funciona offline (sem CDN). Correção do bloco `inventoryData` para dentro
