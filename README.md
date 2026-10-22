@@ -443,12 +443,14 @@ O `inventario_web.html` é um arquivo único e autossuficiente que contém:
 - **Os dados consolidados** — array JavaScript `inventoryData` embutido entre
   os marcadores `//<DATA_START>` e `//<DATA_END>`, gerado a partir de
   `inventario/*.json`.
-- **A interface** — 3 abas (Dashboard, Alertas, Inventário), cards gerenciais
+- **A interface** — 4 abas (Dashboard, Alertas, Inventário, Topologia), cards gerenciais
   (Total/OK/Atenção/Críticas/Disco baixo/Sem WSUS/Windows 10/Coleta antiga),
   barras de distribuição (SO, RAM, disco, segurança), Top prioridades com
   score de saúde, tabela com paginação, ordenação por coluna, filtros por
-  coluna, busca global, tema claro/escuro, detalhe por máquina (duplo-clique),
-  exportação CSV e modal de seleção de colunas. Funciona offline (sem CDN).
+  coluna, busca global, tema claro/escuro, detalhe por máquina (duplo-clique na
+  tabela, clique nos alertas e nos nós da topologia), exportação CSV e modal de
+  seleção de colunas. Cards com count-up, barras animadas, tooltip rico e CSS de
+  impressão. Funciona offline (sem CDN).
 
 Por isso, **basta abrir o arquivo no navegador** para ver o parque consolidado.
 Os scripts de coleta atualizam apenas os JSONs individuais. O consolidador é o

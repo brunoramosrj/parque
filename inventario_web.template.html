@@ -216,6 +216,8 @@ input,select{
     background:linear-gradient(90deg,var(--brand),#67b7ff);
     border-radius:999px;
 }
+.bar-fill{transition:width .8s ease}
+.grid-cards,.dashboard-grid,.alert-list{animation:topoFade .4s ease}
 .bar-fill.good{background:linear-gradient(90deg,var(--good),#78d9a0)}
 .bar-fill.warn{background:linear-gradient(90deg,var(--warn),#ffd166)}
 .bar-fill.bad{background:linear-gradient(90deg,var(--bad),#ff8a8a)}
@@ -295,6 +297,8 @@ tbody tr:hover{background:rgba(13,110,253,.08)}
     border-radius:13px;
     padding:11px;
 }
+.alert-item{cursor:pointer}
+.alert-item:hover{border-color:var(--brand)}
 .alert-title{
     display:flex;
     justify-content:space-between;
@@ -454,7 +458,8 @@ tbody tr:hover{background:rgba(13,110,253,.08)}
 .topo-grid,.topo-kpis{animation:topoFade .4s ease}
 @media(max-width:700px){.topo-card::before,.topo-trunk{display:none}}
 @media print{.topo-card,.topo-core,.topo-kpi{break-inside:avoid}.topo-card::before,.topo-trunk{display:none}.topo-grid{grid-template-columns:repeat(2,1fr)}}
-@media (prefers-reduced-motion:reduce){.topo-grid,.topo-kpis,.topo-donut{animation:none}.topo-row .bar2 i{transition:none}}
+@media print{.grid-cards{grid-template-columns:repeat(4,1fr)}.dashboard-grid{grid-template-columns:repeat(2,1fr)}.card,.panel,.alert-item{break-inside:avoid}}
+@media (prefers-reduced-motion:reduce){.topo-grid,.topo-kpis,.topo-donut,.grid-cards,.dashboard-grid,.alert-list{animation:none}.topo-row .bar2 i,.bar-fill{transition:none}}
 </style>
 </head>
 <body>
@@ -576,7 +581,6 @@ tbody tr:hover{background:rgba(13,110,253,.08)}
             </div>
         </div>
         <div id="topoRoot"></div>
-        <div id="topoTip" role="tooltip"></div>
     </section>
 
     <section id="inventoryView" class="view">
@@ -603,6 +607,7 @@ tbody tr:hover{background:rgba(13,110,253,.08)}
     </section>
 </main>
 
+<div id="topoTip" role="tooltip"></div>
 <div id="detailModal" class="modal-overlay">
     <div class="modal">
         <div class="modal-head">
@@ -769,12 +774,21 @@ function renderBars(containerId, map, opts={}){
     el.innerHTML = entries.map(([label,count]) => {
         const pct = Math.round((count/max)*100);
         const cls = opts.cls ? opts.cls(label,count) : "";
-        return `<div class="bar-row" title="${escapeHtml(label)}: ${count}">
+        return `<div class="bar-row" data-label="${escapeHtml(label)}" data-count="${count}" data-pct="${pct}">
             <div class="bar-label">${escapeHtml(label)}</div>
-            <div class="bar-track"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div>
+            <div class="bar-track"><div class="bar-fill ${cls}" style="width:0" data-w="${pct}"></div></div>
             <div><b>${count}</b></div>
         </div>`;
     }).join("");
+    el.querySelectorAll(".bar-row").forEach(row => {
+        row.addEventListener("mouseover", e => showTip(
+            `<h4>${escapeHtml(row.dataset.label)}</h4><dl><dt>Registros</dt><dd>${escapeHtml(row.dataset.count)} (${escapeHtml(row.dataset.pct)}%)</dd></dl>`,
+            e.clientX, e.clientY));
+        row.addEventListener("mouseout", hideTip);
+    });
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        el.querySelectorAll(".bar-fill").forEach(f => { f.style.width = f.dataset.w + "%"; });
+    }));
 }
 function escapeHtml(v){
     return String(v ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -800,13 +814,14 @@ function renderCards(){
         ["Coleta antiga", oldCollect, "Mais de 7 dias", oldCollect ? "warn" : "good"],
     ];
 
-    $("cardsContainer").innerHTML = cards.map(c => `
+    $("cardsContainer").innerHTML = cards.map((c,i) => `
         <div class="card ${c[3]}">
             <div class="label">${c[0]}</div>
-            <div class="value">${c[1]}</div>
+            <div class="value" id="dashCard${i}">0</div>
             <div class="hint">${c[2]}</div>
         </div>
     `).join("");
+    cards.forEach((c,i) => topoCountUp(document.getElementById("dashCard" + i), c[1]));
 }
 function ramBucket(r){
     const ram = num(r,"RAM_GB_Total");
@@ -1015,9 +1030,17 @@ function topoTipHtml(r){
     return `<h4>${escapeHtml(host)}</h4><dl>` + rows.map(x =>
         `<dt>${x[0]}</dt><dd>${escapeHtml(String(x[1]))}</dd>`).join("") + `</dl>`;
 }
-function topoBindNodes(){
+function showTip(html, x, y){
     const tip = $("topoTip");
-    const hide = () => tip.classList.remove("on");
+    tip.innerHTML = html;
+    tip.style.left = Math.min(x + 14, window.innerWidth - 320) + "px";
+    tip.style.top = Math.min(y + 14, window.innerHeight - 200) + "px";
+    tip.classList.add("on");
+}
+function hideTip(){ $("topoTip").classList.remove("on"); }
+let topoScrollBound = false;
+function topoBindNodes(){
+    const hide = () => hideTip();
     $("topoRoot").querySelectorAll(".topo-node").forEach(n => {
         n.addEventListener("click", () => {
             hide();
@@ -1027,24 +1050,21 @@ function topoBindNodes(){
         n.addEventListener("mouseover", e => {
             const r = enriched.find(x => String(val(x,"Computador","")) === n.dataset.pc);
             if(!r) return;
-            tip.innerHTML = topoTipHtml(r);
-            tip.style.left = Math.min(e.clientX + 14, window.innerWidth - 320) + "px";
-            tip.style.top = Math.min(e.clientY + 14, window.innerHeight - 200) + "px";
-            tip.classList.add("on");
+            showTip(topoTipHtml(r), e.clientX, e.clientY);
         });
         n.addEventListener("mouseout", hide);
         n.addEventListener("focus", () => {
             const r = enriched.find(x => String(val(x,"Computador","")) === n.dataset.pc);
             if(!r) return;
-            tip.innerHTML = topoTipHtml(r);
             const rc = n.getBoundingClientRect();
-            tip.style.left = Math.min(rc.right + 10, window.innerWidth - 320) + "px";
-            tip.style.top = Math.max(8, rc.top - 10) + "px";
-            tip.classList.add("on");
+            showTip(topoTipHtml(r), rc.right + 10, rc.top - 10);
         });
         n.addEventListener("blur", hide);
     });
-    document.querySelector("main.app").addEventListener("scroll", hide, {passive:true});
+    if(!topoScrollBound){
+        topoScrollBound = true;
+        document.querySelector("main.app").addEventListener("scroll", hide, {passive:true});
+    }
 }
 function renderTopology(){
     const vis = new Set(filtered.filter(r =>
@@ -1140,6 +1160,12 @@ function renderDashboard(){
     const top = [...enriched].sort((a,b)=>a.__score-b.__score).slice(0,8);
     $("topAlerts").innerHTML = top.map(alertHtml).join("") || "<div class='statusline'>Sem alertas.</div>";
     $("alertsContainer").innerHTML = [...enriched].filter(r=>r.__reasons.length).sort((a,b)=>a.__score-b.__score).map(alertHtml).join("") || "<div class='statusline'>Sem alertas.</div>";
+    [$("topAlerts"), $("alertsContainer")].forEach(box => box.querySelectorAll(".alert-item").forEach(el => {
+        el.addEventListener("click", () => {
+            const r = enriched.find(x => String(val(x,"Computador","")) === el.dataset.pc);
+            if(r) openDetail(r);
+        });
+    }));
 
     renderSmallTable("lowDiskTable",
         [...enriched].filter(r=>num(r,"Espaco_Livre_C_Perc")>0).sort((a,b)=>num(a,"Espaco_Livre_C_Perc")-num(b,"Espaco_Livre_C_Perc")).slice(0,10),
@@ -1153,7 +1179,7 @@ function renderDashboard(){
 function alertHtml(r){
     const st = statusFromScore(r.__score);
     const reasons = r.__reasons.length ? r.__reasons.map(x=>`• ${escapeHtml(x.text)}`).join("<br>") : "Sem problemas relevantes.";
-    return `<div class="alert-item">
+    return `<div class="alert-item" data-pc="${escapeHtml(text(r,"Computador"))}">
         <div class="alert-title">
             <span>${escapeHtml(text(r,"Computador"))} <span class="badge ${st.cls}">${st.label}</span></span>
             <span class="badge ${st.cls} score">${r.__score}/100</span>
