@@ -1,4 +1,4 @@
-# Parque 3.3 — Sistema de Inventário e Gestão Computacional
+# Parque 3.4 — Sistema de Inventário e Gestão Computacional
 
 Sistema de coleta de inventário de TI e automação remota para um parque de
 computadores **Windows e Linux**, sem necessidade de servidor dedicado ou banco
@@ -609,6 +609,10 @@ máquina (score, local, IP/MAC/SO/coleta) e CSS de impressão.
 
 ## Notas de versão
 
+- **3.4** — Aba Topologia: visão por Divisão/Setor (regra por hostname +
+  override manual `topologia_fisica.json`) e por sub-rede, com KPIs, donut de
+  SO, tooltip e núcleo L3; mesmos efeitos no Dashboard (count-up, barras
+  animadas, alertas clicáveis, print CSS).
 - **3.3** — Agente com novas ações: `desinstalar` (GUID/.msi/.exe/DisplayName),
   `executar` (`.ps1`/`.bat`/`.exe` com timeout próprio) e `copiar` real;
   allowlist `PERMITIR_CAMINHOS`, timeout `TEMPO_MAX_COMANDO_SEG`, status
