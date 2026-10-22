@@ -96,6 +96,7 @@ parque/
 ├── topologia_fisica.json   # Mapeamento real por host (não versionar)
 ├── teste.ps1 / teste.bat     # Scripts de benchmark (não production)
 ├── inventario_web.template.html # Dashboard publicável sem dados reais
+├── brasao.png                # Brasão do DepMSMRJ no header (versionar)
 ├── inventario_web.html       # Dashboard operacional local com dados inline
 ├── inventario/               # Inventários individuais por máquina (não versionar)
 │   ├── <HOSTNAME>.json
@@ -116,7 +117,7 @@ documentação, modelos e templates:
 - `1 - coletar.bat`, `install_deps_ubuntu.sh`
 - `consolidar_inventario.ps1`, `consolidar_inventario.sh`
 - `inventario_schema.json`
-- `inventario_web.template.html`
+- `inventario_web.template.html`, `brasao.png`
 - `topologia_fisica.example.json`
 
 Ficam fora do Git por padrão: `parque.conf`, `topologia_fisica.json`, `inventario_web.html`,
@@ -305,7 +306,8 @@ duplicidades por `Computador`, ordena os registros e atualiza o bloco
 Antes de gerar o dashboard, o consolidador normaliza cada registro conforme
 `inventario_schema.json`: todos os computadores passam a ter a mesma lista de
 campos, na mesma ordem. Campos ausentes em inventários antigos são preenchidos
-com `null`.
+com `null`. Se existir `topologia_fisica.json` na raiz, `Divisao`/`Setor` manuais
+têm prioridade sobre o valor coletado (JSON inválido é ignorado com aviso).
 
 O consolidador cria um backup do HTML antes de regravar e também gera
 `inventario/inventario_web.json` como espelho agregado dos dados consolidados.
