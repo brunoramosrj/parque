@@ -92,6 +92,8 @@ parque/
 ├── consolidar_inventario.ps1 # Consolida inventario/*.json no dashboard
 ├── consolidar_inventario.sh  # Consolidador equivalente para Linux
 ├── inventario_schema.json    # Lista canonica de campos do inventario
+├── topologia_fisica.example.json # Modelo de mapeamento Divisão/Setor (versionar)
+├── topologia_fisica.json   # Mapeamento real por host (não versionar)
 ├── teste.ps1 / teste.bat     # Scripts de benchmark (não production)
 ├── inventario_web.template.html # Dashboard publicável sem dados reais
 ├── inventario_web.html       # Dashboard operacional local com dados inline
@@ -115,8 +117,9 @@ documentação, modelos e templates:
 - `consolidar_inventario.ps1`, `consolidar_inventario.sh`
 - `inventario_schema.json`
 - `inventario_web.template.html`
+- `topologia_fisica.example.json`
 
-Ficam fora do Git por padrão: `parque.conf`, `inventario_web.html`,
+Ficam fora do Git por padrão: `parque.conf`, `topologia_fisica.json`, `inventario_web.html`,
 `inventario/`, `executados/`, `retorno/`, `comandos/`, `softwares/`, logs,
 zips, screenshots e sobras de refatoração. Esses arquivos podem conter dados
 reais de máquinas, usuários, rede, inventário e execução.
@@ -480,6 +483,25 @@ Exemplo: máquina com RAM 4 GB (−9), 9 updates pendentes (−9), coleta com
 > checagem de ativação usa substring (`includes("ativado")`), então o valor
 > padrão `Nao Ativado` do coletor não dispara o alerta — só textos que não
 > contenham "ativado".
+
+### Topologia física (Divisão/Setor)
+
+A aba 🗺️ Topologia tem dois modos: **Divisão / Setor** (organizacional) e
+**Sub-rede** (por /24 do IP, automático). O modo organizacional funciona em
+duas camadas:
+
+1. **Regra automática pelo hostname** (sem digitar nada): `DEPMSMRJ-1xx` →
+   Divisão 10, `2xx` → Divisão 20, `3xx` → Divisão 30 (vale para 2 ou 3
+   dígitos, com letra opcional: `204A`, `30A`); sufixo não-numérico
+   (`SECOM`, `CPD`…) vira setor próprio fora das divisões.
+2. **Override manual** em `topologia_fisica.json` (na raiz, ao lado do
+   `parque.conf`, fora do Git): `{"DEPMSMRJ-01": {"Divisao": null, "Setor":
+   "Gabinete"}}`. Use o modelo `topologia_fisica.example.json` como base.
+   O consolidador (`.sh` e `.ps1`) injeta `Divisao`/`Setor` em cada registro;
+   JSON inválido é ignorado com aviso, sem quebrar a consolidação.
+
+Sem mapeamento e sem prefixo reconhecido, a máquina cai em "Não mapeado".
+A barra de núcleo mostra gateway/DNS majoritários (derivados do inventário).
 
 ---
 

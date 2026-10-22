@@ -420,6 +420,8 @@ tbody tr:hover{background:rgba(13,110,253,.08)}
 .topo-node small.mono{font-variant-numeric:tabular-nums}
 .topo-dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;background:var(--c)}
 .topo-legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:.85em;color:var(--muted);margin-top:8px}
+.topo-view-btn{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:7px 12px;cursor:pointer;font:inherit;font-size:13px;font-weight:600}
+.topo-view-btn[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
 @media(max-width:700px){.topo-card::before,.topo-trunk{display:none}}
 @media print{.topo-card,.topo-core{break-inside:avoid}.topo-card::before,.topo-trunk{display:none}}
 </style>
@@ -521,8 +523,12 @@ tbody tr:hover{background:rgba(13,110,253,.08)}
         </div>
         <div class="topo-trunk"></div>
         <div class="panel" style="margin-bottom:4px">
-            <h2>Mapa por sub-rede</h2>
-            <div class="statusline">Agrupado por sub-rede /24 do IP coletado · cor do nó = score de saúde · clique num nó para ver detalhes · respeita busca e filtros rápidos</div>
+            <h2>Mapa da rede</h2>
+            <div class="statusline">Cor do nó = score de saúde · clique num nó para ver detalhes · respeita busca e filtros rápidos</div>
+            <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+                <button type="button" class="topo-view-btn" data-modo="org" aria-pressed="true">🏢 Divisão / Setor</button>
+                <button type="button" class="topo-view-btn" data-modo="rede" aria-pressed="false">🌐 Sub-rede</button>
+            </div>
             <div class="topo-legend" id="topoLegend"></div>
         </div>
         <div id="topoRoot"></div>
@@ -775,6 +781,7 @@ function diskBucket(r){
     return "50% ou mais";
 }
 const TOPO_ICON = '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="3" y="5" width="26" height="17" rx="2"/><path d="M12 28h8M16 22v6"/></svg>';
+let topoModo = "org";
 function topoSubnet(row){
     const ip = String(val(row,"IP","")).trim();
     const m = ip.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
@@ -782,13 +789,103 @@ function topoSubnet(row){
     if(m.slice(1).some(o => +o > 255)) return null;
     return m[1] + "." + m[2] + "." + m[3] + ".x";
 }
+function topoRegra(host){
+    const m = String(host || "").match(/^depmsmrj-(.+)$/i);
+    if(!m) return {div:null, set:null};
+    const suf = m[1].toUpperCase();
+    const n = suf.match(/^([0-9])([0-9]{1,2})([A-Z]?)$/);
+    if(n){
+        const d = +n[1];
+        return {div:(d >= 1 && d <= 3) ? ("Divisão " + d + "0") : null, set:suf};
+    }
+    return {div:null, set:suf};
+}
+function topoDivSetor(row){
+    const md = String(val(row,"Divisao","")).trim();
+    const ms = String(val(row,"Setor","")).trim();
+    const r = topoRegra(String(val(row,"Computador","")));
+    return {div: md || r.div || null, set: ms || r.set || null};
+}
 function topoColor(row){
     if(row.__score < 60) return "var(--bad)";
     if(row.__score < 80) return "var(--warn)";
     return "var(--good)";
 }
+function topoModa(key, split){
+    const c = {};
+    enriched.forEach(r => {
+        let v = String(val(r,key,"")).trim();
+        if(split) v = v.split(split)[0].trim();
+        if(!v || /^[Nn][Aa][Oo] /.test(v)) return;
+        c[v] = (c[v] || 0) + 1;
+    });
+    let best = "", n = 0;
+    Object.entries(c).forEach(([k,v]) => { if(v > n){ n = v; best = k; } });
+    return best;
+}
+function topoNodeHtml(r, vis){
+    const host = String(val(r,"Computador","") || "?");
+    const hasIp = !!topoSubnet(r);
+    const dim = vis.has(host) ? "" : " dim";
+    const noip = hasIp ? "" : " noip";
+    const ds = topoDivSetor(r);
+    const org = [ds.div, ds.set].filter(Boolean).join(" · ");
+    const tip = host + " · " + r.__score + "/100 " + r.__status
+        + (org ? "\n" + org : "")
+        + "\nIP: " + (val(r,"IP","") || "—") + " · MAC: " + (val(r,"MAC","") || "—")
+        + "\n" + text(r,"SO");
+    return `<button type="button" class="topo-node${dim}${noip}" data-pc="${escapeHtml(host)}" title="${escapeHtml(tip)}" style="--c:${topoColor(r)}"><span class="topo-ico">${TOPO_ICON}</span><small>${escapeHtml(host)}</small><small class="mono">${escapeHtml(hasIp ? val(r,"IP","") : "s/ IP")}</small></button>`;
+}
+function topoBindNodes(){
+    $("topoRoot").querySelectorAll(".topo-node").forEach(n => n.addEventListener("click", () => {
+        const r = enriched.find(x => String(val(x,"Computador","")) === n.dataset.pc);
+        if(r) openDetail(r);
+    }));
+}
 function renderTopology(){
     const vis = new Set(filtered.map(r => String(val(r,"Computador",""))));
+    $("topoLegend").innerHTML = [["OK","var(--good)"],["Atenção","var(--warn)"],["Crítico","var(--bad)"]]
+        .map(l => `<span><span class="topo-dot" style="--c:${l[1]}"></span>${l[0]}</span>`).join("")
+        + `<span>ícone opaco = sem IP cadastrado</span>`;
+    if(!enriched.length){ $("topoRoot").innerHTML = "<div class='statusline'>Sem dados.</div>"; return; }
+    const crit = enriched.filter(r => r.__score < 60).length;
+    const gw = topoModa("GatewayPadrao");
+    const dns = topoModa("ServidoresDNS", ",");
+    $("topoSummary").textContent = enriched.length + " máquinas · " + crit + " críticas"
+        + (gw ? " · GW " + gw : "") + (dns ? " · DNS " + dns : "");
+    if(topoModo === "org") renderTopoOrg(vis); else renderTopoRede(vis);
+}
+function topoRankDiv(d){
+    if(d === "Não mapeado") return 99;
+    if(d === "Setores independentes") return 50;
+    const m = String(d).match(/Divisão\s+(\d+)/);
+    return m ? +m[1] : 40;
+}
+function renderTopoOrg(vis){
+    const byDiv = {};
+    enriched.forEach(r => {
+        const ds = topoDivSetor(r);
+        const dk = ds.div || (ds.set ? "Setores independentes" : "Não mapeado");
+        const sk = ds.set || "(sem setor)";
+        if(!byDiv[dk]) byDiv[dk] = {};
+        if(!byDiv[dk][sk]) byDiv[dk][sk] = [];
+        byDiv[dk][sk].push(r);
+    });
+    const divs = Object.keys(byDiv).sort((a,b) => topoRankDiv(a) - topoRankDiv(b) || a.localeCompare(b));
+    const nomesDiv = divs.filter(d => d !== "Não mapeado" && d !== "Setores independentes");
+    $("topoSubnets").textContent = nomesDiv.length ? ("Divisões: " + nomesDiv.join(" · ")) : "Sem divisão identificada";
+    $("topoRoot").innerHTML = divs.map(dk => {
+        const setores = Object.keys(byDiv[dk]).sort((a,b) => a.localeCompare(b));
+        const cards = setores.map(sk => {
+            const rows = byDiv[dk][sk].slice().sort((a,b) => String(val(a,"Computador","")).localeCompare(String(val(b,"Computador",""))));
+            const nCrit = rows.filter(r => r.__score < 60).length;
+            return `<div class="topo-card"><h3>${escapeHtml(sk)}<span class="topo-count">${rows.length} máq.${nCrit ? " · " + nCrit + " crít." : ""}</span></h3><div class="topo-nodes">${rows.map(r => topoNodeHtml(r, vis)).join("")}</div></div>`;
+        }).join("");
+        return `<div class="topo-gt">${escapeHtml(dk)}</div><div class="topo-grid">${cards}</div>`;
+    }).join("");
+    topoBindNodes();
+}
+function renderTopoRede(vis){
     const groups = {};
     const order = [];
     enriched.forEach(r => {
@@ -799,31 +896,13 @@ function renderTopology(){
     order.sort((a,b) => a.startsWith("Sem") ? 1 : b.startsWith("Sem") ? -1 : a.localeCompare(b));
     const nets = order.filter(s => s !== "Sem IP / não classificado");
     $("topoSubnets").textContent = nets.length ? ("Sub-redes em uso: " + nets.join(" · ")) : "Nenhuma sub-rede identificada";
-    const crit = enriched.filter(r => r.__score < 60).length;
-    $("topoSummary").textContent = enriched.length + " máquinas · " + crit + " críticas";
-    $("topoLegend").innerHTML = [["OK","var(--good)"],["Atenção","var(--warn)"],["Crítico","var(--bad)"]]
-        .map(l => `<span><span class="topo-dot" style="--c:${l[1]}"></span>${l[0]}</span>`).join("")
-        + `<span>ícone opaco = sem IP cadastrado</span>`;
-    if(!enriched.length){ $("topoRoot").innerHTML = "<div class='statusline'>Sem dados.</div>"; return; }
     $("topoRoot").innerHTML = `<div class="topo-gt">Sub-redes</div><div class="topo-grid">` + order.map(sn => {
         const rows = groups[sn].slice().sort((a,b) => String(val(a,"Computador","")).localeCompare(String(val(b,"Computador",""))));
         const nCrit = rows.filter(r => r.__score < 60).length;
-        const nodes = rows.map(r => {
-            const host = String(val(r,"Computador","") || "?");
-            const hasIp = !!topoSubnet(r);
-            const dim = vis.has(host) ? "" : " dim";
-            const noip = hasIp ? "" : " noip";
-            const tip = host + " · " + r.__score + "/100 " + r.__status
-                + "\nIP: " + (val(r,"IP","") || "—") + " · MAC: " + (val(r,"MAC","") || "—")
-                + "\n" + text(r,"SO");
-            return `<button type="button" class="topo-node${dim}${noip}" data-pc="${escapeHtml(host)}" title="${escapeHtml(tip)}" style="--c:${topoColor(r)}"><span class="topo-ico">${TOPO_ICON}</span><small>${escapeHtml(host)}</small><small class="mono">${escapeHtml(hasIp ? val(r,"IP","") : "s/ IP")}</small></button>`;
-        }).join("");
+        const nodes = rows.map(r => topoNodeHtml(r, vis)).join("");
         return `<div class="topo-card"><h3>${escapeHtml(sn)}<span class="topo-count">${rows.length} máq.${nCrit ? " · " + nCrit + " crít." : ""}</span></h3><div class="topo-nodes">${nodes}</div></div>`;
     }).join("") + `</div>`;
-    $("topoRoot").querySelectorAll(".topo-node").forEach(n => n.addEventListener("click", () => {
-        const r = enriched.find(x => String(val(x,"Computador","")) === n.dataset.pc);
-        if(r) openDetail(r);
-    }));
+    topoBindNodes();
 }
 function renderDashboard(){
     renderCards();
@@ -1097,6 +1176,13 @@ function init(){
             $(btn.dataset.view).classList.add("active");
             if(btn.dataset.view === "dashboardView") renderDashboard();
             if(btn.dataset.view === "topologyView") renderTopology();
+        });
+    });
+    document.querySelectorAll(".topo-view-btn").forEach(b=>{
+        b.addEventListener("click", ()=>{
+            topoModo = b.dataset.modo;
+            document.querySelectorAll(".topo-view-btn").forEach(x=>x.setAttribute("aria-pressed", x===b ? "true" : "false"));
+            renderTopology();
         });
     });
 }

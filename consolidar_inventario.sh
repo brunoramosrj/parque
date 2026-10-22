@@ -81,16 +81,33 @@ tmp_json="$(mktemp)"
 tmp_items="$(mktemp)"
 printf '%s\n' '[]' > "$tmp_items"
 
+# Mapeamento organizacional manual (override Divisao/Setor por host).
+FISICO_FILE="$PROJECT_DIR/topologia_fisica.json"
+FISICO_SLURP="/dev/null"
+if [ -f "$FISICO_FILE" ]; then
+    if jq -e 'type == "object"' "$FISICO_FILE" >/dev/null 2>&1; then
+        FISICO_SLURP="$FISICO_FILE"
+        echo "Mapeamento organizacional: $FISICO_FILE"
+    else
+        echo "AVISO: ignorando $FISICO_FILE (JSON invalido ou nao-objeto)" >&2
+    fi
+fi
+
 while IFS= read -r -d '' json_file; do
-    if ! item="$(jq -c --slurpfile schema "$SCHEMA_FILE" '
+    if ! item="$(jq -c --slurpfile schema "$SCHEMA_FILE" --slurpfile fisico "$FISICO_SLURP" '
         select(type == "object" and (.Computador // "") != "")
         | . as $item
         | ($schema[0].Campos // []) as $fields
         | ($schema[0].SchemaVersao // 1) as $schema_version
+        | ($fisico[0][$item.Computador] // {}) as $ov
         | reduce $fields[] as $field (
             {};
             .[$field] = (
-                if $item | has($field) then
+                if $field == "Divisao" and ($ov.Divisao // null) != null then
+                    $ov.Divisao
+                elif $field == "Setor" and ($ov.Setor // null) != null then
+                    $ov.Setor
+                elif $item | has($field) then
                     $item[$field]
                 elif $field == "SchemaVersao" then
                     $schema_version

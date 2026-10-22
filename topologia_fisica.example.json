@@ -1,0 +1,11 @@
+{
+  "_comentario": "Mapeamento organizacional manual (override da regra automatica por hostname). Copie para topologia_fisica.json (fora do Git) e ajuste. Chave = hostname exato; Divisao null = fora de divisao; Setor null = usa o sufixo do hostname.",
+  "DEPMSMRJ-01":     { "Divisao": null, "Setor": "Gabinete" },
+  "DEPMSMRJ-ADMIN1": { "Divisao": null, "Setor": "Administração" },
+  "DEPMSMRJ-AUDIT":  { "Divisao": null, "Setor": "Auditório" },
+  "DEPMSMRJ-CPD":    { "Divisao": null, "Setor": "CPD" },
+  "DEPMSMRJ-MSGTR":  { "Divisao": null, "Setor": "Mensagem" },
+  "DEPMSMRJ-OI":     { "Divisao": null, "Setor": "OI" },
+  "DEPMSMRJ-SECOM":  { "Divisao": null, "Setor": "SECOM" },
+  "DEPMSMRJ-204A":   { "Divisao": "Divisão 20", "Setor": "204-A" }
+}
