@@ -53,6 +53,23 @@ if (-not $schemaFields -or $schemaFields.Count -eq 0) {
     throw "Schema invalido: lista Campos vazia em $schemaFile"
 }
 
+# Mapeamento organizacional manual (override Divisao/Setor por host).
+$fisico = @{}
+$fisicoFile = Join-Path $cfg.PROJECT_DIR 'topologia_fisica.json'
+if (Test-Path $fisicoFile) {
+    try {
+        $fisicoRaw = Get-Content -Path $fisicoFile -Raw -Encoding UTF8 | ConvertFrom-Json -ErrorAction Stop
+        if ($fisicoRaw -is [System.Management.Automation.PSObject]) {
+            foreach ($prop in $fisicoRaw.PSObject.Properties) { $fisico[$prop.Name] = $prop.Value }
+            Write-Host "Mapeamento organizacional: $fisicoFile"
+        } else {
+            Write-Warning "Ignorando $fisicoFile (raiz precisa ser um objeto)."
+        }
+    } catch {
+        Write-Warning "Ignorando $fisicoFile (JSON invalido): $($_.Exception.Message)"
+    }
+}
+
 function Normalize-InventoryItem($Item) {
     $normalized = [ordered]@{}
     foreach ($field in $schemaFields) {
@@ -101,7 +118,14 @@ foreach ($file in $jsonFiles) {
             Write-Warning "Ignorando JSON sem campo Computador: $($file.FullName)"
             continue
         }
-        $itemsByComputer[[string]$item.Computador] = (Normalize-InventoryItem $item)
+        $normItem = (Normalize-InventoryItem $item)
+        $ovKey = [string]$item.Computador
+        if ($fisico.Contains($ovKey)) {
+            $ov = $fisico[$ovKey]
+            if ($null -ne $ov.Divisao) { $normItem.Divisao = $ov.Divisao }
+            if ($null -ne $ov.Setor) { $normItem.Setor = $ov.Setor }
+        }
+        $itemsByComputer[$ovKey] = $normItem
     } catch {
         Write-Warning "Ignorando JSON invalido: $($file.FullName) - $($_.Exception.Message)"
     }

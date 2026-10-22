@@ -19,6 +19,8 @@
     "Uptime_Horas",
     "Uptime_Formatado",
     "Dominio_ou_Grupo",
+    "Divisao",
+    "Setor",
     "Status_Ativacao",
     "Canal_Licenca",
     "Chave_Parcial",

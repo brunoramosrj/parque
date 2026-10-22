@@ -92,6 +92,8 @@ parque/
 ├── consolidar_inventario.ps1 # Consolida inventario/*.json no dashboard
 ├── consolidar_inventario.sh  # Consolidador equivalente para Linux
 ├── inventario_schema.json    # Lista canonica de campos do inventario
+├── topologia_fisica.example.json # Modelo de mapeamento Divisão/Setor (versionar)
+├── topologia_fisica.json   # Mapeamento real por host (não versionar)
 ├── teste.ps1 / teste.bat     # Scripts de benchmark (não production)
 ├── inventario_web.template.html # Dashboard publicável sem dados reais
 ├── inventario_web.html       # Dashboard operacional local com dados inline
@@ -115,8 +117,9 @@ documentação, modelos e templates:
 - `consolidar_inventario.ps1`, `consolidar_inventario.sh`
 - `inventario_schema.json`
 - `inventario_web.template.html`
+- `topologia_fisica.example.json`
 
-Ficam fora do Git por padrão: `parque.conf`, `inventario_web.html`,
+Ficam fora do Git por padrão: `parque.conf`, `topologia_fisica.json`, `inventario_web.html`,
 `inventario/`, `executados/`, `retorno/`, `comandos/`, `softwares/`, logs,
 zips, screenshots e sobras de refatoração. Esses arquivos podem conter dados
 reais de máquinas, usuários, rede, inventário e execução.
@@ -440,12 +443,14 @@ O `inventario_web.html` é um arquivo único e autossuficiente que contém:
 - **Os dados consolidados** — array JavaScript `inventoryData` embutido entre
   os marcadores `//<DATA_START>` e `//<DATA_END>`, gerado a partir de
   `inventario/*.json`.
-- **A interface** — 3 abas (Dashboard, Alertas, Inventário), cards gerenciais
+- **A interface** — 4 abas (Dashboard, Alertas, Inventário, Topologia), cards gerenciais
   (Total/OK/Atenção/Críticas/Disco baixo/Sem WSUS/Windows 10/Coleta antiga),
   barras de distribuição (SO, RAM, disco, segurança), Top prioridades com
   score de saúde, tabela com paginação, ordenação por coluna, filtros por
-  coluna, busca global, tema claro/escuro, detalhe por máquina (duplo-clique),
-  exportação CSV e modal de seleção de colunas. Funciona offline (sem CDN).
+  coluna, busca global, tema claro/escuro, detalhe por máquina (duplo-clique na
+  tabela, clique nos alertas e nos nós da topologia), exportação CSV e modal de
+  seleção de colunas. Cards com count-up, barras animadas, tooltip rico e CSS de
+  impressão. Funciona offline (sem CDN).
 
 Por isso, **basta abrir o arquivo no navegador** para ver o parque consolidado.
 Os scripts de coleta atualizam apenas os JSONs individuais. O consolidador é o
@@ -480,6 +485,28 @@ Exemplo: máquina com RAM 4 GB (−9), 9 updates pendentes (−9), coleta com
 > checagem de ativação usa substring (`includes("ativado")`), então o valor
 > padrão `Nao Ativado` do coletor não dispara o alerta — só textos que não
 > contenham "ativado".
+
+### Topologia física (Divisão/Setor)
+
+A aba 🗺️ Topologia tem dois modos: **Divisão / Setor** (organizacional) e
+**Sub-rede** (por /24 do IP, automático). O modo organizacional funciona em
+duas camadas:
+
+1. **Regra automática pelo hostname** (sem digitar nada): `DEPMSMRJ-1xx` →
+   Divisão 10, `2xx` → Divisão 20, `3xx` → Divisão 30 (vale para 2 ou 3
+   dígitos, com letra opcional: `204A`, `30A`); sufixo não-numérico
+   (`SECOM`, `CPD`…) vira setor próprio fora das divisões.
+2. **Override manual** em `topologia_fisica.json` (na raiz, ao lado do
+   `parque.conf`, fora do Git): `{"DEPMSMRJ-01": {"Divisao": null, "Setor":
+   "Gabinete"}}`. Use o modelo `topologia_fisica.example.json` como base.
+   O consolidador (`.sh` e `.ps1`) injeta `Divisao`/`Setor` em cada registro;
+   JSON inválido é ignorado com aviso, sem quebrar a consolidação.
+
+Sem mapeamento e sem prefixo reconhecido, a máquina cai em "Não mapeado".
+A barra de núcleo mostra gateway/DNS majoritários (derivados do inventário).
+A aba traz ainda: KPIs animados (máquinas, com IP, críticas, sem mapeamento),
+donut de SO e barras de cobertura clicáveis como filtro, tooltip rico por
+máquina (score, local, IP/MAC/SO/coleta) e CSS de impressão.
 
 ---
 
