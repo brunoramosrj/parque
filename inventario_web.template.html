@@ -46,20 +46,25 @@ body{
     font-family:Segoe UI, Arial, sans-serif;
 }
 .header{
-    padding:18px 24px;
+    padding:14px 24px;
     background:linear-gradient(135deg,#0d6efd,#083b87);
     color:white;
     box-shadow:var(--shadow);
+    display:flex;
+    align-items:center;
+    gap:16px;
 }
+.header .brasao{
+    height:clamp(56px,8vw,84px);
+    width:auto;
+    flex:none;
+    filter:drop-shadow(0 4px 10px rgba(0,0,0,.25));
+}
+.header .ttl{flex:1;min-width:0}
 .header h1{
     margin:0;
     font-size:24px;
     letter-spacing:.2px;
-}
-.header .subtitle{
-    margin-top:6px;
-    opacity:.86;
-    font-size:13px;
 }
 .app{
     padding:18px 22px 28px;
@@ -421,8 +426,8 @@ tbody tr:hover{background:rgba(13,110,253,.08)}
 </head>
 <body>
 <header class="header">
-    <h1>Parque Computacional do DepMSMRJ</h1>
-    <div class="subtitle">Dashboard gerencial, alertas e inventário detalhado. Agora com menos cara de planilha triste.</div>
+    <img class="brasao" src="brasao.png" alt="Brasão do DepMSMRJ">
+    <div class="ttl"><h1>Parque Computacional do DepMSMRJ</h1></div>
 </header>
 
 <main class="app">
