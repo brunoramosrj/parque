@@ -70,6 +70,8 @@
     "ConsumoRAM_Percentual",
     "Top5ProcessosCPU",
     "Top5ProcessosRAM",
-    "RelatorioHTML"
+    "RelatorioHTML",
+    "Docs_TRI",
+    "Docs_TRE"
   ]
 }

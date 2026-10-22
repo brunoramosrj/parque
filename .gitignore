@@ -16,6 +16,7 @@ screenshot*.png
 # Local/private configuration
 parque.conf
 topologia_fisica.json
+documentos/
 
 # Temporary, backup, and refactor leftovers
 __lixo_refactor/

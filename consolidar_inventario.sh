@@ -93,13 +93,31 @@ if [ -f "$FISICO_FILE" ]; then
     fi
 fi
 
+# Documentos TRI/TRE (override de presenca por nome de arquivo).
+DOCS_DIR="$PROJECT_DIR/documentos"
+DOCS_MAP='{}'
+if [ -d "$DOCS_DIR" ]; then
+    while IFS= read -r -d '' f; do
+        base="$(basename "$f")"
+        norm="$(printf '%s' "$base" | tr '[:lower:]' '[:upper:]' | tr -d ' ')"
+        DOCS_MAP="$(printf '%s' "$DOCS_MAP" | jq --arg n "$norm" --arg v "$base" '.[$n] = $v')"
+    done < <(find "$DOCS_DIR" -maxdepth 1 -type f -iname '*.pdf' -print0)
+    if [ "$DOCS_MAP" != '{}' ]; then
+        echo "Documentos TRI/TRE: $DOCS_DIR ($(printf '%s' "$DOCS_MAP" | jq 'keys | length') arquivos)"
+    fi
+fi
+
 while IFS= read -r -d '' json_file; do
-    if ! item="$(jq -c --slurpfile schema "$SCHEMA_FILE" --slurpfile fisico "$FISICO_SLURP" '
+    if ! item="$(jq -c --slurpfile schema "$SCHEMA_FILE" --slurpfile fisico "$FISICO_SLURP" --argjson docs "$DOCS_MAP" '
         select(type == "object" and (.Computador // "") != "")
         | . as $item
         | ($schema[0].Campos // []) as $fields
         | ($schema[0].SchemaVersao // 1) as $schema_version
         | ($fisico[0][$item.Computador] // {}) as $ov
+        | ($item.Computador // "" | tostring | ascii_upcase | gsub(" "; "")) as $pcn
+        | ($item.Usuario // "" | tostring | split("\\") | last | ascii_upcase | gsub(" "; "")) as $fun
+        | ([$docs | to_entries[] | select(.key == ("TRE-" + $pcn + ".PDF") or (.key | startswith("TRE-" + $pcn + "-"))) | .value] | sort | join(";")) as $tres
+        | ($docs[("TRI-" + $fun + ".PDF")] // "") as $tri
         | reduce $fields[] as $field (
             {};
             .[$field] = (
@@ -107,6 +125,10 @@ while IFS= read -r -d '' json_file; do
                     $ov.Divisao
                 elif $field == "Setor" and ($ov.Setor // null) != null then
                     $ov.Setor
+                elif $field == "Docs_TRI" then
+                    $tri
+                elif $field == "Docs_TRE" then
+                    $tres
                 elif $item | has($field) then
                     $item[$field]
                 elif $field == "SchemaVersao" then

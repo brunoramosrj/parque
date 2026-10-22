@@ -70,6 +70,18 @@ if (Test-Path $fisicoFile) {
     }
 }
 
+# Documentos TRI/TRE (presenca por nome de arquivo).
+$docsDir = Join-Path $cfg.PROJECT_DIR 'documentos'
+$docsMap = @{}
+if (Test-Path $docsDir) {
+    foreach ($f in Get-ChildItem -Path $docsDir -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -match '(?i)^\.pdf$' }) {
+        $normDoc = ($f.Name.ToUpper()).Replace(' ', '')
+        if (-not $docsMap.Contains($normDoc)) { $docsMap[$normDoc] = @() }
+        $docsMap[$normDoc] += $f.Name
+    }
+    if ($docsMap.Count -gt 0) { Write-Host "Documentos TRI/TRE: $docsDir ($($docsMap.Count) arquivos)" }
+}
+
 function Normalize-InventoryItem($Item) {
     $normalized = [ordered]@{}
     foreach ($field in $schemaFields) {
@@ -125,6 +137,14 @@ foreach ($file in $jsonFiles) {
             if ($null -ne $ov.Divisao) { $normItem.Divisao = $ov.Divisao }
             if ($null -ne $ov.Setor) { $normItem.Setor = $ov.Setor }
         }
+        $pcnDoc = ([string]$item.Computador).ToUpper().Replace(' ', '')
+        $funDoc = (([string]$item.Usuario -split '\\')[-1]).ToUpper().Replace(' ', '')
+        $tresDoc = @($docsMap.Keys | Where-Object { $_ -eq ("TRE-" + $pcnDoc + ".PDF") -or $_.StartsWith("TRE-" + $pcnDoc + "-") } |
+            ForEach-Object { $docsMap[$_] } | Sort-Object -Unique)
+        $triKey = ("TRI-" + $funDoc + ".PDF")
+        $triDoc = if ($docsMap.Contains($triKey)) { ($docsMap[$triKey] | Sort-Object -Unique) -join ';' } else { '' }
+        $normItem.Docs_TRI = $triDoc
+        $normItem.Docs_TRE = ($tresDoc -join ';')
         $itemsByComputer[$ovKey] = $normItem
     } catch {
         Write-Warning "Ignorando JSON invalido: $($file.FullName) - $($_.Exception.Message)"

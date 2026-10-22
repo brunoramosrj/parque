@@ -482,6 +482,8 @@ tbody tr:hover{background:rgba(13,110,253,.08)}
                 <option value="win11">Windows 11</option>
                 <option value="semwsus">Sem WSUS</option>
                 <option value="semativacao">Windows não ativado</option>
+                <option value="semtre">Sem TRE</option>
+                <option value="semtri">Sem TRI</option>
             </select>
         </div>
         <div class="toolbar-right">
@@ -799,6 +801,8 @@ function renderCards(){
     const warn = enriched.filter(r=>r.__score >= 60 && r.__score < 80).length;
     const ok = enriched.filter(r=>r.__score >= 80).length;
     const semWsus = enriched.filter(r=>["nao","não",""].includes(text(r,"Usa_WSUS").toLowerCase())).length;
+    const semTre = enriched.filter(r=>!String(val(r,"Docs_TRE","")).trim()).length;
+    const semTri = enriched.filter(r=>!String(val(r,"Docs_TRI","")).trim()).length;
     const discoBaixo = enriched.filter(r=>num(r,"Espaco_Livre_C_Perc") > 0 && num(r,"Espaco_Livre_C_Perc") < 20).length;
     const win10 = enriched.filter(r=>text(r,"SO").toLowerCase().includes("windows 10")).length;
     const oldCollect = enriched.filter(r=>daysSince(text(r,"DataHora_Coleta")) > 7).length;
@@ -810,6 +814,8 @@ function renderCards(){
         ["Críticas", crit, "Score abaixo de 60", "bad"],
         ["Disco baixo", discoBaixo, "C: com menos de 20% livre", discoBaixo ? "bad" : "good"],
         ["Sem WSUS", semWsus, "Máquinas sem WSUS informado", semWsus ? "warn" : "good"],
+        ["Sem TRE", semTre, "Estações sem termo de recebimento", semTre ? "warn" : "good"],
+        ["Sem TRI", semTri, "Usuários sem termo de responsabilidade", semTri ? "warn" : "good"],
         ["Windows 10", win10, "Planejar atualização/migração", win10 ? "warn" : "good"],
         ["Coleta antiga", oldCollect, "Mais de 7 dias", oldCollect ? "warn" : "good"],
     ];
@@ -1211,6 +1217,8 @@ function applyFilters(){
         if(quick === "win11") return text(r,"SO").toLowerCase().includes("windows 11");
         if(quick === "semwsus") return text(r,"Usa_WSUS").toLowerCase() !== "sim";
         if(quick === "semativacao") return isWindows(r) && !text(r,"Status_Ativacao").toLowerCase().includes("ativado");
+        if(quick === "semtre") return !String(val(r,"Docs_TRE","")).trim();
+        if(quick === "semtri") return !String(val(r,"Docs_TRI","")).trim();
         return true;
     });
 
@@ -1312,6 +1320,13 @@ function openDetail(r){
         keys.forEach(k => html += `<div class="kv"><b>${escapeHtml(k)}</b><span>${escapeHtml(val(r,k,""))}</span></div>`);
         html += `</div>`;
     }
+    const docsTri = String(val(r,"Docs_TRI","")).split(";").map(s=>s.trim()).filter(Boolean);
+    const docsTre = String(val(r,"Docs_TRE","")).split(";").map(s=>s.trim()).filter(Boolean);
+    const docLink = f => `<a href="${encodeURI("documentos/" + f)}" target="_blank" rel="noopener">${escapeHtml(f)}</a>`;
+    html += `<div class="detail-section"><h3>Documentos</h3>`;
+    html += `<div class="kv"><b>TRI (${text(r,"Usuario") || "—"})</b><span>${docsTri.length ? docsTri.map(docLink).join("<br>") : "Pendente"}</span></div>`;
+    html += `<div class="kv"><b>TRE</b><span>${docsTre.length ? docsTre.map(docLink).join("<br>") : "Pendente"}</span></div>`;
+    html += `</div>`;
     html += `</div>
     <div class="actions-row">
         <button onclick="window.open('inventario/${escapeHtml(text(r,'Computador'))}.html','_blank')">Abrir HTML individual</button>

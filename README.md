@@ -120,7 +120,7 @@ documentação, modelos e templates:
 - `inventario_web.template.html`, `brasao.png`
 - `topologia_fisica.example.json`
 
-Ficam fora do Git por padrão: `parque.conf`, `topologia_fisica.json`, `inventario_web.html`,
+Ficam fora do Git por padrão: `parque.conf`, `topologia_fisica.json`, `documentos/`, `inventario_web.html`,
 `inventario/`, `executados/`, `retorno/`, `comandos/`, `softwares/`, logs,
 zips, screenshots e sobras de refatoração. Esses arquivos podem conter dados
 reais de máquinas, usuários, rede, inventário e execução.
@@ -487,6 +487,19 @@ Exemplo: máquina com RAM 4 GB (−9), 9 updates pendentes (−9), coleta com
 > checagem de ativação usa substring (`includes("ativado")`), então o valor
 > padrão `Nao Ativado` do coletor não dispara o alerta — só textos que não
 > contenham "ativado".
+
+### Documentos (TRI/TRE)
+
+Termos em PDF ficam em `documentos/` (fora do Git — contêm dados pessoais) com
+convenção de nome: `TRE-<HOSTNAME>[-<seq>].pdf` (por máquina, permite histórico)
+e `TRI-<FUNCIONAL>.pdf` (por pessoa; casa com o campo `Usuario` da coleta, que é
+o funcional — a comparação ignora maiúsculas e espaços, e `domínio\\user` vale
+como `user`). O consolidador preenche `Docs_TRI`/`Docs_TRE` (vazio = pendente;
+nomes reais preservados, `;` separando vários). No dashboard: seção
+**Documentos** no detalhe da máquina com link direto ao PDF, colunas próprias,
+filtros rápidos "Sem TRE"/"Sem TRI" e cards gerenciais. Vale o vínculo do
+**usuário da última coleta** — se a máquina foi coletada com outro login, o TRI
+exibido é o dele.
 
 ### Topologia física (Divisão/Setor)
 
