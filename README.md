@@ -502,6 +502,9 @@ duas camadas:
 
 Sem mapeamento e sem prefixo reconhecido, a máquina cai em "Não mapeado".
 A barra de núcleo mostra gateway/DNS majoritários (derivados do inventário).
+A aba traz ainda: KPIs animados (máquinas, com IP, críticas, sem mapeamento),
+donut de SO e barras de cobertura clicáveis como filtro, tooltip rico por
+máquina (score, local, IP/MAC/SO/coleta) e CSS de impressão.
 
 ---
 

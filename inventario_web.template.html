@@ -416,14 +416,45 @@ tbody tr:hover{background:rgba(13,110,253,.08)}
 .topo-node.noip .topo-ico{opacity:.45}
 .topo-ico{width:26px;height:26px;margin:0 auto;color:var(--c)}
 .topo-ico svg{width:100%;height:100%}
-.topo-node small{display:block;font-size:.72em;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topo-node small{display:block;font-size:.72em;color:var(--muted);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;white-space:normal;line-height:1.25}
 .topo-node small.mono{font-variant-numeric:tabular-nums}
 .topo-dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:5px;background:var(--c)}
 .topo-legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:.85em;color:var(--muted);margin-top:8px}
 .topo-view-btn{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;padding:7px 12px;cursor:pointer;font:inherit;font-size:13px;font-weight:600}
 .topo-view-btn[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+.topo-sub{color:var(--muted);font-size:.8em;margin:2px 0 6px}
+.topo-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0 0 12px}
+.topo-kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.topo-kpi::after{content:"";position:absolute;inset:auto -20% -60% auto;width:90px;height:90px;border-radius:50%;background:var(--kc,#0d6efd);opacity:.14}
+.topo-kpi b{display:block;font-size:1.7rem;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--kc,#0d6efd)}
+.topo-kpi span{color:var(--muted);font-size:.82em}
+.topo-panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:12px;margin-bottom:12px}
+.topo-donutbox{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.topo-donut{position:relative;width:180px;flex:none;animation:topoFade .5s ease}
+.topo-donut svg{width:100%;height:auto;display:block}
+.topo-donut .ctr{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none}
+.topo-donut .ctr b{font-size:1.5rem;font-variant-numeric:tabular-nums;line-height:1}
+.topo-donut .ctr span{font-size:.75em;color:var(--muted)}
+.topo-rows{flex:1 1 200px;min-width:200px;display:grid;gap:6px;align-content:start}
+.topo-row{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:10px;padding:6px 9px;color:inherit;font:inherit;cursor:pointer}
+.topo-row:hover,.topo-row.on{background:var(--panel2);border-color:var(--c)}
+.topo-row .dot{width:11px;height:11px;border-radius:4px;background:var(--c)}
+.topo-row .lb{font-weight:600;font-size:.88em}
+.topo-row .lb small{display:block;font-weight:400;color:var(--muted);font-size:.8em}
+.topo-row .pc{font-variant-numeric:tabular-nums;font-weight:700;color:var(--c);font-size:.9em}
+.topo-row .bar2{grid-column:1/-1;height:7px;border-radius:99px;background:var(--line);overflow:hidden}
+.topo-row .bar2 i{display:block;height:100%;width:0;background:var(--c);transition:width .8s ease}
+#topoTip{position:fixed;z-index:60;pointer-events:none;opacity:0;transition:opacity .08s;background:#0b1220;color:#eaf0fb;border:1px solid #33425f;border-radius:10px;padding:10px 12px;font-size:13px;max-width:300px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+#topoTip.on{opacity:1}
+#topoTip h4{margin:0 0 5px;font-size:12.5px;color:#9db7ff}
+#topoTip dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
+#topoTip dt{color:#8b99b3}
+#topoTip dd{margin:0;word-break:break-all;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+@keyframes topoFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.topo-grid,.topo-kpis{animation:topoFade .4s ease}
 @media(max-width:700px){.topo-card::before,.topo-trunk{display:none}}
-@media print{.topo-card,.topo-core{break-inside:avoid}.topo-card::before,.topo-trunk{display:none}}
+@media print{.topo-card,.topo-core,.topo-kpi{break-inside:avoid}.topo-card::before,.topo-trunk{display:none}.topo-grid{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:reduce){.topo-grid,.topo-kpis,.topo-donut{animation:none}.topo-row .bar2 i{transition:none}}
 </style>
 </head>
 <body>
@@ -524,14 +555,28 @@ tbody tr:hover{background:rgba(13,110,253,.08)}
         <div class="topo-trunk"></div>
         <div class="panel" style="margin-bottom:4px">
             <h2>Mapa da rede</h2>
-            <div class="statusline">Cor do nó = score de saúde · clique num nó para ver detalhes · respeita busca e filtros rápidos</div>
+            <div class="statusline">Cor do nó = score de saúde · clique num nó para ver detalhes · donut e barras filtram o mapa · respeita busca e filtros rápidos</div>
             <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
                 <button type="button" class="topo-view-btn" data-modo="org" aria-pressed="true">🏢 Divisão / Setor</button>
                 <button type="button" class="topo-view-btn" data-modo="rede" aria-pressed="false">🌐 Sub-rede</button>
             </div>
             <div class="topo-legend" id="topoLegend"></div>
         </div>
+        <div class="topo-kpis" id="topoKpis"></div>
+        <div class="topo-panels">
+            <div class="panel">
+                <h2>Sistemas operacionais</h2>
+                <div class="statusline">Percentual sobre as máquinas · clique para filtrar o mapa</div>
+                <div class="topo-donutbox"><div class="topo-donut" id="topoDonut"></div><div class="topo-rows" id="topoOsRows"></div></div>
+            </div>
+            <div class="panel">
+                <h2>Cobertura de cadastro</h2>
+                <div class="statusline">Com IP e mapeadas, sem IP ou sem mapeamento · clique para filtrar o mapa</div>
+                <div class="topo-rows" id="topoCovRows"></div>
+            </div>
+        </div>
         <div id="topoRoot"></div>
+        <div id="topoTip" role="tooltip"></div>
     </section>
 
     <section id="inventoryView" class="view">
@@ -782,6 +827,129 @@ function diskBucket(r){
 }
 const TOPO_ICON = '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="3" y="5" width="26" height="17" rx="2"/><path d="M12 28h8M16 22v6"/></svg>';
 let topoModo = "org";
+let topoSO = null, topoCov = null, topoChartsKey = "";
+const TOPO_SO = [
+    {k:"Windows 10", c:"#2f6bff"},
+    {k:"Windows 11", c:"#7c3aed"},
+];
+const TOPO_SO_EXTRA = [
+    {k:"Windows (outros)", c:"#f59e0b"},
+];
+const TOPO_SO_LINUX = {k:"Linux", c:"#10b981"};
+const TOPO_SO_NONE = {k:"Sem informação", c:"#8a96ab"};
+function topoSOBucket(r){
+    const so = text(r,"SO").toLowerCase();
+    if(so.includes("windows 10")) return "Windows 10";
+    if(so.includes("windows 11")) return "Windows 11";
+    if(so.includes("windows")) return "Windows (outros)";
+    if(so.includes("linux") || text(r,"Plataforma").toLowerCase().includes("linux")) return "Linux";
+    return "Sem informação";
+}
+function topoSOColor(k){
+    const all = TOPO_SO.concat(TOPO_SO_EXTRA, [TOPO_SO_LINUX, TOPO_SO_NONE]);
+    const f = all.find(o => o.k === k);
+    return f ? f.c : "#8a96ab";
+}
+function topoCobertura(r){
+    if(!topoSubnet(r)) return "semip";
+    const ds = topoDivSetor(r);
+    if(!ds.div && !ds.set) return "semmap";
+    return "comip";
+}
+const TOPO_COV = [
+    {k:"comip", l:"Com IP e mapeadas", c:"#10b981"},
+];
+const TOPO_COV_REST = [
+    {k:"semip", l:"Sem IP cadastrado", s:"ícone opaco", c:"#f97316"},
+];
+const TOPO_COV_MAP = {k:"semmap", l:"Com IP, sem mapeamento", s:"fora de divisão/setor", c:"#e11d74"};
+function topoCovInfo(k){
+    return TOPO_COV.concat(TOPO_COV_REST, [TOPO_COV_MAP]).find(o => o.k === k);
+}
+function topoCountUp(el, target){
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches){ el.textContent = target; return; }
+    const t0 = performance.now(), dur = 900;
+    (function f(now){
+        const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(target * e);
+        if(p < 1) requestAnimationFrame(f);
+    })(t0);
+}
+function renderTopoKpis(){
+    const total = enriched.length;
+    const comIp = enriched.filter(r => topoSubnet(r)).length;
+    const crit = enriched.filter(r => r.__score < 60).length;
+    const semMap = enriched.filter(r => { const ds = topoDivSetor(r); return !ds.div && !ds.set; }).length;
+    const defs = [
+        {l:"Máquinas", v:total, c:"#0d6efd", s:"no inventário"},
+    ];
+    void defs;
+    const kpiDefs = [
+        {l:"Máquinas", v:total, c:"#0d6efd", s:"no inventário"},
+        {l:"Com IP", v:comIp, c:"#10b981", s:"cadastrado"},
+        {l:"Críticas", v:crit, c:"#dc3545", s:"score < 60"},
+        {l:"Sem mapeamento", v:semMap, c:"#f97316", s:"fora de divisão/setor"}
+    ];
+    $("topoKpis").innerHTML = kpiDefs.map((k,i) =>
+        `<div class="topo-kpi" style="--kc:${k.c}"><b id="topoKpi${i}">0</b><span>${k.l} · ${k.s}</span></div>`
+    ).join("");
+    kpiDefs.forEach((k,i) => topoCountUp(document.getElementById("topoKpi" + i), k.v));
+}
+function renderTopoCharts(){
+    const total = enriched.length || 1;
+    const buckets = ["Windows 10","Windows 11","Windows (outros)","Linux","Sem informação"];
+    const n = {};
+    buckets.forEach(b => n[b] = 0);
+    enriched.forEach(r => n[topoSOBucket(r)]++);
+    const R = 70, C = 2 * Math.PI * R, GAP = 3;
+    let acc = 0;
+    const segs = buckets.map(b => {
+        const frac = n[b] / total;
+        const len = Math.max(0, frac * C - (n[b] ? GAP : 0));
+        const s = `<circle cx="90" cy="90" r="${R}" pathLength="100" fill="none" stroke="${topoSOColor(b)}" stroke-width="22" stroke-dasharray="${(len / C * 100).toFixed(1)} ${(100 - len / C * 100).toFixed(1)}" stroke-dashoffset="${(-acc / C * 100).toFixed(1)}" transform="rotate(-90 90 90)" data-so="${escapeHtml(b)}" style="cursor:pointer"><title>${escapeHtml(b)}: ${n[b]}</title></circle>`;
+        acc += frac * C;
+        return s;
+    }).join("");
+    $("topoDonut").innerHTML = `<svg viewBox="0 0 180 180"><circle cx="90" cy="90" r="${R}" fill="none" stroke="var(--line)" stroke-width="22"/>${segs}</svg><div class="ctr"><b>${enriched.length}</b><span>máquinas</span></div>`;
+    $("topoDonut").querySelectorAll("circle[data-so]").forEach(c => c.addEventListener("click", () => {
+        topoSO = topoSO === c.dataset.so ? null : c.dataset.so;
+        syncTopoFilters(); renderTopology();
+    }));
+    const rows = buckets.map(b => ({b, n:n[b]}));
+    $("topoOsRows").innerHTML = rows.map(o =>
+        `<button type="button" class="topo-row${topoSO === o.b ? " on" : ""}" data-so="${escapeHtml(o.b)}" aria-pressed="${topoSO === o.b}" style="--c:${topoSOColor(o.b)}"><span class="dot"></span><span class="lb">${escapeHtml(o.b)}<small>${o.n} máq.</small></span><span class="pc">${(o.n / total * 100).toFixed(1)}%</span><span class="bar2"><i data-w="${(o.n / total * 100).toFixed(1)}"></i></span></button>`
+    ).join("");
+    $("topoOsRows").querySelectorAll(".topo-row").forEach(btn => btn.addEventListener("click", () => {
+        topoSO = topoSO === btn.dataset.so ? null : btn.dataset.so;
+        syncTopoFilters(); renderTopology();
+    }));
+    const covCounts = {comip:0, semip:0, semmap:0};
+    enriched.forEach(r => covCounts[topoCobertura(r)]++);
+    $("topoCovRows").innerHTML = TOPO_COV.concat(TOPO_COV_REST, [TOPO_COV_MAP]).map(o => {
+        const v = covCounts[o.k] || 0;
+        return `<button type="button" class="topo-row${topoCov === o.k ? " on" : ""}" data-cov="${o.k}" aria-pressed="${topoCov === o.k}" style="--c:${o.c}"><span class="dot"></span><span class="lb">${escapeHtml(o.l)}<small>${o.s ? escapeHtml(o.s) + " · " : ""}${v} máq.</small></span><span class="pc">${(v / total * 100).toFixed(1)}%</span><span class="bar2"><i data-w="${(v / total * 100).toFixed(1)}"></i></span></button>`;
+    }).join("");
+    $("topoCovRows").querySelectorAll(".topo-row").forEach(btn => btn.addEventListener("click", () => {
+        topoCov = topoCov === btn.dataset.cov ? null : btn.dataset.cov;
+        syncTopoFilters(); renderTopology();
+    }));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.querySelectorAll("#topoOsRows .bar2 i, #topoCovRows .bar2 i").forEach(el => { el.style.width = el.dataset.w + "%"; });
+    }));
+}
+function syncTopoFilters(){
+    document.querySelectorAll("#topoOsRows .topo-row").forEach(btn => {
+        const on = topoSO === btn.dataset.so;
+        btn.classList.toggle("on", on);
+        btn.setAttribute("aria-pressed", on);
+    });
+    document.querySelectorAll("#topoCovRows .topo-row").forEach(btn => {
+        const on = topoCov === btn.dataset.cov;
+        btn.classList.toggle("on", on);
+        btn.setAttribute("aria-pressed", on);
+    });
+}
+
 function topoSubnet(row){
     const ip = String(val(row,"IP","")).trim();
     const m = ip.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
@@ -830,30 +998,82 @@ function topoNodeHtml(r, vis){
     const noip = hasIp ? "" : " noip";
     const ds = topoDivSetor(r);
     const org = [ds.div, ds.set].filter(Boolean).join(" · ");
-    const tip = host + " · " + r.__score + "/100 " + r.__status
-        + (org ? "\n" + org : "")
-        + "\nIP: " + (val(r,"IP","") || "—") + " · MAC: " + (val(r,"MAC","") || "—")
-        + "\n" + text(r,"SO");
-    return `<button type="button" class="topo-node${dim}${noip}" data-pc="${escapeHtml(host)}" title="${escapeHtml(tip)}" style="--c:${topoColor(r)}"><span class="topo-ico">${TOPO_ICON}</span><small>${escapeHtml(host)}</small><small class="mono">${escapeHtml(hasIp ? val(r,"IP","") : "s/ IP")}</small></button>`;
+    return `<button type="button" class="topo-node${dim}${noip}" data-pc="${escapeHtml(host)}" aria-label="${escapeHtml(host + " · " + r.__score + "/100 " + r.__status)}" style="--c:${topoColor(r)}"><span class="topo-ico">${TOPO_ICON}</span><small>${escapeHtml(host)}</small><small class="mono">${escapeHtml(hasIp ? val(r,"IP","") : "s/ IP")}</small></button>`;
+}
+function topoTipHtml(r){
+    const host = String(val(r,"Computador",""));
+    const ds = topoDivSetor(r);
+    const org = [ds.div, ds.set].filter(Boolean).join(" · ");
+    const rows = [
+        ["Score", r.__score + "/100 " + r.__status],
+        ["Local", org || "—"],
+        ["IP", val(r,"IP","") || "—"],
+        ["MAC", val(r,"MAC","") || "—"],
+        ["SO", text(r,"SO") || "—"],
+        ["Coleta", text(r,"DataHora_Coleta") || "—"]
+    ];
+    return `<h4>${escapeHtml(host)}</h4><dl>` + rows.map(x =>
+        `<dt>${x[0]}</dt><dd>${escapeHtml(String(x[1]))}</dd>`).join("") + `</dl>`;
 }
 function topoBindNodes(){
-    $("topoRoot").querySelectorAll(".topo-node").forEach(n => n.addEventListener("click", () => {
-        const r = enriched.find(x => String(val(x,"Computador","")) === n.dataset.pc);
-        if(r) openDetail(r);
-    }));
+    const tip = $("topoTip");
+    const hide = () => tip.classList.remove("on");
+    $("topoRoot").querySelectorAll(".topo-node").forEach(n => {
+        n.addEventListener("click", () => {
+            hide();
+            const r = enriched.find(x => String(val(x,"Computador","")) === n.dataset.pc);
+            if(r) openDetail(r);
+        });
+        n.addEventListener("mouseover", e => {
+            const r = enriched.find(x => String(val(x,"Computador","")) === n.dataset.pc);
+            if(!r) return;
+            tip.innerHTML = topoTipHtml(r);
+            tip.style.left = Math.min(e.clientX + 14, window.innerWidth - 320) + "px";
+            tip.style.top = Math.min(e.clientY + 14, window.innerHeight - 200) + "px";
+            tip.classList.add("on");
+        });
+        n.addEventListener("mouseout", hide);
+        n.addEventListener("focus", () => {
+            const r = enriched.find(x => String(val(x,"Computador","")) === n.dataset.pc);
+            if(!r) return;
+            tip.innerHTML = topoTipHtml(r);
+            const rc = n.getBoundingClientRect();
+            tip.style.left = Math.min(rc.right + 10, window.innerWidth - 320) + "px";
+            tip.style.top = Math.max(8, rc.top - 10) + "px";
+            tip.classList.add("on");
+        });
+        n.addEventListener("blur", hide);
+    });
+    document.querySelector("main.app").addEventListener("scroll", hide, {passive:true});
 }
 function renderTopology(){
-    const vis = new Set(filtered.map(r => String(val(r,"Computador",""))));
+    const vis = new Set(filtered.filter(r =>
+        (!topoSO || topoSOBucket(r) === topoSO) &&
+        (!topoCov || topoCobertura(r) === topoCov)
+    ).map(r => String(val(r,"Computador",""))));
     $("topoLegend").innerHTML = [["OK","var(--good)"],["Atenção","var(--warn)"],["Crítico","var(--bad)"]]
         .map(l => `<span><span class="topo-dot" style="--c:${l[1]}"></span>${l[0]}</span>`).join("")
         + `<span>ícone opaco = sem IP cadastrado</span>`;
     if(!enriched.length){ $("topoRoot").innerHTML = "<div class='statusline'>Sem dados.</div>"; return; }
+    const chartsKey = enriched.length + "|" + enriched.map(r => String(val(r,"Computador",""))).join(",");
+    if(chartsKey !== topoChartsKey){
+        topoChartsKey = chartsKey;
+        renderTopoKpis();
+        renderTopoCharts();
+    } else {
+        syncTopoFilters();
+    }
     const crit = enriched.filter(r => r.__score < 60).length;
     const gw = topoModa("GatewayPadrao");
     const dns = topoModa("ServidoresDNS", ",");
     $("topoSummary").textContent = enriched.length + " máquinas · " + crit + " críticas"
         + (gw ? " · GW " + gw : "") + (dns ? " · DNS " + dns : "");
     if(topoModo === "org") renderTopoOrg(vis); else renderTopoRede(vis);
+}
+function topoCardSub(rows){
+    const ips = rows.filter(r => topoSubnet(r)).length;
+    const avg = Math.round(rows.reduce((a,r) => a + r.__score, 0) / rows.length);
+    return `${ips}/${rows.length} com IP · score médio ${avg}`;
 }
 function topoRankDiv(d){
     if(d === "Não mapeado") return 99;
@@ -879,7 +1099,7 @@ function renderTopoOrg(vis){
         const cards = setores.map(sk => {
             const rows = byDiv[dk][sk].slice().sort((a,b) => String(val(a,"Computador","")).localeCompare(String(val(b,"Computador",""))));
             const nCrit = rows.filter(r => r.__score < 60).length;
-            return `<div class="topo-card"><h3>${escapeHtml(sk)}<span class="topo-count">${rows.length} máq.${nCrit ? " · " + nCrit + " crít." : ""}</span></h3><div class="topo-nodes">${rows.map(r => topoNodeHtml(r, vis)).join("")}</div></div>`;
+            return `<div class="topo-card"><h3>${escapeHtml(sk)}<span class="topo-count">${rows.length} máq.${nCrit ? " · " + nCrit + " crít." : ""}</span></h3><div class="topo-sub">${escapeHtml(topoCardSub(rows))}</div><div class="topo-nodes">${rows.map(r => topoNodeHtml(r, vis)).join("")}</div></div>`;
         }).join("");
         return `<div class="topo-gt">${escapeHtml(dk)}</div><div class="topo-grid">${cards}</div>`;
     }).join("");
@@ -900,7 +1120,7 @@ function renderTopoRede(vis){
         const rows = groups[sn].slice().sort((a,b) => String(val(a,"Computador","")).localeCompare(String(val(b,"Computador",""))));
         const nCrit = rows.filter(r => r.__score < 60).length;
         const nodes = rows.map(r => topoNodeHtml(r, vis)).join("");
-        return `<div class="topo-card"><h3>${escapeHtml(sn)}<span class="topo-count">${rows.length} máq.${nCrit ? " · " + nCrit + " crít." : ""}</span></h3><div class="topo-nodes">${nodes}</div></div>`;
+        return `<div class="topo-card"><h3>${escapeHtml(sn)}<span class="topo-count">${rows.length} máq.${nCrit ? " · " + nCrit + " crít." : ""}</span></h3><div class="topo-sub">${escapeHtml(topoCardSub(rows))}</div><div class="topo-nodes">${nodes}</div></div>`;
     }).join("") + `</div>`;
     topoBindNodes();
 }
