@@ -1,4 +1,4 @@
-# Parque 3.4 — Sistema de Inventário e Gestão Computacional
+# Parque 3.5 — Sistema de Inventário e Gestão Computacional
 
 Sistema de coleta de inventário de TI e automação remota para um parque de
 computadores **Windows e Linux**, sem necessidade de servidor dedicado ou banco
@@ -159,6 +159,10 @@ editar o `parque.conf` para personalizar.
 | `INTERVALO_AGENTE_SEG` | `60` | Segundos entre verificações do agente. |
 | `PERMITIR_CAMINHOS` | *(vazio = tudo)* | Allowlist de pastas (`;`) para `instalar/copiar/executar/desinstalar`. Vazio permite tudo + avisa no log. |
 | `TEMPO_MAX_COMANDO_SEG` | `600` | Timeout por comando (`instalar/desinstalar/executar`); `executar` aceita `timeout_seg` próprio. |
+| `PERMITIR_QUALQUER_CAMINHO` | `0` | Desde 3.5, allowlist vazia **recusa** comandos com caminho; `1` restaura o comportamento antigo (inseguro). |
+| `EXIGIR_HASH` | `0` | `1` = `instalar`/`executar` exigem campo `sha256` no comando e verificam o arquivo. |
+| `JITTER_AGENTE_SEG` | `0` | Espera aleatória extra (0..N s) entre verificações. |
+| `BACKUPS_MANTER` | `5` | Quantidade de `*.bak.html` mantidos pelo consolidador. |
 | `TENTATIVAS_GRAVACAO` | `5` | Reservado para rotinas que precisem repetir gravações. |
 | `ESPERA_GRAVACAO_SEG` | `3` | Reservado para intervalo entre tentativas. |
 | `MARCADOR_DADOS_INI` | `//<DATA_START>` | Marcador de início do bloco JSON no HTML. |

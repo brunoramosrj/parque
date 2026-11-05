@@ -182,9 +182,10 @@ try {
 try { if (Get-NetFirewallProfile | Where-Object { $_.Enabled -eq $true }) { $dadosColetados.Firewall_Ativo = "Sim" } else { $dadosColetados.Firewall_Ativo = "Nao" } } catch {}
 try { $wsusPath = "HKLM:\Software\Policies\Microsoft\Windows\WindowsUpdate"; if (Test-Path $wsusPath) { $wsus = Get-ItemProperty -Path $wsusPath -ErrorAction SilentlyContinue; if ($wsus.WUServer) { $dadosColetados.Usa_WSUS = "Sim"; $dadosColetados.Servidor_WSUS = $wsus.WUServer } } } catch {}
 try {
-    $admins = Get-LocalGroupMember -Group "Administradores" | Select-Object -ExpandProperty Name
+    # Grupo Administradores pelo SID conhecido (independe do idioma do Windows)
+    $admins = Get-LocalGroupMember -SID 'S-1-5-32-544' -ErrorAction Stop | Select-Object -ExpandProperty Name
     $dadosColetados.AdminsLocais = ($admins -replace ".*\\", "") -join "; "
-} catch {}
+} catch { Write-Warning "AdminsLocais: $($_.Exception.Message)" }
 try {
     $tcpPorts = (Get-NetTCPConnection -State Listen).LocalPort | Sort-Object -Unique
     if ($tcpPorts) { $dadosColetados.PortasTCP_Abertas = $tcpPorts -join ", " }

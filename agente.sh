@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Agente Parque 3.3 - Linux
+# Agente Parque 3.5 - Linux
 #
 # Loop que monitora comandos/<HOSTNAME>.json e executa a acao solicitada.
 # Suporta: inventario (roda COLETOR_LINUX). Demais acoes -> logadas como
@@ -19,6 +19,7 @@ EXECUTADOS_DIR="executados"
 RETORNO_DIR="retorno"
 COLETOR_LINUX="linux.sh"
 INTERVALO_AGENTE_SEG=60
+JITTER_AGENTE_SEG=0
 CONFIG_FILE="$SCRIPT_DIR/parque.conf"
 
 if [ -f "$CONFIG_FILE" ]; then
@@ -36,6 +37,7 @@ if [ -f "$CONFIG_FILE" ]; then
                     RETORNO_DIR)          [ -n "$val" ] && RETORNO_DIR="$val" ;;
                     COLETOR_LINUX)        [ -n "$val" ] && COLETOR_LINUX="$val" ;;
                     INTERVALO_AGENTE_SEG) [ -n "$val" ] && INTERVALO_AGENTE_SEG="$val" ;;
+                    JITTER_AGENTE_SEG)    [ -n "$val" ] && JITTER_AGENTE_SEG="$val" ;;
                 esac
                 ;;
         esac
@@ -58,6 +60,7 @@ HOSTNAME_BIN="$(hostname)"
 COMANDO_PATH="$COMANDOS_DIR/$HOSTNAME_BIN.json"
 RETORNO_LOG="$RETORNO_DIR/$HOSTNAME_BIN.log"
 STATUS_JSON="$RETORNO_DIR/$HOSTNAME_BIN.json"
+CLAIM_PATH="$COMANDO_PATH.processando"   # claim atomico: comando em execucao
 
 mkdir -p "$EXECUTADOS_DIR" "$RETORNO_DIR"
 
@@ -77,7 +80,7 @@ escreve_status() { # acao sucesso codigo mensagem origem arquivado
           --arg msg "$4" --arg origem "$5" --arg arq "$6" \
           '{Computador:$pc, Acao:$acao, Inicio:$inicio, Fim:$fim,
             Sucesso:$sucesso, CodigoSaida:$codigo, Mensagem:$msg,
-            ComandoOrigem:$origem, ArquivoArquivado:$arq, AgenteVersao:"3.3"}' \
+            ComandoOrigem:$origem, ArquivoArquivado:$arq, AgenteVersao:"3.5"}' \
           --arg inicio "$ACAO_INICIO" --arg fim "$(date +"%Y-%m-%d %H:%M:%S")" > "$STATUS_JSON"
 }
 
@@ -89,10 +92,26 @@ FALHAS_PARSE=0
 MAX_FALHAS_PARSE=3
 
 while true; do
-    if [ -f "$COMANDO_PATH" ]; then
+    # Sobra de execucao interrompida: nunca reexecuta, apenas arquiva.
+    if [ -f "$CLAIM_PATH" ]; then
+        DEST="$EXECUTADOS_DIR/$HOSTNAME_BIN.interrompido-$(date +%Y%m%d_%H%M%S).json"
+        mv -f "$CLAIM_PATH" "$DEST"
+        ACAO_INICIO="$(date +"%Y-%m-%d %H:%M:%S")"
+        log "Comando encontrado em execucao no inicio do agente (interrompido). Arquivado sem reexecutar: $DEST"
+        escreve_status "(interrompido)" false null "Execucao interrompida; arquivado sem reexecutar." "$CLAIM_PATH" "$DEST"
+    fi
+
+    # Claim atomico: renomeia antes de ler (mv no mesmo FS e atomico).
+    CLAIMED=false
+    if [ -f "$COMANDO_PATH" ] && mv -n "$COMANDO_PATH" "$CLAIM_PATH" 2>/dev/null && [ -f "$CLAIM_PATH" ]; then
+        CLAIMED=true
+    fi
+
+    if $CLAIMED; then
         echo "Comando encontrado para $HOSTNAME_BIN."
         ACAO_INICIO="$(date +"%Y-%m-%d %H:%M:%S")"
-        ACAO="$(jq -r '.acao // empty' "$COMANDO_PATH" 2>/dev/null)"
+        ACAO="$(jq -r '.acao // empty' "$CLAIM_PATH" 2>/dev/null)"
+        CMD_ID="$(jq -r '.id // empty' "$CLAIM_PATH" 2>/dev/null)"
         if [ -z "$ACAO" ]; then
             FALHAS_PARSE=$((FALHAS_PARSE + 1))
             if [ "$FALHAS_PARSE" -eq 1 ]; then
@@ -100,15 +119,18 @@ while true; do
             fi
             if [ "$FALHAS_PARSE" -ge "$MAX_FALHAS_PARSE" ]; then
                 DEST="$EXECUTADOS_DIR/$HOSTNAME_BIN.invalido-$(date +%Y%m%d_%H%M%S).json"
-                mv -f "$COMANDO_PATH" "$DEST"
+                mv -f "$CLAIM_PATH" "$DEST"
                 log "JSON inválido arquivado em $DEST após $FALHAS_PARSE tentativas. Corrija e publique novamente em comandos/."
                 escreve_status "(parse)" false null "JSON inválido arquivado." "$COMANDO_PATH" "$DEST"
                 FALHAS_PARSE=0
+            else
+                # Devolve a fila (pode ser escrita parcial); -n nao pisa num comando novo.
+                mv -n "$CLAIM_PATH" "$COMANDO_PATH" 2>/dev/null || true
             fi
         else
             FALHAS_PARSE=0
             log ""
-            log "Iniciando ação: $ACAO"
+            log "Iniciando ação: $ACAO${CMD_ID:+ (id: $CMD_ID)}"
             OK=true; CODE=null; MSG="ok"
             case "$ACAO" in
                 inventario)
@@ -131,10 +153,12 @@ while true; do
                     ;;
             esac
             DEST="$EXECUTADOS_DIR/$HOSTNAME_BIN-$(date +%Y%m%d_%H%M%S).json"
-            mv -f "$COMANDO_PATH" "$DEST"
+            mv -f "$CLAIM_PATH" "$DEST"
             escreve_status "$ACAO" "$OK" "$CODE" "$MSG" "$COMANDO_PATH" "$DEST"
             log "Ação concluída (sucesso: $OK) e comando arquivado em $DEST."
         fi
     fi
-    sleep "$INTERVALO_AGENTE_SEG"
+    JIT=0
+    if [ "${JITTER_AGENTE_SEG:-0}" -gt 0 ] 2>/dev/null; then JIT=$((RANDOM % (JITTER_AGENTE_SEG + 1))); fi
+    sleep $((INTERVALO_AGENTE_SEG + JIT))
 done

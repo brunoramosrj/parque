@@ -32,6 +32,7 @@ if [ -f "$CONFIG_FILE" ]; then
                     SCHEMA_FILE)        [ -n "$val" ] && SCHEMA_FILE="$val" ;;
                     MARCADOR_DADOS_INI) [ -n "$val" ] && MARCADOR_DADOS_INI="$val" ;;
                     MARCADOR_DADOS_FIM) [ -n "$val" ] && MARCADOR_DADOS_FIM="$val" ;;
+                    BACKUPS_MANTER)     [ -n "$val" ] && BACKUPS_MANTER="$val" ;;
                 esac
                 ;;
         esac
@@ -93,42 +94,52 @@ if [ -f "$FISICO_FILE" ]; then
     fi
 fi
 
-while IFS= read -r -d '' json_file; do
-    if ! item="$(jq -c --slurpfile schema "$SCHEMA_FILE" --slurpfile fisico "$FISICO_SLURP" '
-        select(type == "object" and (.Computador // "") != "")
-        | . as $item
-        | ($schema[0].Campos // []) as $fields
-        | ($schema[0].SchemaVersao // 1) as $schema_version
-        | ($fisico[0][$item.Computador] // {}) as $ov
-        | reduce $fields[] as $field (
-            {};
-            .[$field] = (
-                if $field == "Divisao" and ($ov.Divisao // null) != null then
-                    $ov.Divisao
-                elif $field == "Setor" and ($ov.Setor // null) != null then
-                    $ov.Setor
-                elif $item | has($field) then
-                    $item[$field]
-                elif $field == "SchemaVersao" then
-                    $schema_version
-                else
-                    null
-                end
-            )
+# Filtro jq unico: normaliza cada inventario pelo schema + override organizacional.
+JQ_FILTER='
+    select(type == "object" and (.Computador // "") != "")
+    | . as $item
+    | ($schema[0].Campos // []) as $fields
+    | ($schema[0].SchemaVersao // 1) as $schema_version
+    | ($fisico[0][$item.Computador] // {}) as $ov
+    | reduce $fields[] as $field (
+        {};
+        .[$field] = (
+            if $field == "Divisao" and ($ov.Divisao // null) != null then $ov.Divisao
+            elif $field == "Setor" and ($ov.Setor // null) != null then $ov.Setor
+            elif $item | has($field) then $item[$field]
+            elif $field == "SchemaVersao" then $schema_version
+            else null end
         )
-        + ($item | with_entries(select(.key as $key | ($fields | index($key) | not))))
-    ' "$json_file" 2>/dev/null)"; then
-        echo "AVISO: ignorando JSON invalido: $json_file" >&2
-        continue
-    fi
-    if [ -z "$item" ]; then
-        echo "AVISO: ignorando JSON sem campo Computador: $json_file" >&2
-        continue
-    fi
-    updated_items="$(mktemp)"
-    jq --argjson item "$item" '. + [$item]' "$tmp_items" > "$updated_items"
-    mv "$updated_items" "$tmp_items"
-done < <(find "$INVENTORY_DIR" -maxdepth 1 -type f -name '*.json' ! -name 'inventario_web.json' -print0)
+    )
+    + ($item | with_entries(select(.key as $key | ($fields | index($key) | not))))
+'
+
+mapfile -d '' -t json_files < <(find "$INVENTORY_DIR" -maxdepth 1 -type f -name '*.json' ! -name 'inventario_web.json' -print0)
+
+# Caminho rapido: um unico processo jq para todos os arquivos (O(n)).
+# Se algum JSON estiver corrompido o jq aborta; entao cai para o modo arquivo-a-arquivo.
+if [ "${#json_files[@]}" -gt 0 ] && \
+   jq -c --slurpfile schema "$SCHEMA_FILE" --slurpfile fisico "$FISICO_SLURP" "$JQ_FILTER" \
+      "${json_files[@]}" 2>/dev/null | jq -s '.' > "$tmp_items" && [ -s "$tmp_items" ] \
+   && [ "${PIPESTATUS[0]}" -eq 0 ]; then
+    :
+else
+    printf '%s\n' '[]' > "$tmp_items"
+    : > "$tmp_items.ndjson"
+    for json_file in "${json_files[@]}"; do
+        if ! item="$(jq -c --slurpfile schema "$SCHEMA_FILE" --slurpfile fisico "$FISICO_SLURP" "$JQ_FILTER" "$json_file" 2>/dev/null)"; then
+            echo "AVISO: ignorando JSON invalido: $json_file" >&2
+            continue
+        fi
+        if [ -z "$item" ]; then
+            echo "AVISO: ignorando JSON sem campo Computador: $json_file" >&2
+            continue
+        fi
+        printf '%s\n' "$item" >> "$tmp_items.ndjson"
+    done
+    jq -s '.' "$tmp_items.ndjson" > "$tmp_items"
+    rm -f "$tmp_items.ndjson"
+fi
 
 jq 'unique_by(.Computador) | sort_by(.Computador)' "$tmp_items" > "$tmp_json"
 
@@ -144,6 +155,12 @@ flock -x 200
 
 backup_file="$HTML_FILE.$(date +%Y%m%d%H%M%S).bak.html"
 cp "$HTML_FILE" "$backup_file"
+# Retencao: mantem apenas os N backups mais recentes (default 5).
+BACKUPS_MANTER="${BACKUPS_MANTER:-5}"
+ls -1t "$HTML_FILE".*.bak.html 2>/dev/null | tail -n +"$((BACKUPS_MANTER + 1))" | while IFS= read -r old; do rm -f -- "$old"; done
+
+# Evita que "</script>" dentro de um valor encerre o bloco <script> do dashboard.
+jq -c '.' "$tmp_json" | sed 's#</#<\\/#g' > "$tmp_json.safe" && mv "$tmp_json.safe" "$tmp_json"
 
 tmp_html="$(mktemp)"
 awk -v start="$MARCADOR_DADOS_INI" -v end="$MARCADOR_DADOS_FIM" -v json_file="$tmp_json" '

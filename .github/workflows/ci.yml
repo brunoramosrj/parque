@@ -1,0 +1,21 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  shell:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sintaxe bash
+        run: for f in *.sh; do bash -n "$f"; done
+      - name: ShellCheck (apenas erros)
+        run: sudo apt-get install -y shellcheck && shellcheck -S error *.sh
+  powershell:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PSScriptAnalyzer (apenas erros)
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          $r = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Error
+          $r | Format-Table; if ($r) { exit 1 }

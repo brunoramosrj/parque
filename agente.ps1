@@ -1,5 +1,5 @@
 # ================================
-# Agente Parque 3.3 - Cliente
+# Agente Parque 3.5 - Cliente
 # ================================
 
 # Nome do computador (COMPUTERNAME no Windows; HOSTNAME/hostname como fallback)
@@ -22,6 +22,9 @@ $cfg = @{
     INTERVALO_AGENTE_SEG = 60
     PERMITIR_CAMINHOS   = ''
     TEMPO_MAX_COMANDO_SEG = 600
+    PERMITIR_QUALQUER_CAMINHO = '0'   # 1 = aceita qualquer caminho quando PERMITIR_CAMINHOS esta vazio (inseguro)
+    EXIGIR_HASH         = '0'         # 1 = instalar/executar exigem campo sha256 no comando
+    JITTER_AGENTE_SEG   = 0           # espera aleatoria extra (0..N s) para evitar picos no share
 }
 $configFile = Join-Path $scriptDir 'parque.conf'
 if (Test-Path $configFile) {
@@ -49,6 +52,7 @@ $cfg.HTML_FILE       = Resolve-CfgPath $cfg.HTML_FILE
 
 # Caminhos no servidor (derivados da configuracao)
 $comandoPath    = Join-Path $cfg.COMANDOS_DIR "$pcName.json"
+$claimPath      = "$comandoPath.processando"   # claim atomico: comando em execucao
 $executados     = $cfg.EXECUTADOS_DIR
 $retornoPath    = Join-Path $cfg.RETORNO_DIR "$pcName.log"
 $statusPath     = Join-Path $cfg.RETORNO_DIR "$pcName.json"
@@ -63,6 +67,8 @@ if (-not [string]::IsNullOrWhiteSpace($cfg.PERMITIR_CAMINHOS)) {
     $allowlist = @($cfg.PERMITIR_CAMINHOS -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
 }
 $avisoAllowlistVazio = $false
+$permitirQualquer = ("$($cfg.PERMITIR_QUALQUER_CAMINHO)" -eq '1')
+$exigirHash       = ("$($cfg.EXIGIR_HASH)" -eq '1')
 
 # Garantir que pastas existam
 foreach ($p in @($executados, (Split-Path $retornoPath))) {
@@ -84,11 +90,13 @@ function Get-PowerShellLauncher {
 
 function Test-CaminhoPermitido($caminho) {
     if ($allowlist.Count -eq 0) {
+        # Negar por padrao: allowlist vazia so libera com PERMITIR_QUALQUER_CAMINHO=1.
         if (-not $script:avisoAllowlistVazio) {
             $script:avisoAllowlistVazio = $true
-            Add-Content $retornoPath "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] AVISO: PERMITIR_CAMINHOS vazio — qualquer caminho é aceito. Restrinja no parque.conf."
+            $modo = if ($permitirQualquer) { 'qualquer caminho e aceito (PERMITIR_QUALQUER_CAMINHO=1)' } else { 'comandos com caminho serao RECUSADOS' }
+            Add-Content $retornoPath "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] AVISO: PERMITIR_CAMINHOS vazio — $modo. Configure a allowlist no parque.conf."
         }
-        return $true
+        return $permitirQualquer
     }
     try { $alvo = [System.IO.Path]::GetFullPath($caminho).TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar) }
     catch { return $false }
@@ -100,6 +108,20 @@ function Test-CaminhoPermitido($caminho) {
         if ($alvo.StartsWith($b + [System.IO.Path]::AltDirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) { return $true }
     }
     return $false
+}
+
+# Verifica integridade (SHA-256) do arquivo antes de instalar/executar.
+# Retorna $null se OK, ou a mensagem de erro.
+function Test-HashArquivo($alvo, $esperado) {
+    $esperado = "$esperado".Trim()
+    if ([string]::IsNullOrWhiteSpace($esperado)) {
+        if ($exigirHash) { return "EXIGIR_HASH=1: comando sem campo 'sha256'." }
+        return $null
+    }
+    if (-not (Test-Path -LiteralPath $alvo)) { return "Arquivo nao encontrado para verificar hash: $alvo" }
+    $real = (Get-FileHash -LiteralPath $alvo -Algorithm SHA256).Hash
+    if ($real -ne $esperado.ToUpperInvariant()) { return "Hash SHA-256 divergente para ${alvo}: esperado $esperado, real $real" }
+    return $null
 }
 
 function Invoke-ProcessoSupervisionado($file, $argList, $timeoutSeg, $baseLog) {
@@ -159,7 +181,7 @@ function Write-StatusAgente($acao, $inicio, $fim, $sucesso, $codigo, $mensagem, 
         Mensagem         = "$mensagem"
         ComandoOrigem    = "$origem"
         ArquivoArquivado = "$arquivado"
-        AgenteVersao     = '3.3'
+        AgenteVersao     = '3.5'
     }
     ($st | ConvertTo-Json -Depth 5) | Set-Content -Path $statusPath -Encoding UTF8
 }
@@ -167,13 +189,29 @@ function Write-StatusAgente($acao, $inicio, $fim, $sucesso, $codigo, $mensagem, 
 # Loop infinito
 while ($true) {
     try {
+        # Sobra de execucao interrompida (agente caiu no meio): NUNCA reexecuta; arquiva.
+        if (Test-Path $claimPath) {
+            $destInt = Join-Path $executados ("$pcName.interrompido-$(Get-Date -Format 'yyyyMMdd_HHmmss').json")
+            Move-Item -Path $claimPath -Destination $destInt -Force
+            $msgInt = "Comando encontrado em execucao no inicio do agente (interrompido). Arquivado sem reexecutar: $destInt"
+            Add-Content $retornoPath "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $msgInt"
+            Write-StatusAgente -acao '(interrompido)' -inicio (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') -fim (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') -sucesso $false -codigo $null -mensagem $msgInt -origem $claimPath -arquivado $destInt
+        }
+
+        # Claim atomico: renomeia antes de ler. Se o operador sobrescrever depois, vira novo comando.
+        $reivindicado = $false
         if (Test-Path $comandoPath) {
+            try { Move-Item -LiteralPath $comandoPath -Destination $claimPath -ErrorAction Stop; $reivindicado = $true } catch {}
+        }
+
+        if ($reivindicado) {
             Write-Host "Comando encontrado para $pcName."
 
             # Lê o conteúdo do comando (parse isolado: erro aqui não despacha nada)
             $comando = $null
             try {
-                $comando = Get-Content $comandoPath -Raw | ConvertFrom-Json
+                $comando = Get-Content $claimPath -Raw | ConvertFrom-Json
+                if ($null -eq $comando) { throw "comando vazio" }
                 $falhasParse = 0
             } catch {
                 $falhasParse++
@@ -182,18 +220,22 @@ while ($true) {
                 }
                 if ($falhasParse -ge $maxFalhasParse) {
                     $destinoInv = Join-Path $executados ("$pcName.invalido-$(Get-Date -Format 'yyyyMMdd_HHmmss').json")
-                    Move-Item -Path $comandoPath -Destination $destinoInv -Force
+                    Move-Item -Path $claimPath -Destination $destinoInv -Force
                     $msgInv = "JSON inválido arquivado após $falhasParse tentativas. Corrija e publique novamente em comandos/."
                     Add-Content $retornoPath "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $msgInv ($destinoInv)"
                     Write-StatusAgente -acao '(parse)' -inicio (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') -fim (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') -sucesso $false -codigo $null -mensagem $msgInv -origem $comandoPath -arquivado $destinoInv
                     $falhasParse = 0
+                } elseif (Test-Path $claimPath) {
+                    # Devolve a fila (pode ser escrita parcial); sem -Force para nao pisar num comando novo.
+                    try { Move-Item -LiteralPath $claimPath -Destination $comandoPath -ErrorAction Stop } catch {}
                 }
             }
 
             if ($null -ne $comando) {
             # Log de início
             $acaoInicio = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-            Add-Content $retornoPath "`n[$acaoInicio] Iniciando ação: $($comando.acao)"
+            $idCmd = if ($comando.id) { " (id: $($comando.id))" } else { '' }
+            Add-Content $retornoPath "`n[$acaoInicio] Iniciando ação: $($comando.acao)$idCmd"
             $resOk = $true
             $resCode = $null
             $resMsg = 'ok'
@@ -233,6 +275,10 @@ while ($true) {
                     } elseif (-not (Test-CaminhoPermitido $alvo)) {
                         $resOk = $false
                         $resMsg = "Caminho fora da allowlist (PERMITIR_CAMINHOS): $alvo"
+                        Add-Content $retornoPath $resMsg
+                    } elseif ($erroHash = Test-HashArquivo $alvo $comando.sha256) {
+                        $resOk = $false
+                        $resMsg = $erroHash
                         Add-Content $retornoPath $resMsg
                     } else {
                     try {
@@ -366,6 +412,10 @@ while ($true) {
                         $resOk = $false
                         $resMsg = "Caminho fora da allowlist (PERMITIR_CAMINHOS): $alvo"
                         Add-Content $retornoPath $resMsg
+                    } elseif ($erroHash = Test-HashArquivo $alvo $comando.sha256) {
+                        $resOk = $false
+                        $resMsg = $erroHash
+                        Add-Content $retornoPath $resMsg
                     } else {
                     try {
                         if (-not (Test-Path $alvo)) { throw "Arquivo não encontrado: $alvo" }
@@ -416,7 +466,7 @@ while ($true) {
 
             # Move o comando para a pasta "executados" (timestamp preserva histórico)
             $destinoCmd = Join-Path $executados ("$pcName-$(Get-Date -Format 'yyyyMMdd_HHmmss').json")
-            Move-Item -Path $comandoPath -Destination $destinoCmd -Force
+            Move-Item -Path $claimPath -Destination $destinoCmd -Force
 
             $acaoFim = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
             Write-StatusAgente -acao "$($comando.acao)" -inicio $acaoInicio -fim $acaoFim -sucesso $resOk -codigo $resCode -mensagem $resMsg -origem $comandoPath -arquivado $destinoCmd
@@ -429,5 +479,7 @@ while ($true) {
     }
 
     # Espera o intervalo configurado antes de checar novamente
-    Start-Sleep -Seconds ([int]$cfg.INTERVALO_AGENTE_SEG)
+    $jit = 0
+    try { if ([int]$cfg.JITTER_AGENTE_SEG -gt 0) { $jit = Get-Random -Minimum 0 -Maximum ([int]$cfg.JITTER_AGENTE_SEG + 1) } } catch {}
+    Start-Sleep -Seconds ([int]$cfg.INTERVALO_AGENTE_SEG + $jit)
 }

@@ -218,11 +218,13 @@ data["Top5ProcessosCPU"]=$(get_data "ps -eo comm,pcpu --sort=-pcpu | head -n 6 |
 data["Top5ProcessosRAM"]=$(get_data "ps -eo comm,pmem --sort=-pmem | head -n 6 | tail -n 5 | awk '{printf \"%s (%.1f%%); \", \$1, \$2}' | sed 's/; \$//'" "Nao Coletado")
 
 # --- CONSTRUÇÃO DO JSON FINAL ---
+NUMERIC_KEYS="SchemaVersao CPU_Cores CPU_Threads CPU_Clock_MHz RAM_GB_Total Qtd_Pentes Armazenamento_C_GB Espaco_Livre_C_GB Espaco_Livre_C_Perc ConsumoCPU_Percentual ConsumoRAM_Percentual UpdatesPendentes"
 echo "Construindo objeto JSON..."
 json_output=$(jq -n '{}')
 for key in "${!data[@]}"; do
     value=$(remove_accents "${data[$key]}")
-    if [[ $value =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+    # So campos numericos conhecidos viram numero; seriais como "0012345" permanecem texto.
+    if [[ " $NUMERIC_KEYS " == *" $key "* && $value =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
         json_output=$(echo "$json_output" | jq --arg key "$key" --argjson val "$value" '.[$key] = $val')
     else
         json_output=$(echo "$json_output" | jq --arg key "$key" --arg val "$value" '.[$key] = $val')
@@ -238,6 +240,7 @@ echo "Gerando relatório HTML individual..."
 html_rows=""
 for key in "${!data[@]}"; do
     value=${data[$key]:-"Indisponivel"}
+    value=${value//&/&amp;}; value=${value//</&lt;}; value=${value//>/&gt;}
     html_rows+="<tr><td><b>$key</b></td><td>$value</td></tr>"
 done
 cat > "$HTML_DESTINO" <<EOF

@@ -56,3 +56,14 @@ ESPERA_GRAVACAO_SEG=3
 # Devem ser identicos em windows.ps1 e linux.sh. Nao altere sem motivo.
 MARCADOR_DADOS_INI=//<DATA_START>
 MARCADOR_DADOS_FIM=//<DATA_END>
+
+# --- Seguranca do agente (3.5) ---
+# Allowlist vazia agora NEGA comandos com caminho. Defina PERMITIR_CAMINHOS
+# ou, sabendo do risco, PERMITIR_QUALQUER_CAMINHO=1.
+PERMITIR_QUALQUER_CAMINHO=0
+# 1 = instalar/executar exigem "sha256" no comando JSON
+EXIGIR_HASH=0
+# Espera aleatoria extra (0..N s) no polling, evita picos no compartilhamento
+JITTER_AGENTE_SEG=0
+# Backups .bak.html do dashboard mantidos pelo consolidador
+BACKUPS_MANTER=5
