@@ -1375,7 +1375,7 @@ function init(){
     $("quickFilter").innerHTML = Object.entries(QUICK).map(([k,v]) => `<option value="${k}">${v.l}</option>`).join("");
 
     if(typeof window.inventoryData === "undefined" || !Array.isArray(window.inventoryData) || window.inventoryData.length === 0){
-        $("status").textContent = "Nenhum dado encontrado. Rode ./consolidar_inventario.sh (ou .ps1) para gerar o bloco de dados.";
+        $("status").textContent = "Este HTML ainda não tem dados embutidos. Execute o consolidador (consolidar_inventario.ps1 no Windows ou .sh no Linux) para gravar o inventário dentro do inventario_web.html e depois recarregue a página (Ctrl+F5). Sempre que o HTML for recriado a partir do template, é preciso consolidar de novo.";
         $("hdrSub").textContent = "Sem dados";
         $("alertsBadge").style.display = "none";
         return;

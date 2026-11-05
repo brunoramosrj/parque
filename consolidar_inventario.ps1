@@ -160,7 +160,9 @@ try {
 
     $before = $html.Substring(0, $afterStartIndex)
     $after = $html.Substring($endIndex)
-    $newBlock = "`r`n    var inventoryData = $json;`r`n    "
+    # Evita que "</script>" dentro de um valor encerre o bloco <script> do dashboard.
+    $jsonHtml = $json -replace '</', '<\/'
+    $newBlock = "`r`n    var inventoryData = $jsonHtml;`r`n    "
     $newHtml = $before + $newBlock + $after
 
     [System.IO.File]::WriteAllText($htmlFile, $newHtml, [System.Text.UTF8Encoding]::new($true))
