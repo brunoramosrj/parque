@@ -437,6 +437,17 @@ o arquivo é autossuficiente (HTML + CSS + JS + dados JSON inline).
 
 ## Dashboard web
 
+**Novidades da versão 3.5 do dashboard**
+
+- **Filtro cruzado:** clique em qualquer gráfico, KPI, donut ou barra de conformidade e todo o painel passa a refletir só aquelas máquinas (chip "🔎" na barra, `×` remove). Busca global e filtros rápidos também valem para o dashboard, os alertas e a topologia.
+- **Saúde do parque:** medidor com score médio, distribuição OK/Atenção/Crítico e 8 KPIs clicáveis.
+- **Conformidade:** antivírus, firewall, ativação, WSUS, updates, SMART, espaço em disco, coleta recente e portas de risco.
+- **Hardware e operação:** RAM, disco livre, tipo de disco (SSD/HDD/NVMe), idade pela BIOS, fabricantes, modelos, CPUs, uptime, atualidade da coleta, portas TCP, contas administradoras e saúde por divisão.
+- **Novos alertas no score:** SMART com falha prevista, uptime > 30 dias, portas de risco (FTP/Telnet/VNC), excesso de administradores locais, hardware antigo, uso elevado de CPU/RAM e Windows legado/10 fora de suporte.
+- **Correção:** "Windows não ativado" nunca era detectado (a string "Nao Ativado" contém "ativado").
+- Aba **Alertas** agrupada por tipo de problema; detalhe da máquina com portas, administradores e botão que copia o comando JSON de coleta; tema escuro automático; atalho `/` para a busca; impressão limpa; CSV protegido contra injeção de fórmula.
+
+
 Use `inventario_web.template.html` como base publicável do dashboard. Em uma
 instalação real, o consolidador copia esse template para `inventario_web.html`
 se o HTML operacional ainda não existir.
@@ -558,6 +569,15 @@ máquina (score, local, IP/MAC/SO/coleta) e CSS de impressão.
   `dmidecode`/WMI.
 - A pasta compartilhada deve permitir leitura/escrita para os usuários das
   máquinas-alvo.
+
+---
+
+## Roadmap / pendências
+
+- [ ] **Agente como tarefa agendada** — `instalar_agente.ps1` (Windows: `Register-ScheduledTask`, conta SYSTEM, gatilho "na inicialização", reinício em falha, sem janela aberta) e unit `systemd` para o `agente.sh`. Hoje o agente roda manualmente via `agente.bat`.
+- [ ] Parser de `parque.conf` compartilhado entre os scripts.
+- [ ] Testes (Pester/bats) para allowlist, claim atômico e consolidador.
+- [ ] Histórico de coletas (snapshot diário) para tendências no dashboard.
 
 ---
 

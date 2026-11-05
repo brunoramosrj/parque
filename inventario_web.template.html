@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Parque Computacional DepMSMRJ - Dashboard Plus</title>
+<title>Parque Computacional DepMSMRJ</title>
 <script>
 //<DATA_START>
     var inventoryData = [];
@@ -11,395 +11,151 @@
 </script>
 <style>
 :root{
-    --bg:#f4f7fb;
-    --panel:#ffffff;
-    --panel2:#f8fafc;
-    --text:#172033;
-    --muted:#667085;
-    --line:#d8e0ea;
-    --brand:#0d6efd;
-    --brand2:#0b5ed7;
-    --good:#198754;
-    --warn:#f59f00;
-    --bad:#dc3545;
-    --info:#0dcaf0;
-    --purple:#6f42c1;
-    --shadow:0 10px 24px rgba(15,23,42,.08);
-    --radius:16px;
+    --bg:#f3f6fb; --panel:#ffffff; --panel2:#f6f8fc; --text:#142033; --muted:#64708a; --line:#dbe2ee;
+    --brand:#0d6efd; --brand2:#0b5ed7; --good:#12935f; --warn:#e8900c; --bad:#dc3545; --info:#0d9fd8; --purple:#7c3aed;
+    --shadow:0 8px 22px rgba(15,23,42,.07); --radius:14px;
+    --good-bg:rgba(18,147,95,.12); --warn-bg:rgba(232,144,12,.15); --bad-bg:rgba(220,53,69,.12); --info-bg:rgba(13,110,253,.12);
 }
 body.dark-theme{
-    --bg:#121826;
-    --panel:#1d2638;
-    --panel2:#263247;
-    --text:#e5ecf7;
-    --muted:#a9b4c6;
-    --line:#344158;
-    --brand:#4da3ff;
-    --brand2:#237bd3;
-    --shadow:0 10px 24px rgba(0,0,0,.35);
+    --bg:#0f1523; --panel:#1a2336; --panel2:#222d44; --text:#e6edf8; --muted:#9aa8c0; --line:#33415b;
+    --brand:#4da3ff; --brand2:#2a82dd; --good:#34d399; --warn:#fbbf24; --bad:#f87171; --info:#38bdf8;
+    --shadow:0 8px 22px rgba(0,0,0,.35);
+    --good-bg:rgba(52,211,153,.14); --warn-bg:rgba(251,191,36,.14); --bad-bg:rgba(248,113,113,.15); --info-bg:rgba(77,163,255,.15);
 }
 *{box-sizing:border-box}
-body{
-    margin:0;
-    background:var(--bg);
-    color:var(--text);
-    font-family:Segoe UI, Arial, sans-serif;
-}
-.header{
-    padding:14px 24px;
-    background:linear-gradient(135deg,#0d6efd,#083b87);
-    color:white;
-    box-shadow:var(--shadow);
-    display:flex;
-    align-items:center;
-    gap:16px;
-}
-.header .brasao{
-    height:clamp(56px,8vw,84px);
-    width:auto;
-    flex:none;
-    filter:drop-shadow(0 4px 10px rgba(0,0,0,.25));
-}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Segoe UI,system-ui,Arial,sans-serif;font-size:14px}
+button{font-family:inherit}
+.header{padding:12px 24px;background:linear-gradient(135deg,#0d6efd,#082f6e);color:#fff;box-shadow:var(--shadow);display:flex;align-items:center;gap:16px}
+.header .brasao{height:clamp(52px,7vw,76px);width:auto;flex:none;filter:drop-shadow(0 4px 10px rgba(0,0,0,.25))}
 .header .ttl{flex:1;min-width:0}
-.header h1{
-    margin:0;
-    font-size:24px;
-    letter-spacing:.2px;
-}
-.app{
-    padding:18px 22px 28px;
-}
-.toolbar{
-    display:flex;
-    gap:10px;
-    align-items:center;
-    justify-content:space-between;
-    flex-wrap:wrap;
-    margin-bottom:16px;
-}
-.toolbar-left,.toolbar-right{
-    display:flex;
-    gap:10px;
-    align-items:center;
-    flex-wrap:wrap;
-}
-button,.btn{
-    border:1px solid transparent;
-    background:var(--brand);
-    color:white;
-    border-radius:10px;
-    padding:9px 13px;
-    cursor:pointer;
-    font-weight:600;
-    font-size:13px;
-}
+.header h1{margin:0;font-size:23px;letter-spacing:.2px}
+.header .sub{font-size:12.5px;opacity:.85;margin-top:3px}
+.hdr-right{display:flex;gap:10px}
+.hdr-stat{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:12px;padding:6px 14px;text-align:center;min-width:92px}
+.hdr-stat b{display:block;font-size:22px;line-height:1.15;font-variant-numeric:tabular-nums}
+.hdr-stat span{font-size:11px;opacity:.85;text-transform:uppercase;letter-spacing:.5px}
+.app{padding:16px 22px 30px;max-width:1700px;margin:0 auto}
+.toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
+.toolbar-left,.toolbar-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button,.btn{border:1px solid transparent;background:var(--brand);color:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:600;font-size:13px}
 button:hover{background:var(--brand2)}
-button.secondary{
-    background:var(--panel);
-    color:var(--text);
-    border-color:var(--line);
-}
+button:disabled{opacity:.45;cursor:default}
+button.secondary{background:var(--panel);color:var(--text);border-color:var(--line)}
 button.secondary:hover{background:var(--panel2)}
-input,select{
-    background:var(--panel);
-    color:var(--text);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:9px 12px;
-    font-size:13px;
-}
+input,select{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:13px;font-family:inherit}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 #globalSearchInput{min-width:280px}
-.statusline{
-    color:var(--muted);
-    font-size:13px;
-    margin:8px 0 14px;
-}
-.tabs{
-    display:flex;
-    gap:8px;
-    margin-bottom:16px;
-    flex-wrap:wrap;
-}
-.tab-btn{
-    background:var(--panel);
-    color:var(--text);
-    border:1px solid var(--line);
-}
-.tab-btn.active{
-    background:var(--brand);
-    color:white;
-}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--info-bg);color:var(--brand);border:1px solid var(--brand);border-radius:999px;padding:4px 6px 4px 12px;font-weight:700;font-size:12.5px}
+.chip button{background:transparent;color:inherit;padding:0 7px;border-radius:99px;font-size:16px;line-height:1.2}
+.chip button:hover{background:var(--brand);color:#fff}
+.chip a{color:inherit;cursor:pointer;text-decoration:underline;font-weight:600;font-size:12px}
+.statusline{color:var(--muted);font-size:13px;margin:6px 0 12px}
+.tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.tab-btn{background:var(--panel);color:var(--text);border:1px solid var(--line)}
+.tab-btn.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+.tab-btn .n{background:var(--bad);color:#fff;border-radius:99px;padding:0 7px;font-size:11px;margin-left:6px}
 .view{display:none}
 .view.active{display:block}
-.grid-cards{
-    display:grid;
-    grid-template-columns:repeat(6,minmax(150px,1fr));
-    gap:12px;
-    margin-bottom:16px;
-}
-.card{
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:var(--radius);
-    box-shadow:var(--shadow);
-    padding:14px;
-    min-height:92px;
-}
-.card .label{
-    color:var(--muted);
-    font-size:12px;
-    font-weight:700;
-    text-transform:uppercase;
-    letter-spacing:.4px;
-}
-.card .value{
-    font-size:28px;
-    font-weight:800;
-    margin-top:8px;
-}
-.card .hint{
-    color:var(--muted);
-    font-size:12px;
-    margin-top:4px;
-}
-.card.good .value{color:var(--good)}
-.card.warn .value{color:var(--warn)}
-.card.bad .value{color:var(--bad)}
-.card.info .value{color:var(--brand)}
-.dashboard-grid{
-    display:grid;
-    grid-template-columns:1.3fr 1fr;
-    gap:14px;
-}
-.panel{
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:var(--radius);
-    box-shadow:var(--shadow);
-    padding:16px;
-    overflow:hidden;
-}
-.panel h2{
-    margin:0 0 12px;
-    font-size:17px;
-}
-.panel h3{
-    margin:0 0 10px;
-    font-size:15px;
-}
-.chart-list{
-    display:flex;
-    flex-direction:column;
-    gap:9px;
-}
-.bar-row{
-    display:grid;
-    grid-template-columns: minmax(120px, 240px) 1fr 48px;
-    align-items:center;
-    gap:10px;
-    font-size:13px;
-}
-.bar-label{
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
-}
-.bar-track{
-    height:12px;
-    background:var(--panel2);
-    border-radius:999px;
-    overflow:hidden;
-    border:1px solid var(--line);
-}
-.bar-fill{
-    height:100%;
-    background:linear-gradient(90deg,var(--brand),#67b7ff);
-    border-radius:999px;
-}
-.bar-fill{transition:width .8s ease}
-.grid-cards,.dashboard-grid,.alert-list{animation:topoFade .4s ease}
-.bar-fill.good{background:linear-gradient(90deg,var(--good),#78d9a0)}
-.bar-fill.warn{background:linear-gradient(90deg,var(--warn),#ffd166)}
-.bar-fill.bad{background:linear-gradient(90deg,var(--bad),#ff8a8a)}
-.mini-grid{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:14px;
-    margin-top:14px;
-}
-.table-wrap{
-    max-height:calc(100vh - 260px);
-    overflow:auto;
-    border:1px solid var(--line);
-    border-radius:var(--radius);
-    background:var(--panel);
-    box-shadow:var(--shadow);
-}
-table{
-    width:100%;
-    border-collapse:separate;
-    border-spacing:0;
-    background:var(--panel);
-}
-th,td{
-    border-bottom:1px solid var(--line);
-    border-right:1px solid var(--line);
-    padding:9px 10px;
-    text-align:left;
-    font-size:12.5px;
-    white-space:nowrap;
-}
-th{
-    position:sticky;
-    top:0;
-    z-index:4;
-    background:var(--brand);
-    color:white;
-    font-weight:800;
-    cursor:pointer;
-}
-.filter-row th{
-    top:36px;
-    background:var(--panel2);
-    z-index:3;
-    cursor:default;
-}
-.filter-row input{
-    width:100%;
-    padding:6px 8px;
-    border-radius:7px;
-}
-tbody tr:hover{background:rgba(13,110,253,.08)}
-.badge{
-    display:inline-flex;
-    align-items:center;
-    gap:4px;
-    border-radius:999px;
-    padding:4px 8px;
-    font-size:12px;
-    font-weight:700;
-}
-.badge.good{background:rgba(25,135,84,.12); color:var(--good)}
-.badge.warn{background:rgba(245,159,0,.16); color:#b56f00}
-.badge.bad{background:rgba(220,53,69,.12); color:var(--bad)}
-.badge.info{background:rgba(13,110,253,.12); color:var(--brand)}
-.alert-list{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    max-height:560px;
-    overflow:auto;
-    padding-right:4px;
-}
-.alert-item{
-    border:1px solid var(--line);
-    background:var(--panel2);
-    border-radius:13px;
-    padding:11px;
-}
-.alert-item{cursor:pointer}
+.sec{margin:22px 2px 10px;font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:10px}
+.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:15px;overflow:hidden;min-width:0}
+.panel h2{margin:0 0 4px;font-size:15.5px}
+.panel .hint{color:var(--muted);font-size:12px;margin:0 0 12px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px}
+.cols2{align-items:start;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:14px}
+.hero{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;margin-bottom:14px}
+.gauge{position:relative;width:170px;height:170px}
+.gauge svg{width:100%;height:100%}
+.gauge .ctr{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.gauge .ctr b{font-size:40px;line-height:1;font-variant-numeric:tabular-nums}
+.gauge .ctr span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.statbar{display:flex;height:26px;border-radius:99px;overflow:hidden;background:var(--line);margin:10px 0 8px}
+.statbar button{border-radius:0;padding:0;border:0;color:#fff;font-weight:800;font-size:12px;min-width:0;transition:flex .8s ease}
+.statbar button.good{background:var(--good)} .statbar button.warn{background:var(--warn)} .statbar button.bad{background:var(--bad)}
+.legend{display:flex;gap:6px 18px;flex-wrap:wrap;font-size:13px}
+.legend button{background:transparent;color:var(--text);padding:3px 6px;border:0;font-weight:600}
+.legend button:hover{background:var(--panel2)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;background:var(--c)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:12px;margin-bottom:6px}
+.kpi{position:relative;text-align:left;background:var(--panel);color:var(--text);border:1px solid var(--line);border-left:5px solid var(--kc);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 14px;overflow:hidden;display:block;width:100%;font-weight:400}
+.kpi:hover{background:var(--panel2);transform:translateY(-1px)}
+.kpi .l{color:var(--muted);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.kpi .v{font-size:30px;font-weight:800;margin-top:4px;color:var(--kc);font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .s{color:var(--muted);font-size:12px;margin-top:3px}
+.kpi.good{--kc:var(--good)} .kpi.warn{--kc:var(--warn)} .kpi.bad{--kc:var(--bad)} .kpi.info{--kc:var(--brand)}
+.rows{display:flex;flex-direction:column;gap:5px}
+.row{display:grid;grid-template-columns:minmax(120px,44%) 1fr auto;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;color:var(--text);border:1px solid transparent;border-radius:9px;padding:4px 7px;font-weight:400;font-size:13px}
+.row:hover{background:var(--panel2);border-color:var(--c,var(--line))}
+.row .lb{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .tr{height:11px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;overflow:hidden}
+.row .tr i{display:block;height:100%;width:0;background:var(--c,var(--brand));border-radius:99px;transition:width .8s ease}
+.row .nv{font-variant-numeric:tabular-nums;font-weight:700;min-width:34px;text-align:right}
+.row .nv small{color:var(--muted);font-weight:400;margin-left:4px}
+.donutbox{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.donut{position:relative;width:150px;flex:none}
+.donut svg{width:100%;display:block}
+.donut .ctr{position:absolute;inset:0;display:grid;place-content:center;text-align:center;pointer-events:none}
+.donut .ctr b{font-size:24px;line-height:1;font-variant-numeric:tabular-nums}
+.donut .ctr span{font-size:11px;color:var(--muted)}
+.donutbox .rows{flex:1 1 170px;min-width:170px}
+.donutbox .row{grid-template-columns:auto 1fr auto}
+.donutbox .row .dot{margin:0}
+.stack-row{display:grid;grid-template-columns:minmax(80px,30%) 1fr auto;gap:10px;align-items:center;font-size:13px;padding:4px 7px;border-radius:9px;cursor:pointer;background:transparent;border:1px solid transparent;color:var(--text);width:100%;text-align:left;font-weight:400}
+.stack-row:hover{background:var(--panel2);border-color:var(--line)}
+.stack-row .sb{display:flex;height:13px;border-radius:99px;overflow:hidden;background:var(--line)}
+.stack-row .sb i{display:block;height:100%}
+.table-wrap{max-height:calc(100vh - 270px);overflow:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);box-shadow:var(--shadow)}
+table{width:100%;border-collapse:separate;border-spacing:0;background:var(--panel)}
+th,td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:8px 10px;text-align:left;font-size:12.5px;white-space:nowrap}
+th{position:sticky;top:0;z-index:4;background:var(--brand);color:#fff;font-weight:800;cursor:pointer}
+body.dark-theme th{background:#2a4f86}
+.filter-row th{top:36px;background:var(--panel2);z-index:3;cursor:default}
+.filter-row input{width:100%;padding:5px 8px;border-radius:7px}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--info-bg)}
+.mini{font-size:12.5px}
+.mini th{position:static;background:var(--panel2);color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.3px;cursor:default}
+.mini td{white-space:normal}
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700}
+.badge.good{background:var(--good-bg);color:var(--good)} .badge.warn{background:var(--warn-bg);color:var(--warn)}
+.badge.bad{background:var(--bad-bg);color:var(--bad)} .badge.info{background:var(--info-bg);color:var(--brand)}
+td.c-good{color:var(--good);font-weight:700} td.c-warn{color:var(--warn);font-weight:700} td.c-bad{color:var(--bad);font-weight:700}
+.alert-list{display:flex;flex-direction:column;gap:9px;max-height:620px;overflow:auto;padding-right:4px}
+.alert-item{border:1px solid var(--line);border-left:5px solid var(--ac,var(--line));background:var(--panel2);border-radius:12px;padding:10px 12px;cursor:pointer}
 .alert-item:hover{border-color:var(--brand)}
-.alert-title{
-    display:flex;
-    justify-content:space-between;
-    gap:10px;
-    align-items:center;
-    font-weight:800;
-    margin-bottom:7px;
-}
-.alert-reasons{
-    color:var(--muted);
-    font-size:12.5px;
-    line-height:1.4;
-}
-.score{
-    min-width:54px;
-    text-align:center;
-}
-.pagination{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-    margin-top:12px;
-    flex-wrap:wrap;
-}
-.modal-overlay{
-    display:none;
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,.55);
-    z-index:2000;
-    align-items:center;
-    justify-content:center;
-    padding:18px;
-}
-.modal{
-    width:min(980px,96vw);
-    max-height:88vh;
-    overflow:auto;
-    background:var(--panel);
-    color:var(--text);
-    border-radius:18px;
-    box-shadow:0 24px 64px rgba(0,0,0,.35);
-    border:1px solid var(--line);
-}
-.modal-head{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    padding:16px 18px;
-    border-bottom:1px solid var(--line);
-}
+.alert-title{display:flex;justify-content:space-between;gap:10px;align-items:center;font-weight:800;margin-bottom:6px}
+.alert-reasons{display:flex;flex-wrap:wrap;gap:5px}
+.rs{font-size:12px;border-radius:7px;padding:2px 8px;font-weight:600}
+.rs.bad{background:var(--bad-bg);color:var(--bad)} .rs.warn{background:var(--warn-bg);color:var(--warn)} .rs.info{background:var(--info-bg);color:var(--brand)}
+.sevbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.sevbar button[aria-pressed="true"]{background:var(--brand);color:#fff;border-color:var(--brand)}
+.pagination{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(5,10,20,.6);z-index:2000;align-items:center;justify-content:center;padding:18px}
+.modal{width:min(1000px,96vw);max-height:90vh;overflow:auto;background:var(--panel);color:var(--text);border-radius:18px;box-shadow:0 24px 64px rgba(0,0,0,.4);border:1px solid var(--line)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:5}
 .modal-head h2{margin:0;font-size:19px}
 .modal-body{padding:16px 18px}
-.detail-grid{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(220px,1fr));
-    gap:12px;
-}
-.detail-section{
-    background:var(--panel2);
-    border:1px solid var(--line);
-    border-radius:14px;
-    padding:12px;
-}
-.detail-section h3{margin:0 0 8px}
-.kv{
-    display:grid;
-    grid-template-columns:145px 1fr;
-    gap:6px;
-    border-bottom:1px dashed var(--line);
-    padding:5px 0;
-    font-size:12.5px;
-}
-.kv b{color:var(--muted)}
-.column-modal-list{
-    columns:3;
-    gap:18px;
-}
-.column-modal-list label{
-    display:block;
-    margin-bottom:7px;
-    font-size:13px;
-}
-.actions-row{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    margin-top:12px;
-}
+.detail-top{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.detail-top .gauge{width:96px;height:96px}
+.detail-top .gauge .ctr b{font-size:24px}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.detail-section{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.detail-section h3{margin:0 0 8px;font-size:14px}
+.kv{display:grid;grid-template-columns:minmax(120px,42%) 1fr;gap:6px;border-bottom:1px dashed var(--line);padding:5px 0;font-size:12.5px}
+.kv b{color:var(--muted);font-weight:600;word-break:break-word}
+.kv span{word-break:break-word}
+.pill{display:inline-block;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:1px 7px;margin:2px 3px 2px 0;font-size:12px;font-variant-numeric:tabular-nums}
+.pill.risk{background:var(--bad-bg);border-color:var(--bad);color:var(--bad);font-weight:700}
+.column-modal-list{columns:3;gap:18px}
+.column-modal-list label{display:block;margin-bottom:7px;font-size:13px}
+.actions-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .hidden{display:none!important}
-@media(max-width:1200px){
-    .grid-cards{grid-template-columns:repeat(3,1fr)}
-    .dashboard-grid{grid-template-columns:1fr}
-}
-@media(max-width:700px){
-    .grid-cards{grid-template-columns:1fr}
-    .mini-grid{grid-template-columns:1fr}
-    .detail-grid{grid-template-columns:1fr}
+.empty{color:var(--muted);font-size:13px;padding:10px 4px}
+@media(max-width:800px){
+    .hero{grid-template-columns:1fr;justify-items:center;text-align:center}
+    .hdr-right{display:none}
     #globalSearchInput{min-width:100%}
+    .column-modal-list{columns:1}
 }
 /* ---------- topologia ---------- */
 .topo-core{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--brand),#083b87);color:#fff;border-radius:14px;padding:11px 18px;margin-bottom:6px}
@@ -414,7 +170,7 @@ tbody tr:hover{background:rgba(13,110,253,.08)}
 .topo-card h3{margin:0;font-size:1em;font-variant-numeric:tabular-nums}
 .topo-count{font-size:.78em;color:var(--muted);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:1px 9px;margin-left:6px;white-space:nowrap;font-weight:400}
 .topo-nodes{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px 4px;margin-top:8px}
-.topo-node{text-align:center;border-radius:9px;padding:5px 2px 3px;cursor:pointer;border:1px solid transparent;background:transparent;color:inherit;font:inherit}
+.topo-node{text-align:center;border-radius:9px;padding:5px 2px 3px;cursor:pointer;border:1px solid transparent;background:transparent;color:inherit;font:inherit;font-weight:400}
 .topo-node:hover{background:var(--panel2);border-color:var(--c)}
 .topo-node.dim{opacity:.18}
 .topo-node.noip .topo-ico{opacity:.45}
@@ -440,115 +196,100 @@ tbody tr:hover{background:rgba(13,110,253,.08)}
 .topo-donut .ctr b{font-size:1.5rem;font-variant-numeric:tabular-nums;line-height:1}
 .topo-donut .ctr span{font-size:.75em;color:var(--muted)}
 .topo-rows{flex:1 1 200px;min-width:200px;display:grid;gap:6px;align-content:start}
-.topo-row{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:10px;padding:6px 9px;color:inherit;font:inherit;cursor:pointer}
+.topo-row{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:center;text-align:left;width:100%;background:transparent;border:1px solid transparent;border-radius:10px;padding:6px 9px;color:inherit;font:inherit;font-weight:400;cursor:pointer}
 .topo-row:hover,.topo-row.on{background:var(--panel2);border-color:var(--c)}
-.topo-row .dot{width:11px;height:11px;border-radius:4px;background:var(--c)}
+.topo-row .dot{width:11px;height:11px;border-radius:4px;background:var(--c);margin:0}
 .topo-row .lb{font-weight:600;font-size:.88em}
 .topo-row .lb small{display:block;font-weight:400;color:var(--muted);font-size:.8em}
 .topo-row .pc{font-variant-numeric:tabular-nums;font-weight:700;color:var(--c);font-size:.9em}
 .topo-row .bar2{grid-column:1/-1;height:7px;border-radius:99px;background:var(--line);overflow:hidden}
 .topo-row .bar2 i{display:block;height:100%;width:0;background:var(--c);transition:width .8s ease}
-#topoTip{position:fixed;z-index:60;pointer-events:none;opacity:0;transition:opacity .08s;background:#0b1220;color:#eaf0fb;border:1px solid #33425f;border-radius:10px;padding:10px 12px;font-size:13px;max-width:300px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+#topoTip{position:fixed;z-index:3000;pointer-events:none;opacity:0;transition:opacity .08s;background:#0b1220;color:#eaf0fb;border:1px solid #33425f;border-radius:10px;padding:10px 12px;font-size:13px;max-width:300px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 #topoTip.on{opacity:1}
 #topoTip h4{margin:0 0 5px;font-size:12.5px;color:#9db7ff}
 #topoTip dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
 #topoTip dt{color:#8b99b3}
 #topoTip dd{margin:0;word-break:break-all;font-family:ui-monospace,Consolas,monospace;font-size:12px}
 @keyframes topoFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.topo-grid,.topo-kpis{animation:topoFade .4s ease}
+.topo-grid,.topo-kpis,.kpis,.cols,.cols2,.hero{animation:topoFade .4s ease}
 @media(max-width:700px){.topo-card::before,.topo-trunk{display:none}}
-@media print{.topo-card,.topo-core,.topo-kpi{break-inside:avoid}.topo-card::before,.topo-trunk{display:none}.topo-grid{grid-template-columns:repeat(2,1fr)}}
-@media print{.grid-cards{grid-template-columns:repeat(4,1fr)}.dashboard-grid{grid-template-columns:repeat(2,1fr)}.card,.panel,.alert-item{break-inside:avoid}}
-@media (prefers-reduced-motion:reduce){.topo-grid,.topo-kpis,.topo-donut,.grid-cards,.dashboard-grid,.alert-list{animation:none}.topo-row .bar2 i,.bar-fill{transition:none}}
+@media print{
+    .toolbar,.tabs,.chip,.sevbar,.pagination,.actions-row{display:none!important}
+    body{background:#fff}
+    .view{display:none!important}.view.active{display:block!important}
+    .panel,.kpi,.topo-card,.alert-item{break-inside:avoid;box-shadow:none}
+    .topo-card::before,.topo-trunk{display:none}
+    .alert-list,.table-wrap{max-height:none;overflow:visible}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <header class="header">
     <img class="brasao" src="brasao.png" alt="Brasão do DepMSMRJ">
-    <div class="ttl"><h1>Parque Computacional do DepMSMRJ</h1></div>
+    <div class="ttl"><h1>Parque Computacional do DepMSMRJ</h1><div class="sub" id="hdrSub">Carregando…</div></div>
+    <div class="hdr-right">
+        <div class="hdr-stat"><b id="hdrScore">—</b><span>saúde média</span></div>
+        <div class="hdr-stat"><b id="hdrTotal">—</b><span>máquinas</span></div>
+    </div>
 </header>
 
 <main class="app">
     <div class="toolbar">
         <div class="toolbar-left">
-            <input type="search" id="globalSearchInput" placeholder="Busca global por máquina, IP, usuário, SO, CPU...">
-            <select id="quickFilter">
-                <option value="todos">Todos</option>
-                <option value="criticos">Somente críticos</option>
-                <option value="atencao">Somente atenção</option>
-                <option value="disco">Disco C abaixo de 20%</option>
-                <option value="ram">RAM abaixo de 8 GB</option>
-                <option value="win10">Windows 10</option>
-                <option value="win11">Windows 11</option>
-                <option value="semwsus">Sem WSUS</option>
-                <option value="semativacao">Windows não ativado</option>
-            </select>
+            <input type="search" id="globalSearchInput" placeholder="Busca global: máquina, IP, usuário, SO, CPU…  ( / )" aria-label="Busca global">
+            <select id="quickFilter" aria-label="Filtro rápido"></select>
+            <span id="drillChip"></span>
         </div>
         <div class="toolbar-right">
-            <button class="secondary" id="btnTheme">🎨 Tema</button>
+            <button class="secondary" id="btnTheme" title="Alternar tema">🎨 Tema</button>
             <button class="secondary" id="btnColumns">⚙️ Colunas</button>
             <button class="secondary" id="btnReset">🔄 Limpar</button>
+            <button class="secondary" id="btnPrint">🖨️ Imprimir</button>
             <button id="btnExport">📤 Exportar CSV</button>
         </div>
     </div>
 
-    <div class="tabs">
+    <div class="tabs" role="tablist">
         <button class="tab-btn active" data-view="dashboardView">📊 Dashboard</button>
-        <button class="tab-btn" data-view="alertsView">🚨 Alertas</button>
+        <button class="tab-btn" data-view="alertsView">🚨 Alertas <span class="n" id="alertsBadge">0</span></button>
         <button class="tab-btn" data-view="inventoryView">📋 Inventário</button>
         <button class="tab-btn" data-view="topologyView">🗺️ Topologia</button>
     </div>
 
-    <div id="status" class="statusline">Carregando dados...</div>
+    <div id="status" class="statusline" aria-live="polite">Carregando dados...</div>
 
     <section id="dashboardView" class="view active">
-        <div class="grid-cards" id="cardsContainer"></div>
-
-        <div class="dashboard-grid">
-            <div class="panel">
-                <h2>Visão geral</h2>
-                <div class="mini-grid">
-                    <div>
-                        <h3>Sistemas operacionais</h3>
-                        <div id="chartOS" class="chart-list"></div>
-                    </div>
-                    <div>
-                        <h3>Faixas de RAM</h3>
-                        <div id="chartRAM" class="chart-list"></div>
-                    </div>
-                    <div>
-                        <h3>Espaço livre no C:</h3>
-                        <div id="chartDisk" class="chart-list"></div>
-                    </div>
-                    <div>
-                        <h3>WSUS / Segurança</h3>
-                        <div id="chartSecurity" class="chart-list"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="panel">
-                <h2>Top prioridades</h2>
-                <div id="topAlerts" class="alert-list"></div>
+        <div class="panel hero">
+            <div class="gauge" id="heroGauge"></div>
+            <div>
+                <h2>Saúde do parque</h2>
+                <div class="hint" id="heroSummary"></div>
+                <div class="statbar" id="heroBar"></div>
+                <div class="legend" id="heroLegend"></div>
             </div>
         </div>
-
-        <div class="dashboard-grid" style="margin-top:14px;">
-            <div class="panel">
-                <h2>Top 10 menor espaço livre no C:</h2>
-                <div id="lowDiskTable"></div>
-            </div>
-            <div class="panel">
-                <h2>Top 10 updates pendentes</h2>
-                <div id="updatesTable"></div>
-            </div>
-        </div>
+        <div class="kpis" id="kpis"></div>
+        <div id="dashPanels"></div>
     </section>
 
     <section id="alertsView" class="view">
-        <div class="panel">
-            <h2>Alertas do parque</h2>
-            <div id="alertsContainer" class="alert-list"></div>
+        <div class="cols2">
+            <div class="panel">
+                <h2>Problemas mais frequentes</h2>
+                <div class="hint">Clique para listar as máquinas afetadas</div>
+                <div class="rows" id="alertTypes"></div>
+            </div>
+            <div class="panel">
+                <h2>Máquinas com alertas</h2>
+                <div class="sevbar" id="sevBar">
+                    <button class="secondary" data-sev="all" aria-pressed="true">Todos</button>
+                    <button class="secondary" data-sev="bad" aria-pressed="false">Críticos</button>
+                    <button class="secondary" data-sev="warn" aria-pressed="false">Atenção</button>
+                    <button class="secondary" data-sev="info" aria-pressed="false">Informativos</button>
+                </div>
+                <div id="alertsContainer" class="alert-list"></div>
+            </div>
         </div>
     </section>
 
@@ -608,7 +349,7 @@ tbody tr:hover{background:rgba(13,110,253,.08)}
 </main>
 
 <div id="topoTip" role="tooltip"></div>
-<div id="detailModal" class="modal-overlay">
+<div id="detailModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
     <div class="modal">
         <div class="modal-head">
             <h2 id="detailTitle">Detalhes</h2>
@@ -618,7 +359,7 @@ tbody tr:hover{background:rgba(13,110,253,.08)}
     </div>
 </div>
 
-<div id="columnsModal" class="modal-overlay">
+<div id="columnsModal" class="modal-overlay" role="dialog" aria-modal="true">
     <div class="modal">
         <div class="modal-head">
             <h2>Colunas visíveis</h2>
@@ -646,102 +387,181 @@ const DEFAULT_COLUMNS = [
     "Espaco_Livre_C_Perc","Espaco_Livre_C_GB","Usa_WSUS","Antivirus_Status",
     "Firewall_Ativo","UpdatesPendentes","DataHora_Coleta"
 ];
-
 const THEME_KEY = "parque3_theme_plus";
 const COLUMNS_KEY = "parque3_columns_plus";
+const PALETTE = ["#2f6bff","#10b981","#f59e0b","#7c3aed","#e11d74","#06b6d4","#f97316","#84cc16","#8a96ab"];
+const LEVEL_COLOR = {good:"var(--good)", warn:"var(--warn)", bad:"var(--bad)", info:"var(--info)"};
+const RISK_PORTS = {21:"FTP", 23:"Telnet", 69:"TFTP", 5900:"VNC", 5800:"VNC-HTTP"};
+const INFO_PORTS = {3389:"RDP", 22:"SSH"};
 
-let data = [];
-let enriched = [];
-let headers = [];
-let visibleColumns = [];
-let filtered = [];
-let sortKey = null;
-let sortDir = "asc";
-let currentPage = 1;
+let data = [], enriched = [], headers = [], visibleColumns = [], filtered = [];
+let sortKey = null, sortDir = "asc", currentPage = 1;
+let drill = null;          // {label, fn} - filtro cruzado vindo de graficos/KPIs
+let sevFilter = "all";
+let columnFilters = {};
+const NOW = new Date();
 
 const $ = id => document.getElementById(id);
+function store(k, v){ try{ if(v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); }catch(e){ return null; } }
 
-function val(row, key, fallback=""){
-    return row && row[key] !== undefined && row[key] !== null ? row[key] : fallback;
-}
+/* ---------- acesso a dados ---------- */
+function val(row, key, fallback=""){ return row && row[key] !== undefined && row[key] !== null ? row[key] : fallback; }
 function text(row, key){ return String(val(row,key,"")).trim(); }
-function num(row, key){
-    const raw = val(row,key,0);
-    if(typeof raw === "number") return raw;
+function numOrNull(row, key){
+    const raw = val(row,key,null);
+    if(raw === null || raw === "") return null;
+    if(typeof raw === "number") return Number.isFinite(raw) ? raw : null;
     const n = parseFloat(String(raw).replace(",",".").replace("%",""));
-    return Number.isFinite(n) ? n : 0;
+    return Number.isFinite(n) ? n : null;
 }
+function num(row, key){ const n = numOrNull(row,key); return n === null ? 0 : n; }
 function parseDateSafe(value){
     if(!value) return null;
     const s = String(value).trim();
     const m = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}):?(\d{2})?)?/);
-    if(m){
-        return new Date(+m[1], +m[2]-1, +m[3], +(m[4]||0), +(m[5]||0), +(m[6]||0));
-    }
+    if(m) return new Date(+m[1], +m[2]-1, +m[3], +(m[4]||0), +(m[5]||0), +(m[6]||0));
     const d = new Date(s);
     return Number.isNaN(d.getTime()) ? null : d;
 }
 function daysSince(value){
     const d = parseDateSafe(value);
-    if(!d) return 9999;
-    return Math.floor((new Date() - d) / 86400000);
+    if(!d) return null;
+    return Math.max(0, Math.floor((NOW - d) / 86400000));
 }
+function escapeHtml(v){
+    return String(v ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+}
+function plural(n, s, p){ return n + " " + (n === 1 ? s : p); }
+function fmtPct(n, t){ return t ? (n / t * 100).toFixed(n / t * 100 >= 10 || n === 0 ? 0 : 1) + "%" : "0%"; }
+function lc(row, key){ return text(row,key).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""); }
+
+/* ---------- classificacao de maquinas ---------- */
 function isWindows(row){
-    const plat = text(row,"Plataforma").toLowerCase();
+    const plat = lc(row,"Plataforma");
     if(plat) return plat.includes("windows");
-    return text(row,"SO").toLowerCase().includes("windows");
+    return lc(row,"SO").includes("windows");
 }
-function isOldWindows(row){
-    if(!isWindows(row)) return false;
-    const so = text(row,"SO").toLowerCase();
-    const build = num(row,"Build");
-    return so.includes("windows 10") || (build && build < 22000);
+function isLinux(row){ return !isWindows(row) && (lc(row,"Plataforma").includes("linux") || lc(row,"SO").length > 0 && !lc(row,"SO").includes("windows")); }
+function soBucket(row){
+    const so = lc(row,"SO");
+    if(so.includes("windows 11")) return "Windows 11";
+    if(so.includes("windows 10")) return "Windows 10";
+    if(so.includes("windows")) return "Windows (outros)";
+    if(isLinux(row)) return "Linux";
+    return "Sem informação";
 }
+function diskKind(row){
+    const d = lc(row,"Discos_Fisicos");
+    if(!d || d.includes("falha") || d.includes("acesso")) return "Não identificado";
+    if(/nvme/.test(d)) return "NVMe";
+    if(/ssd|solid/.test(d)) return "SSD";
+    if(/hdd|rotat/.test(d)) return "HDD";
+    return "Não identificado";
+}
+function hwYear(row){
+    const d = parseDateSafe(text(row,"BIOS_Data"));
+    return d ? d.getFullYear() : null;
+}
+function hwAge(row){ const y = hwYear(row); return y && y > 1990 ? NOW.getFullYear() - y : null; }
+function ports(row){
+    return String(val(row,"PortasTCP_Abertas","")).split(/[\s,;]+/).map(p => parseInt(p,10)).filter(p => Number.isFinite(p));
+}
+function admins(row){
+    const raw = text(row,"AdminsLocais");
+    if(!raw || /^nao coletado$/i.test(raw)) return [];
+    return raw.split(/[;,]/).map(s => s.trim()).filter(Boolean);
+}
+function maker(row){
+    let m = text(row,"Computador_Fabricante");
+    if(!m || /^indispon/i.test(m)) return "Não informado";
+    if(/o\.?e\.?m|system manufacturer|default string|to be filled/i.test(m)) return "Genérico / OEM";
+    if(/hewlett|^hp\b/i.test(m)) return "HP";
+    if(/innotek|vmware|qemu|microsoft corp.*virtual|xen|virtualbox/i.test(m)) return "Máquina virtual";
+    m = m.replace(/,?\s*(inc\.?|corporation|corp\.?|co\.?,? ltd\.?|ltd\.?|technology)\b.*$/i,"").trim();
+    const w = m.split(/\s+/)[0] || m;
+    return w.length <= 4 ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+}
+function modelName(row){
+    const mk = maker(row);
+    let m = text(row,"Computador_Modelo");
+    if(!m || /^indispon/i.test(m)) return "Não informado";
+    return (mk === "Não informado" || mk === "Genérico / OEM" ? "" : mk + " ") + m.replace(/^\s*(dell|lenovo|hp)\s+/i,"");
+}
+function cpuName(row){
+    let c = text(row,"CPU");
+    if(!c || /^indispon/i.test(c)) return "Não informado";
+    return c.replace(/\((R|TM)\)/gi,"").replace(/\s+CPU\b.*$/i,"").replace(/@.*$/,"").replace(/\s+/g," ").trim();
+}
+function divisaoOf(row){
+    const ds = topoDivSetor(row);
+    return ds.div || (ds.set ? "Setores independentes" : "Não mapeado");
+}
+
+/* ---------- alertas / score ---------- */
+const REASON_TITLE = {
+    disco:"Pouco espaço em disco", ram:"RAM insuficiente", updates:"Updates pendentes", ativacao:"Windows não ativado",
+    firewall:"Firewall inativo", av:"Antivírus inativo", wsus:"Sem WSUS", coleta:"Coleta desatualizada",
+    arch32:"Sistema de 32 bits", so:"Sistema operacional fora de suporte", hdd:"Disco mecânico (HDD)",
+    smart:"Falha prevista no disco (SMART)", uptime:"Muito tempo sem reiniciar", portas:"Portas de risco abertas",
+    admins:"Excesso de administradores locais", hw:"Hardware antigo", uso:"Uso elevado de CPU/RAM"
+};
 function getReasons(row){
-    const reasons = [];
-    const diskPct = num(row,"Espaco_Livre_C_Perc");
-    const ram = num(row,"RAM_GB_Total");
-    const updates = num(row,"UpdatesPendentes");
+    const out = [];
+    const add = (level, code, t) => out.push({level, code, text:t});
+    const win = isWindows(row);
+    const diskPct = numOrNull(row,"Espaco_Livre_C_Perc");
+    const ram = numOrNull(row,"RAM_GB_Total");
+    const updates = numOrNull(row,"UpdatesPendentes");
+    const dias = daysSince(text(row,"DataHora_Coleta"));
+    const so = lc(row,"SO");
     const build = num(row,"Build");
-    const coletaDias = daysSince(text(row,"DataHora_Coleta"));
-    const ativacao = text(row,"Status_Ativacao").toLowerCase();
-    const firewall = text(row,"Firewall_Ativo").toLowerCase();
-    const av = (text(row,"Antivirus_Status") + " " + text(row,"Antivirus")).toLowerCase();
-    const wsus = text(row,"Usa_WSUS").toLowerCase();
-    const arch = text(row,"Arquitetura").toLowerCase();
-    const diskModel = text(row,"Discos_Fisicos").toLowerCase();
 
-    if(diskPct && diskPct < 10) reasons.push({level:"bad", text:`Disco C crítico: ${diskPct}% livre`});
-    else if(diskPct && diskPct < 20) reasons.push({level:"warn", text:`Disco C baixo: ${diskPct}% livre`});
-
-    if(ram && ram < 4) reasons.push({level:"bad", text:`RAM muito baixa: ${ram} GB`});
-    else if(ram && ram < 8) reasons.push({level:"warn", text:`RAM abaixo do ideal: ${ram} GB`});
-
-    if(updates >= 20) reasons.push({level:"bad", text:`Muitos updates pendentes: ${updates}`});
-    else if(updates >= 5) reasons.push({level:"warn", text:`Updates pendentes: ${updates}`});
-
-    if(isWindows(row) && ativacao && !ativacao.includes("ativado") && !ativacao.includes("n/a")) reasons.push({level:"bad", text:`Windows não ativado`});
-    if(firewall && firewall !== "sim") reasons.push({level:"bad", text:`Firewall desativado/não detectado`});
-    if(av && (av.includes("inativo") || av.includes("nao") || av.includes("não"))) reasons.push({level:"bad", text:`Antivírus inativo/não detectado`});
-    if(isWindows(row) && (wsus === "nao" || wsus === "não")) reasons.push({level:"warn", text:`Sem WSUS configurado`});
-    if(coletaDias > 15) reasons.push({level:"bad", text:`Coleta antiga: ${coletaDias} dias`});
-    else if(coletaDias > 7) reasons.push({level:"warn", text:`Coleta com ${coletaDias} dias`});
-    if(arch.includes("32")) reasons.push({level:"warn", text:`Sistema 32 bits`});
-    if(isOldWindows(row)) reasons.push({level:"warn", text:`Windows 10/build antigo${build ? " ("+build+")" : ""}`});
-    if(diskModel.includes("hdd")) reasons.push({level:"info", text:`Disco mecânico HDD`});
-    return reasons;
-}
-function calcScore(row){
-    let score = 100;
-    for(const r of getReasons(row)){
-        if(r.level === "bad") score -= 18;
-        else if(r.level === "warn") score -= 9;
-        else score -= 3;
+    if(diskPct !== null && diskPct > 0){
+        if(diskPct < 10) add("bad","disco",`Disco crítico: ${diskPct}% livre`);
+        else if(diskPct < 20) add("warn","disco",`Disco baixo: ${diskPct}% livre`);
     }
-    const cpu = num(row,"ConsumoCPU_Percentual");
-    const ramUse = num(row,"ConsumoRAM_Percentual");
-    if(cpu > 85) score -= 8;
-    if(ramUse > 85) score -= 8;
+    if(ram){
+        if(ram < 4) add("bad","ram",`RAM muito baixa: ${ram} GB`);
+        else if(ram < 8) add("warn","ram",`RAM abaixo do ideal: ${ram} GB`);
+    }
+    if(updates !== null){
+        if(updates >= 20) add("bad","updates",`Muitos updates pendentes: ${updates}`);
+        else if(updates >= 5) add("warn","updates",`Updates pendentes: ${updates}`);
+    }
+    if(win){
+        const at = lc(row,"Status_Ativacao");
+        if(at && at !== "ativado" && !at.includes("n/a") && !at.includes("desconhecido")) add("bad","ativacao",`Windows não ativado (${text(row,"Status_Ativacao")})`);
+        const av = lc(row,"Antivirus_Status");
+        if(av && av !== "ativo" && !av.includes("indispon")) add("bad","av",`Antivírus ${av.includes("inativo") ? "inativo" : "não detectado"}`);
+        else if(lc(row,"Antivirus") === "desconhecido") add("bad","av","Antivírus não detectado");
+        if(lc(row,"Usa_WSUS") === "nao") add("warn","wsus","Sem WSUS configurado");
+    }
+    const fw = lc(row,"Firewall_Ativo");
+    if(fw && fw !== "sim") add("bad","firewall","Firewall desativado/não detectado");
+    if(dias === null) add("warn","coleta","Data da coleta ausente");
+    else if(dias > 15) add("bad","coleta",`Coleta antiga: ${dias} dias`);
+    else if(dias > 7) add("warn","coleta",`Coleta com ${dias} dias`);
+    if(lc(row,"Arquitetura").includes("32")) add("warn","arch32","Sistema de 32 bits");
+    if(so.includes("windows 10")) add("warn","so","Windows 10 fora do suporte padrão (desde 14/10/2025)");
+    else if(win && (/windows (7|8|xp|vista)|2003|2008|2012/.test(so) || (build && build < 10240))) add("bad","so",`Windows legado sem suporte${build ? " (build " + build + ")" : ""}`);
+    if(diskKind(row) === "HDD") add("info","hdd","Disco mecânico HDD");
+    const smart = lc(row,"SaudeDiscoSMART");
+    if(/falha prevista|failed|\bfail/.test(smart)) add("bad","smart",`SMART: ${text(row,"SaudeDiscoSMART")}`);
+    const up = numOrNull(row,"Uptime_Horas");
+    if(up !== null && up > 24*60) add("bad","uptime",`Sem reiniciar há ${Math.floor(up/24)} dias`);
+    else if(up !== null && up > 24*30) add("warn","uptime",`Sem reiniciar há ${Math.floor(up/24)} dias`);
+    const risky = ports(row).filter(p => RISK_PORTS[p]);
+    if(risky.length) add("warn","portas",`Portas de risco abertas: ${risky.map(p => p + "/" + RISK_PORTS[p]).join(", ")}`);
+    const adm = admins(row);
+    if(adm.length > 4) add("warn","admins",`${adm.length} administradores locais`);
+    const age = hwAge(row);
+    if(age !== null && age >= 9) add("info","hw",`Hardware com ~${age} anos (BIOS ${hwYear(row)})`);
+    if(num(row,"ConsumoCPU_Percentual") > 85 || num(row,"ConsumoRAM_Percentual") > 90) add("warn","uso",`Uso elevado (CPU ${num(row,"ConsumoCPU_Percentual")}% · RAM ${num(row,"ConsumoRAM_Percentual")}%)`);
+    return out;
+}
+function calcScore(reasons){
+    let score = 100;
+    for(const r of reasons) score -= r.level === "bad" ? 18 : r.level === "warn" ? 9 : 3;
     return Math.max(0, Math.min(100, score));
 }
 function statusFromScore(score){
@@ -749,97 +569,120 @@ function statusFromScore(score){
     if(score < 80) return {label:"Atenção", cls:"warn"};
     return {label:"OK", cls:"good"};
 }
+function worstLevel(r){ return r.__reasons.some(x=>x.level==="bad") ? "bad" : r.__reasons.some(x=>x.level==="warn") ? "warn" : r.__reasons.length ? "info" : "good"; }
 function enrichData(){
     enriched = data.map(row => {
         const copy = Object.assign({}, row);
-        copy.__score = calcScore(row);
         copy.__reasons = getReasons(row);
+        copy.__score = calcScore(copy.__reasons);
         copy.__status = statusFromScore(copy.__score).label;
         return copy;
     });
 }
-function countBy(rows, getter){
-    const map = {};
-    rows.forEach(r => {
-        const key = getter(r) || "Não informado";
-        map[key] = (map[key] || 0) + 1;
-    });
-    return map;
+
+/* ---------- filtro cruzado (drill) ---------- */
+function setDrill(label, fn){
+    drill = drill && drill.label === label ? null : {label, fn};
+    currentPage = 1;
+    applyFilters();
 }
-function renderBars(containerId, map, opts={}){
-    const el = $(containerId);
-    const entries = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0, opts.limit || 12);
-    const max = Math.max(1, ...entries.map(e=>e[1]));
-    if(entries.length === 0){ el.innerHTML = "<div class='statusline'>Sem dados.</div>"; return; }
-    el.innerHTML = entries.map(([label,count]) => {
-        const pct = Math.round((count/max)*100);
-        const cls = opts.cls ? opts.cls(label,count) : "";
-        return `<div class="bar-row" data-label="${escapeHtml(label)}" data-count="${count}" data-pct="${pct}">
-            <div class="bar-label">${escapeHtml(label)}</div>
-            <div class="bar-track"><div class="bar-fill ${cls}" style="width:0" data-w="${pct}"></div></div>
-            <div><b>${count}</b></div>
-        </div>`;
-    }).join("");
-    el.querySelectorAll(".bar-row").forEach(row => {
-        row.addEventListener("mouseover", e => showTip(
-            `<h4>${escapeHtml(row.dataset.label)}</h4><dl><dt>Registros</dt><dd>${escapeHtml(row.dataset.count)} (${escapeHtml(row.dataset.pct)}%)</dd></dl>`,
-            e.clientX, e.clientY));
-        row.addEventListener("mouseout", hideTip);
-    });
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-        el.querySelectorAll(".bar-fill").forEach(f => { f.style.width = f.dataset.w + "%"; });
+function renderDrillChip(){
+    const el = $("drillChip");
+    if(!drill){ el.innerHTML = ""; return; }
+    el.innerHTML = `<span class="chip">🔎 ${escapeHtml(drill.label)} <a id="drillList">ver lista</a><button id="drillClear" aria-label="Remover filtro">×</button></span>`;
+    $("drillClear").addEventListener("click", () => { drill = null; applyFilters(); });
+    $("drillList").addEventListener("click", () => switchView("inventoryView"));
+}
+
+/* ---------- componentes de grafico ---------- */
+function groupItems(rows, keyFn, o={}){
+    const map = new Map();
+    rows.forEach(r => { const k = keyFn(r) || "Não informado"; map.set(k, (map.get(k) || 0) + 1); });
+    let ents = [...map.entries()];
+    if(o.order) ents.sort((a,b) => o.order.indexOf(a[0]) - o.order.indexOf(b[0]));
+    else ents.sort((a,b) => b[1] - a[1]);
+    if(o.limit && ents.length > o.limit){
+        const rest = ents.slice(o.limit).reduce((s,e) => s + e[1], 0);
+        ents = ents.slice(0, o.limit);
+        if(rest) ents.push(["Outros", rest]);
+    }
+    return ents.map(([label,value], i) => ({
+        label, value,
+        color: o.colors ? (typeof o.colors === "function" ? o.colors(label,i) : o.colors[label]) : PALETTE[i % PALETTE.length],
+        fn: label === "Outros" ? null : (o.fn ? o.fn(label) : (r => (keyFn(r) || "Não informado") === label)),
+        drillLabel: (o.prefix ? o.prefix + ": " : "") + label
     }));
 }
-function escapeHtml(v){
-    return String(v ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+function bindItems(el, items, sel){
+    el.querySelectorAll(sel).forEach((node, i) => {
+        const it = items[i];
+        if(!it || !it.fn) { node.style.cursor = "default"; return; }
+        node.addEventListener("click", () => setDrill(it.drillLabel, it.fn));
+        node.setAttribute("title", `${it.label}: ${it.value}`);
+    });
 }
-function renderCards(){
-    const total = enriched.length;
-    const crit = enriched.filter(r=>r.__score < 60).length;
-    const warn = enriched.filter(r=>r.__score >= 60 && r.__score < 80).length;
-    const ok = enriched.filter(r=>r.__score >= 80).length;
-    const semWsus = enriched.filter(r=>["nao","não",""].includes(text(r,"Usa_WSUS").toLowerCase())).length;
-    const discoBaixo = enriched.filter(r=>num(r,"Espaco_Livre_C_Perc") > 0 && num(r,"Espaco_Livre_C_Perc") < 20).length;
-    const win10 = enriched.filter(r=>text(r,"SO").toLowerCase().includes("windows 10")).length;
-    const oldCollect = enriched.filter(r=>daysSince(text(r,"DataHora_Coleta")) > 7).length;
+function hbars(id, items, o={}){
+    const el = $(id);
+    if(!items.length){ el.innerHTML = "<div class='empty'>Sem dados.</div>"; return; }
+    const max = Math.max(1, ...items.map(i => i.value));
+    const total = o.total || items.reduce((s,i)=>s+i.value,0);
+    el.innerHTML = `<div class="rows">` + items.map(it => `<button type="button" class="row" style="--c:${it.color}"><span class="lb">${escapeHtml(it.label)}</span><span class="tr"><i data-w="${(it.value/max*100).toFixed(1)}"></i></span><span class="nv">${it.value}<small>${fmtPct(it.value,total)}</small></span></button>`).join("") + `</div>`;
+    bindItems(el, items, ".row");
+    animateBars(el);
+}
+function animateBars(el){
+    requestAnimationFrame(() => requestAnimationFrame(() => el.querySelectorAll("i[data-w]").forEach(f => { f.style.width = f.dataset.w + "%"; })));
+}
+function donut(id, items, centerLabel){
+    const el = $(id);
+    const total = items.reduce((s,i)=>s+i.value,0);
+    if(!total){ el.innerHTML = "<div class='empty'>Sem dados.</div>"; return; }
+    const R = 62, C = 2*Math.PI*R, GAP = items.filter(i=>i.value).length > 1 ? 2.5 : 0;
+    let acc = 0;
+    const segs = items.map((it, idx) => {
+        const frac = it.value / total;
+        const len = Math.max(0, frac*C - (it.value ? GAP : 0));
+        const s = `<circle data-i="${idx}" cx="80" cy="80" r="${R}" fill="none" stroke="${it.color}" stroke-width="20" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-acc).toFixed(2)}" transform="rotate(-90 80 80)" style="cursor:${it.fn?"pointer":"default"}"><title>${escapeHtml(it.label)}: ${it.value}</title></circle>`;
+        acc += frac*C;
+        return s;
+    }).join("");
+    el.innerHTML = `<div class="donutbox"><div class="donut"><svg viewBox="0 0 160 160"><circle cx="80" cy="80" r="${R}" fill="none" stroke="var(--line)" stroke-width="20"/>${segs}</svg><div class="ctr"><b>${total}</b><span>${escapeHtml(centerLabel||"máquinas")}</span></div></div><div class="rows">${items.map(it => `<button type="button" class="row" style="--c:${it.color}"><span class="dot"></span><span class="lb">${escapeHtml(it.label)}</span><span class="nv">${it.value}<small>${fmtPct(it.value,total)}</small></span></button>`).join("")}</div></div>`;
+    bindItems(el, items, ".row");
+    el.querySelectorAll("circle[data-i]").forEach(c => { const it = items[+c.dataset.i]; if(it && it.fn) c.addEventListener("click", () => setDrill(it.drillLabel, it.fn)); });
+}
+function stacked(id, groups){ // groups: [{label, parts:[{n,color,title}], fn, drillLabel}]
+    const el = $(id);
+    if(!groups.length){ el.innerHTML = "<div class='empty'>Sem dados.</div>"; return; }
+    el.innerHTML = groups.map(g => {
+        const tot = g.parts.reduce((s,p)=>s+p.n,0) || 1;
+        return `<button type="button" class="stack-row"><span class="lb">${escapeHtml(g.label)}</span><span class="sb">${g.parts.map(p => p.n ? `<i style="width:${p.n/tot*100}%;background:${p.color}" title="${escapeHtml(p.title)}: ${p.n}"></i>` : "").join("")}</span><span class="nv"><b>${tot}</b> <small style="color:var(--muted)">score ${g.avg}</small></span></button>`;
+    }).join("");
+    bindItems(el, groups.map(g=>({label:g.label,value:0,fn:g.fn,drillLabel:g.drillLabel})), ".stack-row");
+}
+function gaugeSvg(score, color){
+    const R = 52, C = 2*Math.PI*R, len = C * score / 100;
+    return `<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--line)" stroke-width="11"/><circle cx="60" cy="60" r="${R}" fill="none" stroke="${color}" stroke-width="11" stroke-linecap="round" stroke-dasharray="${len.toFixed(1)} ${(C-len).toFixed(1)}" transform="rotate(-90 60 60)"/></svg>`;
+}
+function countUp(el, target, suffix){
+    suffix = suffix || "";
+    if(!el) return;
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches){ el.textContent = target + suffix; return; }
+    const t0 = performance.now(), dur = 700;
+    (function f(now){
+        const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(target * e) + suffix;
+        if(p < 1) requestAnimationFrame(f);
+    })(t0);
+}
+function miniTable(id, rows, cols, fmt){
+    const el = $(id);
+    if(!rows.length){ el.innerHTML = "<div class='empty'>Sem dados.</div>"; return; }
+    el.innerHTML = `<table class="mini"><thead><tr>${cols.map(c=>`<th>${escapeHtml(c.h)}</th>`).join("")}</tr></thead><tbody>` +
+        rows.map((r,i) => `<tr data-i="${i}">${cols.map(c => `<td>${c.f ? c.f(r) : escapeHtml(val(r,c.k,""))}</td>`).join("")}</tr>`).join("") + `</tbody></table>`;
+    el.querySelectorAll("tbody tr").forEach(tr => tr.addEventListener("click", () => openDetail(rows[+tr.dataset.i])));
+}
 
-    const cards = [
-        ["Total", total, "Máquinas no inventário", "info"],
-        ["OK", ok, "Score de saúde ≥ 80", "good"],
-        ["Atenção", warn, "Score entre 60 e 79", "warn"],
-        ["Críticas", crit, "Score abaixo de 60", "bad"],
-        ["Disco baixo", discoBaixo, "C: com menos de 20% livre", discoBaixo ? "bad" : "good"],
-        ["Sem WSUS", semWsus, "Máquinas sem WSUS informado", semWsus ? "warn" : "good"],
-        ["Windows 10", win10, "Planejar atualização/migração", win10 ? "warn" : "good"],
-        ["Coleta antiga", oldCollect, "Mais de 7 dias", oldCollect ? "warn" : "good"],
-    ];
-
-    $("cardsContainer").innerHTML = cards.map((c,i) => `
-        <div class="card ${c[3]}">
-            <div class="label">${c[0]}</div>
-            <div class="value" id="dashCard${i}">0</div>
-            <div class="hint">${c[2]}</div>
-        </div>
-    `).join("");
-    cards.forEach((c,i) => topoCountUp(document.getElementById("dashCard" + i), c[1]));
-}
-function ramBucket(r){
-    const ram = num(r,"RAM_GB_Total");
-    if(!ram) return "Não informado";
-    if(ram < 4) return "< 4 GB";
-    if(ram < 8) return "4 a 7 GB";
-    if(ram < 16) return "8 a 15 GB";
-    if(ram < 32) return "16 a 31 GB";
-    return "32 GB ou mais";
-}
-function diskBucket(r){
-    const p = num(r,"Espaco_Livre_C_Perc");
-    if(!p) return "Não informado";
-    if(p < 10) return "< 10% crítico";
-    if(p < 20) return "10% a 19% baixo";
-    if(p < 50) return "20% a 49%";
-    return "50% ou mais";
-}
+/* ================= TOPOLOGIA (mantida) ================= */
 const TOPO_ICON = '<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><rect x="3" y="5" width="26" height="17" rx="2"/><path d="M12 28h8M16 22v6"/></svg>';
 let topoModo = "org";
 let topoSO = null, topoCov = null, topoChartsKey = "";
@@ -1144,223 +987,399 @@ function renderTopoRede(vis){
     }).join("") + `</div>`;
     topoBindNodes();
 }
+
+/* ================= DASHBOARD ================= */
+const QUICK = {
+    todos:       {l:"Todas as máquinas", fn:()=>true},
+    criticos:    {l:"Somente críticas", fn:r=>r.__score < 60},
+    atencao:     {l:"Somente atenção", fn:r=>r.__score >= 60 && r.__score < 80},
+    ok:          {l:"Somente OK", fn:r=>r.__score >= 80},
+    disco:       {l:"Disco C abaixo de 20%", fn:r=>{ const p=numOrNull(r,"Espaco_Livre_C_Perc"); return p!==null && p>0 && p<20; }},
+    ram:         {l:"RAM abaixo de 8 GB", fn:r=>{ const g=num(r,"RAM_GB_Total"); return g>0 && g<8; }},
+    win10:       {l:"Windows 10", fn:r=>soBucket(r)==="Windows 10"},
+    win11:       {l:"Windows 11", fn:r=>soBucket(r)==="Windows 11"},
+    linux:       {l:"Linux", fn:r=>soBucket(r)==="Linux"},
+    semwsus:     {l:"Windows sem WSUS", fn:r=>isWindows(r) && lc(r,"Usa_WSUS")!=="sim"},
+    semativacao: {l:"Windows não ativado", fn:r=>r.__reasons.some(x=>x.code==="ativacao")},
+    coleta:      {l:"Coleta com mais de 7 dias", fn:r=>{ const d=daysSince(text(r,"DataHora_Coleta")); return d===null || d>7; }}
+};
+function hasReason(code){ return r => r.__reasons.some(x => x.code === code); }
+
+const PANELS = [
+    ["Conformidade e segurança", [
+        ["compliance","Conformidade","% de máquinas que atendem cada requisito · clique para ver as que não atendem"],
+        ["orgStack","Por divisão","Distribuição de saúde (verde OK · âmbar atenção · vermelho crítico)"],
+        ["soDonut","Sistemas operacionais",""],
+        ["alertTypesDash","Problemas mais frequentes",""]
+    ]],
+    ["Hardware", [
+        ["ramBars","Memória RAM",""],
+        ["diskBars","Espaço livre no C:",""],
+        ["diskKindBars","Tipo de armazenamento","Inferido de Discos_Fisicos"],
+        ["ageBars","Idade do hardware","Pela data da BIOS"],
+        ["makerDonut","Fabricantes",""],
+        ["modelBars","Modelos mais comuns",""],
+        ["cpuBars","Processadores",""],
+        ["chassisBars","Tipo de equipamento",""]
+    ]],
+    ["Operação", [
+        ["freshBars","Atualidade da coleta","Há quanto tempo cada máquina coletou"],
+        ["uptimeBars","Tempo ligado (uptime)","Sem reiniciar acumula updates pendentes"],
+        ["updBars","Updates pendentes",""],
+        ["portBars","Portas TCP mais abertas","Vermelho = porta de risco"],
+        ["adminBars","Contas administradoras mais comuns","Contas locais com privilégio elevado"],
+        ["platBars","Plataforma",""]
+    ]]
+];
+function buildDashSkeleton(){
+    $("dashPanels").innerHTML = PANELS.map(([sec, ps]) => `<h3 class="sec">${sec}</h3><div class="cols">` +
+        ps.map(([id,t,h]) => `<div class="panel"><h2>${t}</h2>${h?`<div class="hint">${h}</div>`:""}<div id="${id}"></div></div>`).join("") + `</div>`).join("") +
+        `<h3 class="sec">Prioridades</h3><div class="cols2">
+            <div class="panel"><h2>Top prioridades</h2><div class="hint">Menores scores de saúde</div><div id="topAlerts" class="alert-list"></div></div>
+            <div style="display:grid;gap:14px;align-content:start">
+                <div class="panel"><h2>Menor espaço livre no C:</h2><div id="lowDiskTable"></div></div>
+                <div class="panel"><h2>Mais updates pendentes</h2><div id="updatesTable"></div></div>
+                <div class="panel"><h2>Maior tempo sem reiniciar</h2><div id="uptimeTable"></div></div>
+            </div>
+        </div>`;
+}
+
+function renderHero(rows){
+    const n = rows.length;
+    const avg = n ? Math.round(rows.reduce((s,r)=>s+r.__score,0)/n) : 0;
+    const st = statusFromScore(avg);
+    const cnt = {good:0, warn:0, bad:0};
+    rows.forEach(r => cnt[statusFromScore(r.__score).cls]++);
+    $("heroGauge").innerHTML = gaugeSvg(avg, LEVEL_COLOR[st.cls]) + `<div class="ctr"><b id="heroNum">0</b><span>de 100</span></div>`;
+    countUp($("heroNum"), avg);
+    const crit = cnt.bad, last = rows.map(r=>parseDateSafe(text(r,"DataHora_Coleta"))).filter(Boolean).sort((a,b)=>b-a)[0];
+    $("heroSummary").textContent = n ? `${plural(n,"máquina","máquinas")} · saúde média ${avg}/100 (${st.label})${crit ? " · " + plural(crit,"crítica","críticas") : ""}${last ? " · última coleta " + last.toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}) : ""}` : "Nenhuma máquina no filtro atual.";
+    const defs = [["good","OK","≥ 80",QUICK.ok.fn],["warn","Atenção","60–79",QUICK.atencao.fn],["bad","Críticas","< 60",QUICK.criticos.fn]];
+    $("heroBar").innerHTML = defs.map(([c,l,,fn]) => `<button type="button" class="${c}" style="flex:${cnt[c]||0.0001}" title="${l}: ${cnt[c]}" data-c="${c}">${cnt[c] ? cnt[c] : ""}</button>`).join("");
+    $("heroLegend").innerHTML = defs.map(([c,l,rng]) => `<button type="button" data-c="${c}"><span class="dot" style="--c:${LEVEL_COLOR[c]}"></span>${l} <span style="color:var(--muted);font-weight:400">(${rng})</span> · <b>${cnt[c]}</b></button>`).join("");
+    document.querySelectorAll("#heroBar button, #heroLegend button").forEach(b => {
+        const d = defs.find(x => x[0] === b.dataset.c);
+        b.addEventListener("click", () => setDrill("Saúde: " + d[1], d[3]));
+    });
+    $("hdrScore").textContent = n ? avg : "—";
+    $("hdrTotal").textContent = n;
+}
+function renderKpis(rows){
+    const n = rows.length;
+    const cnt = fn => rows.filter(fn).length;
+    const totalUpd = rows.reduce((s,r)=>s+num(r,"UpdatesPendentes"),0);
+    const defs = [
+        ["Máquinas", n, "no filtro atual", "info", QUICK.todos.fn, "Todas"],
+        ["Críticas", cnt(QUICK.criticos.fn), "score abaixo de 60", "bad", QUICK.criticos.fn, "Saúde: Críticas"],
+        ["Disco baixo", cnt(QUICK.disco.fn), "C: com menos de 20% livre", "warn", QUICK.disco.fn, "Disco baixo"],
+        ["Updates pendentes", totalUpd, `em ${plural(cnt(r=>num(r,"UpdatesPendentes")>0),"máquina","máquinas")}`, "warn", r=>num(r,"UpdatesPendentes")>0, "Com updates pendentes"],
+        ["Sem antivírus ativo", cnt(hasReason("av")), "Windows", "bad", hasReason("av"), "Antivírus inativo"],
+        ["Fora de suporte", cnt(hasReason("so")), "Windows 10 e legados", "warn", hasReason("so"), "SO fora de suporte"],
+        ["Coleta antiga", cnt(QUICK.coleta.fn), "mais de 7 dias", "warn", QUICK.coleta.fn, "Coleta antiga"],
+        ["Hardware antigo", cnt(hasReason("hw")), "BIOS com 9+ anos", "info", hasReason("hw"), "Hardware antigo"]
+    ];
+    $("kpis").innerHTML = defs.map((d,i) => `<button type="button" class="kpi ${d[1] === 0 && d[3] !== "info" ? "good" : d[3]}"><div class="l">${d[0]}</div><div class="v" id="kpi${i}">0</div><div class="s">${d[2]}</div></button>`).join("");
+    defs.forEach((d,i) => countUp($("kpi"+i), d[1]));
+    document.querySelectorAll("#kpis .kpi").forEach((b,i) => b.addEventListener("click", () => setDrill(defs[i][5], defs[i][4])));
+}
+function complianceDefs(){
+    return [
+        ["Antivírus ativo", r=>isWindows(r), r=>!hasReason("av")(r)],
+        ["Firewall ativo", r=>lc(r,"Firewall_Ativo")!=="", r=>lc(r,"Firewall_Ativo")==="sim"],
+        ["Windows ativado", r=>isWindows(r), r=>!hasReason("ativacao")(r)],
+        ["Gerenciado por WSUS", r=>isWindows(r), r=>lc(r,"Usa_WSUS")==="sim"],
+        ["Updates em dia (< 5)", r=>numOrNull(r,"UpdatesPendentes")!==null, r=>num(r,"UpdatesPendentes")<5],
+        ["Disco saudável (SMART)", r=>/ok|passed|falha|fail/.test(lc(r,"SaudeDiscoSMART")), r=>!hasReason("smart")(r)],
+        ["Espaço livre ≥ 20%", r=>numOrNull(r,"Espaco_Livre_C_Perc")>0, r=>num(r,"Espaco_Livre_C_Perc")>=20],
+        ["Coleta recente (≤ 7 d)", r=>true, r=>!QUICK.coleta.fn(r)],
+        ["Sem portas de risco", r=>ports(r).length>0, r=>!hasReason("portas")(r)]
+    ];
+}
+function renderCompliance(rows){
+    const defs = complianceDefs();
+    const el = $("compliance");
+    const items = defs.map(([l, base, pass]) => {
+        const b = rows.filter(base), ok = b.filter(pass).length;
+        return {l, total:b.length, ok, pct: b.length ? ok/b.length*100 : null, fail: r => base(r) && !pass(r)};
+    }).filter(i => i.total);
+    if(!items.length){ el.innerHTML = "<div class='empty'>Sem dados.</div>"; return; }
+    el.innerHTML = `<div class="rows">` + items.map(i => {
+        const c = i.pct >= 90 ? "var(--good)" : i.pct >= 70 ? "var(--warn)" : "var(--bad)";
+        return `<button type="button" class="row" style="--c:${c}"><span class="lb">${i.l}</span><span class="tr"><i data-w="${i.pct.toFixed(1)}"></i></span><span class="nv">${Math.round(i.pct)}%<small>${i.ok}/${i.total}</small></span></button>`;
+    }).join("") + `</div>`;
+    el.querySelectorAll(".row").forEach((b,i) => b.addEventListener("click", () => setDrill("Fora de conformidade: " + items[i].l, items[i].fail)));
+    animateBars(el);
+}
+function renderOrgStack(rows){
+    const by = {};
+    rows.forEach(r => { const d = divisaoOf(r); (by[d] = by[d] || []).push(r); });
+    const rank = d => d === "Não mapeado" ? 99 : d === "Setores independentes" ? 50 : (+((d.match(/\d+/)||[40])[0]));
+    const groups = Object.keys(by).sort((a,b)=>rank(a)-rank(b)||a.localeCompare(b)).map(d => {
+        const g = by[d], c = {good:0,warn:0,bad:0};
+        g.forEach(r => c[statusFromScore(r.__score).cls]++);
+        return {label:d, avg: Math.round(g.reduce((s,r)=>s+r.__score,0)/g.length), fn:r=>divisaoOf(r)===d, drillLabel:"Divisão: "+d,
+            parts:[{n:c.good,color:"var(--good)",title:"OK"},{n:c.warn,color:"var(--warn)",title:"Atenção"},{n:c.bad,color:"var(--bad)",title:"Crítico"}]};
+    });
+    stacked("orgStack", groups);
+}
+function renderAlertTypes(rows, id){
+    const map = {};
+    rows.forEach(r => r.__reasons.forEach(x => { (map[x.code] = map[x.code] || {code:x.code, bad:0, any:new Set(), worst:"info"}); map[x.code].any.add(r); if(x.level==="bad") map[x.code].bad++; }));
+    const items = Object.values(map).map(m => {
+        const lvl = m.bad ? "bad" : rows.some(r => r.__reasons.some(x => x.code===m.code && x.level==="warn")) ? "warn" : "info";
+        return {label:REASON_TITLE[m.code]||m.code, value:m.any.size, color:LEVEL_COLOR[lvl], fn:hasReason(m.code), drillLabel:"Problema: "+(REASON_TITLE[m.code]||m.code)};
+    }).sort((a,b)=>b.value-a.value);
+    hbars(id, items.slice(0, id==="alertTypes" ? 30 : 8), {total: rows.length});
+}
+function bucketOf(v, limits, labels){ for(let i=0;i<limits.length;i++) if(v < limits[i]) return labels[i]; return labels[labels.length-1]; }
 function renderDashboard(){
-    renderCards();
-    renderBars("chartOS", countBy(enriched, r => text(r,"SO").replace("Microsoft ","")), {limit:10});
-    renderBars("chartRAM", countBy(enriched, ramBucket), {cls: label => label.includes("< 4") || label.includes("4 a 7") ? "warn" : "good"});
-    renderBars("chartDisk", countBy(enriched, diskBucket), {cls: label => label.includes("crítico") ? "bad" : label.includes("baixo") ? "warn" : "good"});
-    renderBars("chartSecurity", {
-        "Com WSUS": enriched.filter(r=>text(r,"Usa_WSUS").toLowerCase()==="sim").length,
-        "Sem WSUS": enriched.filter(r=>text(r,"Usa_WSUS").toLowerCase()!=="sim").length,
-        "Firewall ativo": enriched.filter(r=>text(r,"Firewall_Ativo").toLowerCase()==="sim").length,
-        "Firewall não ativo": enriched.filter(r=>text(r,"Firewall_Ativo").toLowerCase()!=="sim").length,
-        "Antivírus ativo": enriched.filter(r=>text(r,"Antivirus_Status").toLowerCase()==="ativo").length
-    }, {cls: label => label.includes("Sem") || label.includes("não") ? "warn" : "good"});
+    const rows = filtered;
+    renderHero(rows);
+    renderKpis(rows);
+    renderCompliance(rows);
+    renderOrgStack(rows);
+    donut("soDonut", groupItems(rows, soBucket, {colors:{"Windows 10":"#2f6bff","Windows 11":"#7c3aed","Windows (outros)":"#f59e0b","Linux":"#10b981","Sem informação":"#8a96ab"}, prefix:"SO"}));
+    renderAlertTypes(rows, "alertTypesDash");
 
-    const top = [...enriched].sort((a,b)=>a.__score-b.__score).slice(0,8);
-    $("topAlerts").innerHTML = top.map(alertHtml).join("") || "<div class='statusline'>Sem alertas.</div>";
-    $("alertsContainer").innerHTML = [...enriched].filter(r=>r.__reasons.length).sort((a,b)=>a.__score-b.__score).map(alertHtml).join("") || "<div class='statusline'>Sem alertas.</div>";
-    [$("topAlerts"), $("alertsContainer")].forEach(box => box.querySelectorAll(".alert-item").forEach(el => {
-        el.addEventListener("click", () => {
-            const r = enriched.find(x => String(val(x,"Computador","")) === el.dataset.pc);
-            if(r) openDetail(r);
-        });
-    }));
+    const ramLab = ["Não informado","< 4 GB","4 a 7 GB","8 a 15 GB","16 a 31 GB","32 GB ou mais"];
+    const ramK = r => { const g = num(r,"RAM_GB_Total"); return g ? bucketOf(g,[4,8,16,32],["< 4 GB","4 a 7 GB","8 a 15 GB","16 a 31 GB","32 GB ou mais"]) : "Não informado"; };
+    hbars("ramBars", groupItems(rows, ramK, {order:ramLab, prefix:"RAM", colors:l=>l==="< 4 GB"?"#dc3545":l==="4 a 7 GB"?"#f59e0b":l==="Não informado"?"#8a96ab":"#10b981"}));
+    const dLab = ["Não informado","< 10% (crítico)","10 a 19% (baixo)","20 a 49%","50% ou mais"];
+    const dK = r => { const p = numOrNull(r,"Espaco_Livre_C_Perc"); return p ? bucketOf(p,[10,20,50],["< 10% (crítico)","10 a 19% (baixo)","20 a 49%","50% ou mais"]) : "Não informado"; };
+    hbars("diskBars", groupItems(rows, dK, {order:dLab, prefix:"Disco livre", colors:l=>l.includes("crítico")?"#dc3545":l.includes("baixo")?"#f59e0b":l==="Não informado"?"#8a96ab":"#10b981"}));
+    hbars("diskKindBars", groupItems(rows, diskKind, {prefix:"Disco", colors:{"NVMe":"#7c3aed","SSD":"#10b981","HDD":"#f59e0b","Não identificado":"#8a96ab"}}));
+    const aLab = ["Até 3 anos","4 a 6 anos","7 a 8 anos","9+ anos","Não informado"];
+    const aK = r => { const a = hwAge(r); return a === null ? "Não informado" : bucketOf(a,[4,7,9],["Até 3 anos","4 a 6 anos","7 a 8 anos","9+ anos"]); };
+    hbars("ageBars", groupItems(rows, aK, {order:aLab, prefix:"Idade", colors:{"Até 3 anos":"#10b981","4 a 6 anos":"#06b6d4","7 a 8 anos":"#f59e0b","9+ anos":"#dc3545","Não informado":"#8a96ab"}}));
+    donut("makerDonut", groupItems(rows, maker, {limit:7, prefix:"Fabricante"}));
+    hbars("modelBars", groupItems(rows, modelName, {limit:8, prefix:"Modelo", colors:()=>"#2f6bff"}));
+    hbars("cpuBars", groupItems(rows, cpuName, {limit:8, prefix:"CPU", colors:()=>"#7c3aed"}));
+    hbars("chassisBars", groupItems(rows, r => { const c = text(r,"Chassis_Tipo"); return !c||/^indispon/i.test(c) ? "Não informado" : c; }, {limit:8, prefix:"Equipamento", colors:()=>"#06b6d4"}));
 
-    renderSmallTable("lowDiskTable",
-        [...enriched].filter(r=>num(r,"Espaco_Livre_C_Perc")>0).sort((a,b)=>num(a,"Espaco_Livre_C_Perc")-num(b,"Espaco_Livre_C_Perc")).slice(0,10),
-        ["Computador","Usuario","Espaco_Livre_C_Perc","Espaco_Livre_C_GB","SO"]
-    );
-    renderSmallTable("updatesTable",
-        [...enriched].sort((a,b)=>num(b,"UpdatesPendentes")-num(a,"UpdatesPendentes")).slice(0,10),
-        ["Computador","Usuario","UpdatesPendentes","UltimaInstalacaoUpdates","SO"]
-    );
+    const fLab = ["Hoje","1 a 7 dias","8 a 15 dias","Mais de 15 dias","Sem data"];
+    const fK = r => { const d = daysSince(text(r,"DataHora_Coleta")); return d === null ? "Sem data" : d < 1 ? "Hoje" : d <= 7 ? "1 a 7 dias" : d <= 15 ? "8 a 15 dias" : "Mais de 15 dias"; };
+    hbars("freshBars", groupItems(rows, fK, {order:fLab, prefix:"Coleta", colors:{"Hoje":"#10b981","1 a 7 dias":"#84cc16","8 a 15 dias":"#f59e0b","Mais de 15 dias":"#dc3545","Sem data":"#8a96ab"}}));
+    const uLab = ["Menos de 1 dia","1 a 7 dias","8 a 30 dias","Mais de 30 dias","Não informado"];
+    const uK = r => { const h = numOrNull(r,"Uptime_Horas"); return h === null ? "Não informado" : h < 24 ? "Menos de 1 dia" : h <= 24*7 ? "1 a 7 dias" : h <= 24*30 ? "8 a 30 dias" : "Mais de 30 dias"; };
+    hbars("uptimeBars", groupItems(rows, uK, {order:uLab, prefix:"Uptime", colors:{"Menos de 1 dia":"#10b981","1 a 7 dias":"#84cc16","8 a 30 dias":"#f59e0b","Mais de 30 dias":"#dc3545","Não informado":"#8a96ab"}}));
+    const pLab = ["Em dia (0)","1 a 4","5 a 19","20 ou mais","Não coletado"];
+    const pK = r => { const u = numOrNull(r,"UpdatesPendentes"); return u === null ? "Não coletado" : u === 0 ? "Em dia (0)" : u < 5 ? "1 a 4" : u < 20 ? "5 a 19" : "20 ou mais"; };
+    hbars("updBars", groupItems(rows, pK, {order:pLab, prefix:"Updates", colors:{"Em dia (0)":"#10b981","1 a 4":"#84cc16","5 a 19":"#f59e0b","20 ou mais":"#dc3545","Não coletado":"#8a96ab"}}));
+
+    const pc = {};
+    rows.forEach(r => new Set(ports(r)).forEach(p => pc[p] = (pc[p]||0)+1));
+    const pItems = Object.entries(pc).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([p,n]) => ({
+        label: p + (RISK_PORTS[p] ? " · " + RISK_PORTS[p] : INFO_PORTS[p] ? " · " + INFO_PORTS[p] : ""), value:n,
+        color: RISK_PORTS[p] ? "#dc3545" : "#2f6bff", fn: r => ports(r).includes(+p), drillLabel:"Porta TCP " + p }));
+    hbars("portBars", pItems, {total: rows.length});
+    const ac = {};
+    rows.forEach(r => new Set(admins(r).map(a=>a.toLowerCase())).forEach(a => ac[a] = (ac[a]||0)+1));
+    hbars("adminBars", Object.entries(ac).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([a,n]) => ({label:a, value:n, color:"#e11d74", fn:r=>admins(r).some(x=>x.toLowerCase()===a), drillLabel:"Admin: "+a})), {total: rows.length});
+    donut("platBars", groupItems(rows, r => isWindows(r) ? "Windows" : isLinux(r) ? "Linux" : "Sem informação", {colors:{"Windows":"#2f6bff","Linux":"#10b981","Sem informação":"#8a96ab"}, prefix:"Plataforma"}));
+
+    const top = [...rows].sort((a,b)=>a.__score-b.__score).filter(r=>r.__reasons.length).slice(0,8);
+    $("topAlerts").innerHTML = top.map(alertHtml).join("") || "<div class='empty'>Sem alertas. 🎉</div>";
+    bindAlertClicks($("topAlerts"));
+    const host = r => `<b>${escapeHtml(text(r,"Computador"))}</b>`;
+    miniTable("lowDiskTable", [...rows].filter(r=>num(r,"Espaco_Livre_C_Perc")>0).sort((a,b)=>num(a,"Espaco_Livre_C_Perc")-num(b,"Espaco_Livre_C_Perc")).slice(0,6),
+        [{h:"Máquina",f:host},{h:"Usuário",k:"Usuario"},{h:"Livre",f:r=>`<span class="badge ${num(r,"Espaco_Livre_C_Perc")<10?"bad":num(r,"Espaco_Livre_C_Perc")<20?"warn":"good"}">${num(r,"Espaco_Livre_C_Perc")}% · ${num(r,"Espaco_Livre_C_GB")} GB</span>`}]);
+    miniTable("updatesTable", [...rows].filter(r=>num(r,"UpdatesPendentes")>0).sort((a,b)=>num(b,"UpdatesPendentes")-num(a,"UpdatesPendentes")).slice(0,6),
+        [{h:"Máquina",f:host},{h:"Pendentes",f:r=>`<span class="badge ${num(r,"UpdatesPendentes")>=20?"bad":"warn"}">${num(r,"UpdatesPendentes")}</span>`},{h:"Última instalação",k:"UltimaInstalacaoUpdates"}]);
+    miniTable("uptimeTable", [...rows].filter(r=>numOrNull(r,"Uptime_Horas")!==null).sort((a,b)=>num(b,"Uptime_Horas")-num(a,"Uptime_Horas")).slice(0,6),
+        [{h:"Máquina",f:host},{h:"Usuário",k:"Usuario"},{h:"Ligado há",f:r=>escapeHtml(Math.floor(num(r,"Uptime_Horas")/24)+" dias")}]);
 }
 function alertHtml(r){
-    const st = statusFromScore(r.__score);
-    const reasons = r.__reasons.length ? r.__reasons.map(x=>`• ${escapeHtml(x.text)}`).join("<br>") : "Sem problemas relevantes.";
-    return `<div class="alert-item" data-pc="${escapeHtml(text(r,"Computador"))}">
-        <div class="alert-title">
-            <span>${escapeHtml(text(r,"Computador"))} <span class="badge ${st.cls}">${st.label}</span></span>
-            <span class="badge ${st.cls} score">${r.__score}/100</span>
-        </div>
-        <div class="alert-reasons">${reasons}</div>
-    </div>`;
+    const st = statusFromScore(r.__score), w = worstLevel(r);
+    const reasons = r.__reasons.length ? r.__reasons.map(x=>`<span class="rs ${x.level}">${escapeHtml(x.text)}</span>`).join("") : `<span class="rs info">Sem problemas relevantes</span>`;
+    const ds = topoDivSetor(r), org = [ds.div, ds.set].filter(Boolean).join(" · ");
+    return `<div class="alert-item" style="--ac:${LEVEL_COLOR[w]}" data-pc="${escapeHtml(text(r,"Computador"))}">
+        <div class="alert-title"><span>${escapeHtml(text(r,"Computador"))} <span class="badge ${st.cls}">${st.label}</span>${org ? ` <small style="color:var(--muted);font-weight:400">${escapeHtml(org)}</small>` : ""}</span><span class="badge ${st.cls}">${r.__score}/100</span></div>
+        <div class="alert-reasons">${reasons}</div></div>`;
 }
-function renderSmallTable(id, rows, cols){
-    const html = `<table><thead><tr>${cols.map(c=>`<th>${escapeHtml(c)}</th>`).join("")}</tr></thead><tbody>` +
-        rows.map(r=>`<tr>${cols.map(c=>`<td>${escapeHtml(val(r,c,""))}</td>`).join("")}</tr>`).join("") +
-        `</tbody></table>`;
-    $(id).innerHTML = html;
+function bindAlertClicks(box){
+    box.querySelectorAll(".alert-item").forEach(el => el.addEventListener("click", () => {
+        const r = enriched.find(x => text(x,"Computador") === el.dataset.pc);
+        if(r) openDetail(r);
+    }));
 }
+function renderAlertsView(){
+    const rows = filtered;
+    renderAlertTypes(rows, "alertTypes");
+    const list = rows.filter(r => r.__reasons.length && (sevFilter === "all" || r.__reasons.some(x => x.level === sevFilter)))
+        .sort((a,b)=>a.__score-b.__score);
+    $("alertsContainer").innerHTML = list.map(alertHtml).join("") || "<div class='empty'>Nenhuma máquina com alertas neste filtro. 🎉</div>";
+    bindAlertClicks($("alertsContainer"));
+    const nProb = rows.filter(r => r.__reasons.some(x => x.level !== "info")).length;
+    $("alertsBadge").textContent = nProb;
+    $("alertsBadge").style.display = nProb ? "" : "none";
+}
+
+/* ================= FILTROS / TABELA ================= */
 function applyFilters(){
     const q = $("globalSearchInput").value.trim().toLowerCase();
-    const quick = $("quickFilter").value;
+    const quick = QUICK[$("quickFilter").value] || QUICK.todos;
     filtered = enriched.filter(r => {
-        let ok = true;
-        if(q){
-            ok = headers.some(h => String(val(r,h,"")).toLowerCase().includes(q));
-        }
-        if(!ok) return false;
-
-        if(quick === "criticos") return r.__score < 60;
-        if(quick === "atencao") return r.__score >= 60 && r.__score < 80;
-        if(quick === "disco") return num(r,"Espaco_Livre_C_Perc") > 0 && num(r,"Espaco_Livre_C_Perc") < 20;
-        if(quick === "ram") return num(r,"RAM_GB_Total") > 0 && num(r,"RAM_GB_Total") < 8;
-        if(quick === "win10") return text(r,"SO").toLowerCase().includes("windows 10");
-        if(quick === "win11") return text(r,"SO").toLowerCase().includes("windows 11");
-        if(quick === "semwsus") return text(r,"Usa_WSUS").toLowerCase() !== "sim";
-        if(quick === "semativacao") return isWindows(r) && !text(r,"Status_Ativacao").toLowerCase().includes("ativado");
+        if(q && !headers.some(h => h !== "__score" && String(val(r,h,"")).toLowerCase().includes(q))) return false;
+        if(!quick.fn(r)) return false;
+        if(drill && !drill.fn(r)) return false;
         return true;
     });
-
     for(const [key,input] of Object.entries(columnFilters)){
         const term = input.value.trim().toLowerCase();
-        if(term){
-            filtered = filtered.filter(r => String(val(r,key,"")).toLowerCase().includes(term));
-        }
+        if(term) filtered = filtered.filter(r => String(val(r,key,"")).toLowerCase().includes(term));
     }
-
     if(sortKey){
         filtered.sort((a,b)=>{
             let va = val(a,sortKey,""), vb = val(b,sortKey,"");
             const na = parseFloat(String(va).replace(",",".")), nb = parseFloat(String(vb).replace(",","."));
-            if(Number.isFinite(na) && Number.isFinite(nb)){ va=na; vb=nb; }
-            else { va=String(va).toLowerCase(); vb=String(vb).toLowerCase(); }
+            if(Number.isFinite(na) && Number.isFinite(nb)){ va=na; vb=nb; } else { va=String(va).toLowerCase(); vb=String(vb).toLowerCase(); }
             if(va<vb) return sortDir==="asc" ? -1 : 1;
             if(va>vb) return sortDir==="asc" ? 1 : -1;
             return 0;
         });
     }
-    currentPage = Math.min(currentPage, getTotalPages());
-    if(currentPage < 1) currentPage = 1;
+    currentPage = Math.max(1, Math.min(currentPage, getTotalPages()));
+    renderDrillChip();
     renderTable();
     updateStatus();
+    renderDashboard();
+    renderAlertsView();
     if($("topologyView").classList.contains("active")) renderTopology();
 }
-let columnFilters = {};
 function renderHeader(){
     const head = $("inventoryHead");
-    const hrow = `<tr>${visibleColumns.map(h=>`<th data-key="${escapeHtml(h)}">${escapeHtml(h)} ${sortKey===h ? (sortDir==="asc"?"▲":"▼") : ""}</th>`).join("")}</tr>`;
-    const frow = `<tr class="filter-row">${visibleColumns.map(h=>`<th><input data-key="${escapeHtml(h)}" placeholder="Filtrar..."></th>`).join("")}</tr>`;
-    head.innerHTML = hrow + frow;
-
-    head.querySelectorAll("tr:first-child th").forEach(th=>{
-        th.addEventListener("click",()=>{
-            const key = th.dataset.key;
-            if(sortKey === key) sortDir = sortDir === "asc" ? "desc" : "asc";
-            else { sortKey = key; sortDir = "asc"; }
-            renderHeader();
-            applyFilters();
-        });
-    });
+    const prev = {};
+    Object.entries(columnFilters).forEach(([k,i]) => prev[k] = i.value);
+    head.innerHTML = `<tr>${visibleColumns.map(h=>`<th data-key="${escapeHtml(h)}">${escapeHtml(h === "__score" ? "Saúde" : h)} ${sortKey===h ? (sortDir==="asc"?"▲":"▼") : ""}</th>`).join("")}</tr>` +
+        `<tr class="filter-row">${visibleColumns.map(h=>`<th><input data-key="${escapeHtml(h)}" placeholder="Filtrar..." value="${escapeHtml(prev[h]||"")}"></th>`).join("")}</tr>`;
+    head.querySelectorAll("tr:first-child th").forEach(th => th.addEventListener("click", () => {
+        const key = th.dataset.key;
+        if(sortKey === key) sortDir = sortDir === "asc" ? "desc" : "asc"; else { sortKey = key; sortDir = "asc"; }
+        renderHeader(); applyFilters();
+    }));
     columnFilters = {};
-    head.querySelectorAll(".filter-row input").forEach(inp=>{
+    head.querySelectorAll(".filter-row input").forEach(inp => {
         columnFilters[inp.dataset.key] = inp;
-        inp.addEventListener("input", debounce(()=>{currentPage=1; applyFilters();},250));
+        inp.addEventListener("input", debounce(()=>{ currentPage=1; applyFilters(); }, 250));
     });
 }
 function getRowsPerPage(){ return parseInt($("rowsPerPage").value,10) || 20; }
 function getTotalPages(){ return Math.max(1, Math.ceil(filtered.length / getRowsPerPage())); }
+function cellClass(h, r){
+    const v = text(r,h);
+    if(h === "Espaco_Livre_C_Perc"){ const p = num(r,h); return p ? (p<10?"c-bad":p<20?"c-warn":"c-good") : ""; }
+    if(h === "RAM_GB_Total"){ const g = num(r,h); return g ? (g<4?"c-bad":g<8?"c-warn":"") : ""; }
+    if(h === "UpdatesPendentes"){ const u = numOrNull(r,h); return u === null ? "" : u>=20?"c-bad":u>=5?"c-warn":"c-good"; }
+    if(h === "Firewall_Ativo") return /^sim$/i.test(v) ? "c-good" : v ? "c-bad" : "";
+    if(h === "Antivirus_Status") return /^ativo$/i.test(v) ? "c-good" : /inativo/i.test(v) ? "c-bad" : "";
+    if(h === "Usa_WSUS") return /^sim$/i.test(v) ? "c-good" : /^nao$/i.test(v) ? "c-warn" : "";
+    if(h === "DataHora_Coleta"){ const d = daysSince(v); return d === null ? "c-warn" : d>15 ? "c-bad" : d>7 ? "c-warn" : ""; }
+    return "";
+}
 function renderTable(){
-    const body = $("inventoryBody");
-    const rpp = getRowsPerPage();
-    const start = (currentPage-1)*rpp;
-    const rows = filtered.slice(start,start+rpp);
-    body.innerHTML = rows.map((r,idx)=>{
-        const absoluteIndex = start + idx;
-        return `<tr data-index="${absoluteIndex}">${visibleColumns.map(h=>{
-            let value = val(r,h,"");
-            if(h === "__score"){
-                const st = statusFromScore(r.__score);
-                value = `<span class="badge ${st.cls}">${r.__score}/100</span>`;
-                return `<td>${value}</td>`;
-            }
-            return `<td>${escapeHtml(value)}</td>`;
-        }).join("")}</tr>`;
-    }).join("");
-    body.querySelectorAll("tr").forEach(tr=>{
-        tr.addEventListener("dblclick",()=>{
-            const r = filtered[parseInt(tr.dataset.index,10)];
-            openDetail(r);
-        });
-    });
+    const rpp = getRowsPerPage(), start = (currentPage-1)*rpp;
+    const rows = filtered.slice(start, start+rpp);
+    $("inventoryBody").innerHTML = rows.map((r,idx) => `<tr data-index="${start+idx}">${visibleColumns.map(h => {
+        if(h === "__score"){ const st = statusFromScore(r.__score); return `<td><span class="badge ${st.cls}">${r.__score}/100</span></td>`; }
+        const cc = cellClass(h, r);
+        return `<td${cc ? ` class="${cc}"` : ""}>${escapeHtml(val(r,h,""))}</td>`;
+    }).join("")}</tr>`).join("") || `<tr><td colspan="${visibleColumns.length}" class="empty">Nenhum registro encontrado.</td></tr>`;
+    $("inventoryBody").querySelectorAll("tr[data-index]").forEach(tr => tr.addEventListener("click", () => openDetail(filtered[+tr.dataset.index])));
     $("currentPage").textContent = currentPage;
     $("totalPages").textContent = getTotalPages();
     $("prevPage").disabled = currentPage <= 1;
     $("nextPage").disabled = currentPage >= getTotalPages();
 }
 function updateStatus(){
-    $("status").textContent = `Exibindo ${filtered.length} de ${enriched.length} registros. ${visibleColumns.length} de ${headers.length} colunas visíveis.`;
+    $("status").textContent = `Exibindo ${filtered.length} de ${enriched.length} máquinas · ${visibleColumns.length} de ${headers.length} colunas visíveis na tabela.`;
 }
+
+/* ================= DETALHE ================= */
+function pills(list, riskFn){ return list.length ? list.map(x => `<span class="pill${riskFn && riskFn(x) ? " risk" : ""}">${escapeHtml(x)}</span>`).join("") : "—"; }
 function openDetail(r){
-    $("detailTitle").textContent = `Detalhes - ${text(r,"Computador")}`;
-    const sections = {
-        "Resumo": ["Computador","Usuario","IP","MAC","SO","Build","DataHora_Coleta","Dominio_ou_Grupo","Status_Ativacao","Usa_WSUS","Servidor_WSUS"],
-        "Hardware": ["Computador_Fabricante","Computador_Modelo","Chassis_Tipo","CPU","Arquitetura","CPU_Cores","CPU_Threads","RAM_GB_Total","RAM_Detalhes","GPU","Monitores","Resolucao_Tela"],
-        "Discos": ["Armazenamento_C_GB","Espaco_Livre_C_GB","Espaco_Livre_C_Perc","Discos_Fisicos","Volumes","Modelo_Disco_Principal","SaudeDiscoSMART"],
-        "Segurança / Rede": ["Antivirus","Antivirus_Status","Firewall_Ativo","AdminsLocais","PortasTCP_Abertas","PortasUDP_Abertas","GatewayPadrao","ServidoresDNS","DHCPAtivado"],
-        "Uso / Updates": ["Uptime_Formatado","UpdatesPendentes","UltimaInstalacaoUpdates","ConsumoCPU_Percentual","ConsumoRAM_Percentual","Top5ProcessosCPU","Top5ProcessosRAM"]
-    };
+    $("detailTitle").textContent = text(r,"Computador");
     const st = statusFromScore(r.__score);
-    let html = `<div style="margin-bottom:14px;">
-        <span class="badge ${st.cls}">Saúde: ${r.__score}/100 - ${st.label}</span>
-        <div class="statusline" style="margin-top:8px;">${r.__reasons.length ? r.__reasons.map(x=>"• "+escapeHtml(x.text)).join("<br>") : "Sem alertas relevantes."}</div>
-    </div><div class="detail-grid">`;
-    for(const [title,keys] of Object.entries(sections)){
-        html += `<div class="detail-section"><h3>${title}</h3>`;
-        keys.forEach(k => html += `<div class="kv"><b>${escapeHtml(k)}</b><span>${escapeHtml(val(r,k,""))}</span></div>`);
-        html += `</div>`;
+    const kv = (k, label) => `<div class="kv"><b>${escapeHtml(label||k)}</b><span>${escapeHtml(val(r,k,"")) || "—"}</span></div>`;
+    const sections = {
+        "Identificação": ["Usuario","IP","MAC","Dominio_ou_Grupo","Divisao","Setor","Plataforma","DataHora_Coleta"],
+        "Sistema": ["SO","Build","Arquitetura","Data_Instalacao","Uptime_Formatado","Status_Ativacao","Canal_Licenca","Chave_Parcial"],
+        "Hardware": ["Computador_Fabricante","Computador_Modelo","Computador_Serial","Chassis_Tipo","PlacaMae_Fabricante","PlacaMae_Modelo","BIOS_Versao","BIOS_Data","CPU","CPU_Cores","CPU_Threads","RAM_GB_Total","RAM_Detalhes","GPU","Monitores","Resolucao_Tela","Bateria"],
+        "Armazenamento": ["Armazenamento_C_GB","Espaco_Livre_C_GB","Espaco_Livre_C_Perc","Discos_Fisicos","Volumes","Modelo_Disco_Principal","SaudeDiscoSMART"],
+        "Rede": ["GatewayPadrao","ServidoresDNS","ServidorDHCP","DHCPAtivado","Usa_WSUS","Servidor_WSUS"],
+        "Segurança e updates": ["Antivirus","Antivirus_Status","Firewall_Ativo","UpdatesPendentes","UltimaInstalacaoUpdates"],
+        "Desempenho": ["ConsumoCPU_Percentual","ConsumoRAM_Percentual","Top5ProcessosCPU","Top5ProcessosRAM"]
+    };
+    const tcp = ports(r), adm = admins(r);
+    const ds = topoDivSetor(r);
+    let html = `<div class="detail-top"><div class="gauge">${gaugeSvg(r.__score, LEVEL_COLOR[st.cls])}<div class="ctr"><b>${r.__score}</b></div></div>
+        <div style="flex:1;min-width:240px"><span class="badge ${st.cls}">Saúde: ${st.label}</span> <span style="color:var(--muted)">${escapeHtml([ds.div, ds.set].filter(Boolean).join(" · "))}</span>
+        <div class="alert-reasons" style="margin-top:8px">${r.__reasons.length ? r.__reasons.map(x=>`<span class="rs ${x.level}">${escapeHtml(x.text)}</span>`).join("") : '<span class="rs info">Sem alertas relevantes.</span>'}</div></div></div><div class="detail-grid">`;
+    for(const [title, keys] of Object.entries(sections)){
+        const shown = keys.filter(k => text(r,k) !== "");
+        if(!shown.length) continue;
+        html += `<div class="detail-section"><h3>${title}</h3>${shown.map(k => kv(k)).join("")}</div>`;
     }
-    html += `</div>
-    <div class="actions-row">
-        <button onclick="window.open('inventario/${escapeHtml(text(r,'Computador'))}.html','_blank')">Abrir HTML individual</button>
-    </div>`;
+    html += `<div class="detail-section"><h3>Portas TCP em escuta</h3>${pills(tcp.map(String), p => RISK_PORTS[p])}</div>
+             <div class="detail-section"><h3>Administradores locais</h3>${pills(adm)}</div></div>`;
+    const cmd = JSON.stringify({acao:"inventario", id:"inv-" + new Date().toISOString().replace(/\D/g,"").slice(0,14)}, null, 2);
+    const hostFile = encodeURIComponent(text(r,"Computador"));
+    html += `<div class="actions-row">
+        <a class="btn" href="inventario/${hostFile}.html" target="_blank" rel="noopener" style="text-decoration:none">Abrir relatório individual</a>
+        <button class="secondary" id="btnCopyHost">Copiar nome</button>
+        <button class="secondary" id="btnCopyCmd" title="Cole em comandos/${escapeHtml(text(r,"Computador"))}.json para disparar nova coleta">Copiar comando de coleta (JSON)</button></div>`;
     $("detailBody").innerHTML = html;
+    const copy = (t, b) => { try{ navigator.clipboard.writeText(t); const o=b.textContent; b.textContent="Copiado ✓"; setTimeout(()=>b.textContent=o,1400);}catch(e){} };
+    $("btnCopyHost").addEventListener("click", e => copy(text(r,"Computador"), e.target));
+    $("btnCopyCmd").addEventListener("click", e => copy(cmd, e.target));
+    hideTip();
     $("detailModal").style.display = "flex";
 }
-function debounce(fn,ms){
-    let t;
-    return function(){ clearTimeout(t); t = setTimeout(fn,ms); };
-}
+
+/* ================= UTIL / CSV / COLUNAS ================= */
+function debounce(fn,ms){ let t; return function(){ clearTimeout(t); t = setTimeout(fn,ms); }; }
 function exportCsv(){
     const cols = visibleColumns.filter(c=>c !== "__score");
-    const lines = [cols.join(";")];
-    filtered.forEach(r=>{
-        lines.push(cols.map(c=>{
-            let v = String(val(r,c,""));
-            if(v.includes(";") || v.includes('"') || v.includes("\n")) v = `"${v.replace(/"/g,'""')}"`;
-            return v;
-        }).join(";"));
-    });
-    const blob = new Blob(["\ufeff" + lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
+    const lines = [["Saude"].concat(cols).join(";")];
+    filtered.forEach(r => lines.push([r.__score].concat(cols.map(c => {
+        let v = String(val(r,c,""));
+        if(/^[=+\-@]/.test(v)) v = "'" + v;   // evita injecao de formula no Excel
+        if(v.includes(";") || v.includes('"') || v.includes("\n")) v = `"${v.replace(/"/g,'""')}"`;
+        return v;
+    })).join(";")));
+    const blob = new Blob(["﻿" + lines.join("\r\n")], {type:"text/csv;charset=utf-8"});
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `inventario_dashboard_${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
-    URL.revokeObjectURL(a.href);
+    setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
 }
 function renderColumnsModal(){
-    $("columnsList").innerHTML = headers.map(h=>`
-        <label><input type="checkbox" value="${escapeHtml(h)}" ${visibleColumns.includes(h) ? "checked" : ""}> ${escapeHtml(h)}</label>
-    `).join("");
+    $("columnsList").innerHTML = headers.map(h=>`<label><input type="checkbox" value="${escapeHtml(h)}" ${visibleColumns.includes(h) ? "checked" : ""}> ${escapeHtml(h === "__score" ? "Saúde (score)" : h)}</label>`).join("");
 }
 function applyColumns(){
     const checked = Array.from($("columnsList").querySelectorAll("input:checked")).map(i=>i.value);
     visibleColumns = checked.length ? checked : [...headers];
-    localStorage.setItem(COLUMNS_KEY, JSON.stringify(visibleColumns));
+    store(COLUMNS_KEY, JSON.stringify(visibleColumns));
     $("columnsModal").style.display = "none";
-    renderHeader();
-    applyFilters();
+    renderHeader(); applyFilters();
+}
+function switchView(id){
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.view === id));
+    document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === id));
+    if(id === "topologyView") renderTopology();
+    window.scrollTo({top:0});
 }
 function init(){
-    if(localStorage.getItem(THEME_KEY)==="dark") document.body.classList.add("dark-theme");
+    const savedTheme = store(THEME_KEY);
+    if(savedTheme === "dark" || (!savedTheme && matchMedia("(prefers-color-scheme: dark)").matches)) document.body.classList.add("dark-theme");
+    $("quickFilter").innerHTML = Object.entries(QUICK).map(([k,v]) => `<option value="${k}">${v.l}</option>`).join("");
 
     if(typeof window.inventoryData === "undefined" || !Array.isArray(window.inventoryData) || window.inventoryData.length === 0){
         $("status").textContent = "Nenhum dado encontrado. Rode ./consolidar_inventario.sh (ou .ps1) para gerar o bloco de dados.";
+        $("hdrSub").textContent = "Sem dados";
+        $("alertsBadge").style.display = "none";
         return;
     }
-
     data = window.inventoryData;
     enrichData();
     const set = new Set();
@@ -1368,69 +1387,61 @@ function init(){
     const base = DEFAULT_COLUMNS.filter(c=>set.has(c));
     const rest = Array.from(set).filter(c=>!base.includes(c)).sort((a,b)=>a.localeCompare(b));
     headers = ["__score", ...base, ...rest];
+    const saved = store(COLUMNS_KEY);
+    if(saved){ try{ visibleColumns = JSON.parse(saved).filter(c=>headers.includes(c)); }catch(e){ visibleColumns = []; } }
+    if(!visibleColumns.length) visibleColumns = ["__score", ...DEFAULT_COLUMNS.filter(c=>headers.includes(c))];
 
-    const saved = localStorage.getItem(COLUMNS_KEY);
-    if(saved){
-        try{
-            visibleColumns = JSON.parse(saved).filter(c=>headers.includes(c));
-        }catch(e){ visibleColumns = []; }
-    }
-    if(!visibleColumns.length){
-        visibleColumns = ["__score", ...DEFAULT_COLUMNS.filter(c=>headers.includes(c))];
-    }
+    const last = enriched.map(r=>parseDateSafe(text(r,"DataHora_Coleta"))).filter(Boolean).sort((a,b)=>b-a)[0];
+    $("hdrSub").textContent = `Inventário e saúde computacional${last ? " · última coleta em " + last.toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}) : ""}`;
 
+    buildDashSkeleton();
     filtered = [...enriched];
-    renderDashboard();
     renderHeader();
     applyFilters();
 
-    $("globalSearchInput").addEventListener("input", debounce(()=>{currentPage=1; applyFilters();},250));
-    $("quickFilter").addEventListener("change", ()=>{currentPage=1; applyFilters();});
-    $("prevPage").addEventListener("click", ()=>{ if(currentPage>1){currentPage--; renderTable(); updateStatus();} });
-    $("nextPage").addEventListener("click", ()=>{ if(currentPage<getTotalPages()){currentPage++; renderTable(); updateStatus();} });
-    $("rowsPerPage").addEventListener("change", ()=>{currentPage=1; renderTable(); updateStatus();});
+    $("globalSearchInput").addEventListener("input", debounce(()=>{ currentPage=1; applyFilters(); },250));
+    $("quickFilter").addEventListener("change", ()=>{ currentPage=1; applyFilters(); });
+    $("prevPage").addEventListener("click", ()=>{ if(currentPage>1){ currentPage--; renderTable(); updateStatus(); } });
+    $("nextPage").addEventListener("click", ()=>{ if(currentPage<getTotalPages()){ currentPage++; renderTable(); updateStatus(); } });
+    $("rowsPerPage").addEventListener("change", ()=>{ currentPage=1; renderTable(); updateStatus(); });
     $("btnExport").addEventListener("click", exportCsv);
+    $("btnPrint").addEventListener("click", ()=>window.print());
     $("btnTheme").addEventListener("click", ()=>{
         document.body.classList.toggle("dark-theme");
-        localStorage.setItem(THEME_KEY, document.body.classList.contains("dark-theme") ? "dark" : "light");
+        store(THEME_KEY, document.body.classList.contains("dark-theme") ? "dark" : "light");
     });
     $("btnReset").addEventListener("click", ()=>{
-        $("globalSearchInput").value = "";
-        $("quickFilter").value = "todos";
-        sortKey = null; sortDir = "asc"; currentPage = 1;
+        $("globalSearchInput").value = ""; $("quickFilter").value = "todos";
+        drill = null; sevFilter = "all"; sortKey = null; sortDir = "asc"; currentPage = 1;
+        document.querySelectorAll("#sevBar button").forEach(b => b.setAttribute("aria-pressed", b.dataset.sev === "all"));
         visibleColumns = ["__score", ...DEFAULT_COLUMNS.filter(c=>headers.includes(c))];
-        localStorage.setItem(COLUMNS_KEY, JSON.stringify(visibleColumns));
+        store(COLUMNS_KEY, JSON.stringify(visibleColumns));
+        columnFilters = {};
         renderHeader(); applyFilters();
     });
     $("btnColumns").addEventListener("click", ()=>{ renderColumnsModal(); $("columnsModal").style.display = "flex"; });
     $("closeColumns").addEventListener("click", ()=> $("columnsModal").style.display = "none");
     $("applyColumns").addEventListener("click", applyColumns);
-    $("selectDefaultColumns").addEventListener("click", ()=>{
-        $("columnsList").querySelectorAll("input").forEach(i=> i.checked = ["__score", ...DEFAULT_COLUMNS].includes(i.value));
-    });
+    $("selectDefaultColumns").addEventListener("click", ()=> $("columnsList").querySelectorAll("input").forEach(i=> i.checked = ["__score", ...DEFAULT_COLUMNS].includes(i.value)));
     $("selectAllColumns").addEventListener("click", ()=> $("columnsList").querySelectorAll("input").forEach(i=> i.checked = true));
     $("selectNoColumns").addEventListener("click", ()=> $("columnsList").querySelectorAll("input").forEach(i=> i.checked = false));
     $("closeDetail").addEventListener("click", ()=> $("detailModal").style.display = "none");
-    $("detailModal").addEventListener("click", e=>{ if(e.target === $("detailModal")) $("detailModal").style.display = "none"; });
-    $("columnsModal").addEventListener("click", e=>{ if(e.target === $("columnsModal")) $("columnsModal").style.display = "none"; });
-
-    document.querySelectorAll(".tab-btn").forEach(btn=>{
-        btn.addEventListener("click", ()=>{
-            document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
-            document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-            btn.classList.add("active");
-            $(btn.dataset.view).classList.add("active");
-            if(btn.dataset.view === "dashboardView") renderDashboard();
-            if(btn.dataset.view === "topologyView") renderTopology();
-        });
+    ["detailModal","columnsModal"].forEach(id => $(id).addEventListener("click", e=>{ if(e.target === $(id)) $(id).style.display = "none"; }));
+    document.addEventListener("keydown", e => {
+        if(e.key === "Escape") { $("detailModal").style.display = "none"; $("columnsModal").style.display = "none"; }
+        if(e.key === "/" && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)){ e.preventDefault(); $("globalSearchInput").focus(); }
     });
-    document.querySelectorAll(".topo-view-btn").forEach(b=>{
-        b.addEventListener("click", ()=>{
-            topoModo = b.dataset.modo;
-            document.querySelectorAll(".topo-view-btn").forEach(x=>x.setAttribute("aria-pressed", x===b ? "true" : "false"));
-            renderTopology();
-        });
-    });
+    document.querySelectorAll(".tab-btn").forEach(btn => btn.addEventListener("click", () => switchView(btn.dataset.view)));
+    document.querySelectorAll("#sevBar button").forEach(b => b.addEventListener("click", () => {
+        sevFilter = b.dataset.sev;
+        document.querySelectorAll("#sevBar button").forEach(x => x.setAttribute("aria-pressed", x === b));
+        renderAlertsView();
+    }));
+    document.querySelectorAll(".topo-view-btn").forEach(b => b.addEventListener("click", () => {
+        topoModo = b.dataset.modo;
+        document.querySelectorAll(".topo-view-btn").forEach(x=>x.setAttribute("aria-pressed", x===b ? "true" : "false"));
+        renderTopology();
+    }));
 }
 document.addEventListener("DOMContentLoaded", init);
 })();
